@@ -10,3 +10,6 @@
 [submodule "myRaspberryPI"]
 	path = myRaspberryPI
 	url = https://github.com/jcmayoral/myRaspberryPI.git
+[submodule "sa_tool_python"]
+	path = sa_tool_python
+	url = https://github.com/jcmayoral/sa_tool_python.git
