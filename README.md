@@ -2,6 +2,10 @@
 Master Thesis WorkSpace
 
 git submodule init
+git submodule update
+cd slam_testing
+git submodule init
+git submodule update
 
 if trajectory_follower does not work:
   try 
