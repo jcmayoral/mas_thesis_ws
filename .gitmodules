@@ -4,3 +4,6 @@
 [submodule "trajectory_follower"]
 	path = trajectory_follower
 	url = gitgate@mas.b-it-center.de:jmayor2s/trajectory_follower.git
+[submodule "navigation"]
+	path = navigation
+	url = https://github.com/jcmayoral/navigation.git
