@@ -19,6 +19,7 @@ if trajectory_follower does not work:
   try 
     git clone gitgate@mas.b-it-center.de:jmayor2s/trajectory_follower.git
 
+The original repository is used for default to keep track on the updates
 
 To add cob3 configuration files:
 
@@ -27,4 +28,5 @@ cd cartographer_ros
 git remote add cob3 https://github.com/jcmayoral/cartographer_ros.git
 git pull cob3 master
 
-#Note#  MyRaspBerryPi repository is not ROS compatible however it installs the python package
+#Note
+MyRaspBerryPi and sa_tool_python repository is not ROS compatible however it installs the python package
