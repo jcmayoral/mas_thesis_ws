@@ -7,3 +7,6 @@
 [submodule "navigation"]
 	path = navigation
 	url = https://github.com/jcmayoral/navigation.git
+[submodule "myRaspberryPI"]
+	path = myRaspberryPI
+	url = https://github.com/jcmayoral/myRaspberryPI.git
