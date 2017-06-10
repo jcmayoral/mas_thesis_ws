@@ -30,3 +30,4 @@ git pull cob3 master
 
 #Note
 MyRaspBerryPi and sa_tool_python repository is not ROS compatible however it installs the python package
+BMC package provides statical tools which can be compatible with MyRaspBerryPi package #TODO#
