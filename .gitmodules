@@ -1,21 +1,21 @@
 [submodule "slam_tester"]
 	path = slam_tester
-	url = https://github.com/jcmayoral/slam_tester.git
+	url = git@github.com:jcmayoral/slam_tester.git
 [submodule "trajectory_follower"]
 	path = trajectory_follower
 	url = gitgate@mas.b-it-center.de:jmayor2s/trajectory_follower.git
 [submodule "navigation"]
 	path = navigation
-	url = https://github.com/jcmayoral/navigation.git
+	url = git@github.com:jcmayoral/navigation.git
 [submodule "myRaspberryPI"]
 	path = myRaspberryPI
-	url = https://github.com/jcmayoral/myRaspberryPI.git
+	url = git@github.com:jcmayoral/myRaspberryPI.git
 [submodule "sa_tool_python"]
 	path = sa_tool_python
-	url = https://github.com/jcmayoral/sa_tool_python.git
+	url = git@github.com:jcmayoral/sa_tool_python.git
 [submodule "diagnostics"]
 	path = diagnostics
-	url = https://github.com/jcmayoral/diagnostics.git
+	url = git@github.com:jcmayoral/diagnostics.git
 [submodule "BMC"]
 	path = BMC
-	url = https://github.com/jcmayoral/BMC.git
+	url = git@github.com:jcmayoral/BMC.git
