@@ -19,3 +19,6 @@
 [submodule "BMC"]
 	path = BMC
 	url = git@github.com:jcmayoral/BMC.git
+[submodule "VisionUtils"]
+	path = VisionUtils
+	url = git@github.com:jcmayoral/VisionUtils.git
