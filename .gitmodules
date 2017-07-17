@@ -22,3 +22,6 @@
 [submodule "raspberry_ros"]
 	path = raspberry_ros
 	url = git@github.com:jcmayoral/raspberry_ros.git
+[submodule "vision_utils_ros"]
+	path = vision_utils_ros
+	url = git@github.com:jcmayoral/vision_utils_ros.git
