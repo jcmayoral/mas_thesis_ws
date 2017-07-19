@@ -5,7 +5,7 @@
 	path = navigation
 	url = git@github.com:jcmayoral/navigation.git
 [submodule "myRaspberryPI"]
-	path = accelerometers/myRaspberryPI
+	path = accelerometer
 	url = git@github.com:jcmayoral/myRaspberryPI.git
 [submodule "sa_tool_python"]
 	path = sa_tool_python
@@ -17,11 +17,8 @@
 	path = BMC
 	url = git@github.com:jcmayoral/BMC.git
 [submodule "VisionUtils"]
-	path = VisionUtils
+	path = camera
 	url = git@github.com:jcmayoral/VisionUtils.git
 [submodule "raspberry_ros"]
-	path = raspberry_ros
+	path = accelerometer
 	url = git@github.com:jcmayoral/raspberry_ros.git
-[submodule "vision_utils_ros"]
-	path = vision_utils_ros
-	url = git@github.com:jcmayoral/vision_utils_ros.git
