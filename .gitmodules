@@ -1,6 +1,3 @@
-[submodule "slam_tester"]
-	path = slam_tester
-	url = git@github.com:jcmayoral/slam_tester.git
 [submodule "navigation"]
 	path = navigation
 	url = git@github.com:jcmayoral/navigation.git
