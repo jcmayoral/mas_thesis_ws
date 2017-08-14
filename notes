@@ -7,3 +7,16 @@ Big Variance-> Not localized already
 
 If robot is localize then is a dynamic
 if variance localizatio is more or a threshold not localize then relocalize
+
+
+
+
+
+
+
+
+
+
+
+
+move_base runcycle contains a switch to decide what to do ... including recovery behaviors
