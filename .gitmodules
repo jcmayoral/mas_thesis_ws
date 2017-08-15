@@ -4,9 +4,6 @@
 [submodule "myRaspberryPI"]
 	path = myRaspberryPI
 	url = git@github.com:jcmayoral/myRaspberryPI.git
-[submodule "sa_tool_python"]
-	path = sa_tool_python
-	url = git@github.com:jcmayoral/sa_tool_python.git
 [submodule "diagnostics"]
 	path = diagnostics
 	url = git@github.com:jcmayoral/diagnostics.git
