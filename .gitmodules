@@ -19,3 +19,6 @@
 [submodule "vision_utils_ros"]
 	path = vision_utils_ros
 	url = git@github.com:jcmayoral/vision_utils_ros.git
+[submodule "other_sensors"]
+	path = other_sensors
+	url = git@github.com:jcmayoral/other_sensors.git
