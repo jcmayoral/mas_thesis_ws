@@ -5,7 +5,7 @@ This is a private repository which contains repositories that might be used for 
 
 # Libraries
 
-##BMC
+## BMC
 
 BMC is a third part function collection which contain several standard fucntion for pattern detection. We are interested in the detect_cusum function however we suggest to install the complete library to proceed with the proposed research.
 
@@ -14,7 +14,7 @@ sudo python3 setup.py install
 
 **Note** A testing function is provided in MyRaspBerryPi package.
 
-##MyRaspBerryPi 
+## MyRaspBerryPi 
 
 cd sensing/accelerometer
 
@@ -26,7 +26,7 @@ if (RaspBerryPi is used):
 cd Fault_Tolerant_Accelerometer
 sudo python3 setup.py install
 
-###Testing
+### Testing
 cd Fault_Tolerant_Accelerometer
 cd testing
 
@@ -34,7 +34,7 @@ cd testing
 * Test BMC-version CUSUM :   python3 plotBMCDetectCUSUM.py
 * Sample Stochastic Detection algorithm :   python3 plotMathAccelerometeri.py
 
-##VisionUtils
+## VisionUtils
 
 This package provide a ROS independent package to test the collision detection within the integrated camera. It includes a qtcreator pro file if qtcreator IDE will be use to modified the project. It requires the version of OpenCV 3.2. To install run:
 
@@ -44,10 +44,10 @@ cmake ..
 make
 sudo make install
 
-###Testing
+### Testing
 type qt_vision in any terminal
 
-##Navigation
+## Navigation
 
 We suggest an extension of the original move_base package to handle collisions. In case you intend to use it:
 
