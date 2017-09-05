@@ -16,18 +16,18 @@ sudo python3 setup.py install
 
 ## MyRaspBerryPi 
 
-cd sensing/accelerometer
+cd sensing/accelerometer<br />
 
-if (RaspBerryPi is used):
-   cd Adafruit_Python_ADXL345
-   sudo python3 setup.py install
-   cd ..
+if (RaspBerryPi is used): <br />
+   cd Adafruit_Python_ADXL345 <br />
+   sudo python3 setup.py install <br />
+   cd ..<br />
 
-cd Fault_Tolerant_Accelerometer
-sudo python3 setup.py install
+cd Fault_Tolerant_Accelerometer <br />
+sudo python3 setup.py install <br />
 
 ### Testing
-cd Fault_Tolerant_Accelerometer
+cd Fault_Tolerant_Accelerometer <br />
 cd testing
 
 * Print in screen accelerometer readings :   python3 plotOnScreen.py
@@ -38,11 +38,11 @@ cd testing
 
 This package provide a ROS independent package to test the collision detection within the integrated camera. It includes a qtcreator pro file if qtcreator IDE will be use to modified the project. It requires the version of OpenCV 3.2. To install run:
 
-cd VisionUtils
-mkdir build && cd build
-cmake ..
-make
-sudo make install
+cd VisionUtils<br />
+mkdir build && cd build<br />
+cmake ..<br />
+make<br />
+sudo make install<br />
 
 ### Testing
 type qt_vision in any terminal
@@ -51,7 +51,7 @@ type qt_vision in any terminal
 
 We suggest an extension of the original move_base package to handle collisions. In case you intend to use it:
 
-cd navigation
-git checkout collisions
+cd navigation<br />
+git checkout collisions<br />
 
 
