@@ -1,0 +1,12 @@
+demo_camera_collision video:
+
+During this video the basic functionality of a camera collision detection is shown. The algorithm threshold can be modified (not yet done automatically) to reduce the number of false positives and negatives however, it is an important fact that most of the times while the camera is moving the algorithm does not detect a collision.
+
+The main drawbacks are:
+
+-> Parameter reconfiguration could improve or decrease the algorithm accuracy.
+-> In mobile robots, this should be tested since the vibration between frames maybe it is not that strong to be detected.
+
+
+
+Algorithm Status: First Version released.
