@@ -1,6 +1,7 @@
 [submodule "navigation"]
 	path = navigation
 	url = git@github.com:jcmayoral/navigation.git
+        branch = collisions
 [submodule "myRaspberryPI"]
 	path = myRaspberryPI
 	url = git@github.com:jcmayoral/myRaspberryPI.git
