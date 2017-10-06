@@ -10,3 +10,11 @@ The main drawbacks are:
 
 
 Algorithm Status: First Version released.
+
+-----------------------------------------
+
+October 6th 
+
+CUSUM Algorithm modified for reconfigurability.
+CUSUM algorithm matches the Stochastic Method proposed by Blanke(same as accelerometer).
+Image provided at configurable_params.png with a sample of suitable parameters values (not video provided).
