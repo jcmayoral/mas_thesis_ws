@@ -30,7 +30,7 @@ class BaseCollisionChecker
          *
          * @param nh An instance of the ROS node handle.
          */
-        BaseCollisionChecker(const ros::NodeHandle &nh);
+        BaseCollisionChecker(ros::NodeHandle &nh);
 
         /**
          * Dtor.

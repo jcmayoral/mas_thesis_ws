@@ -16,7 +16,7 @@ CollisionChecker::CollisionChecker(){
 
 
 CollisionChecker::CollisionChecker(const std::vector<std::pair<double,double> > footprint_vector,
-                                   const ros::NodeHandle &nh) :
+                                   ros::NodeHandle &nh) :
 convert_map_(false)
 {
     footprint_vector_ = footprint_vector;
@@ -24,6 +24,7 @@ convert_map_(false)
     nh.param("scalling_factor", scaling_factor_new_footprint_,3);
     nh.param("max_collisions", max_number_of_vertices_in_collision_,2);
     nh.param("collision_threshold", threshold_,180.0);
+    footprint_sub_ = nh.subscribe("/move_base/local_costmap/footprint",1, &CollisionChecker::footprintCB, this);
 
 }
 
@@ -31,6 +32,11 @@ convert_map_(false)
 CollisionChecker::~CollisionChecker()
 {
 
+}
+
+void CollisionChecker::footprintCB(const geometry_msgs::PolygonStampedConstPtr &msg){
+  base_transformed_footprint_ = msg->polygon;
+  ROS_INFO("footprintCB");
 }
 
 geometry_msgs::Polygon CollisionChecker::getFootprint(){
@@ -43,10 +49,10 @@ bool CollisionChecker::isBaseInCollision( )
 	int targetCell = 0;
 
 	//Get center of footprint
-	bool center = CollisionChecker::getFootprintCenter();
+	//bool center = CollisionChecker::getFootprintCenter();
 
-	if (center){
-        CollisionChecker::getTransformedFootprint();
+	if (true){
+        //CollisionChecker::getTransformedFootprint();
         CollisionChecker::getIntermediateFootprint();
         success = CollisionChecker::checkCells();
 	}
