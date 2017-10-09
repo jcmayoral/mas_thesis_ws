@@ -13,9 +13,9 @@
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/Point32.h>
 #include <geometry_msgs/Polygon.h>
-#include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseArray.h>
-#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
+
 #include <tf/transform_listener.h>
 #include <nav_msgs/GridCells.h>
 #include <nav_msgs/OccupancyGrid.h>
@@ -28,7 +28,7 @@ class CollisionChecker
     public:
         /**
          * Ctor.
-         * The constructor takes base footprint 
+         * The constructor takes base footprint
          *
          * @param base_footprint vector containing vertices of the footprint
          */
@@ -41,15 +41,14 @@ class CollisionChecker
          */
         virtual ~CollisionChecker();
 
-        /** 
+        /**
          * This method performs time parameterization of a given trajectory.
          *
          * @param costmap stores current costmap
          * @param target_pose_in stores given target pose
          * @return True if base does not in collision
          */
-        bool isBaseInCollision(geometry_msgs::Pose &target_pose_in,
-            footprint_checker::CollisionCheckerMsg::Response &resp);
+        bool isBaseInCollision();
 
         /*
         * Calculate the center of the Footprint
@@ -66,7 +65,7 @@ class CollisionChecker
         * Get the new footprint according to the rotation and translation of the final pose
         * @param target_pose_in stores given target pose
         */
-        void getTransformedFootprint(geometry_msgs::Pose &target_pose_in);
+        void getTransformedFootprint();
 
         /*
         * Check target footprint cell
@@ -98,9 +97,16 @@ class CollisionChecker
         */
         std::string base_frame_;
 
+
+
+        /*
+        * get Polygon
+        */
+        geometry_msgs::Polygon getFootprint();
+
     private:
 
-        /* 
+        /*
         true is map is already converted
         */
         bool convert_map_;
@@ -112,16 +118,16 @@ class CollisionChecker
 
 
         /*
-         * Store Base transformed Footprint 
+         * Store Base transformed Footprint
          */
         geometry_msgs::Polygon base_transformed_footprint_;
         /*
         * Stores Base Footprint Center Coordinates
         */
         geometry_msgs::Pose footprintCenter_;
-        
+
         /**
-         * Store Base Footprint 
+         * Store Base Footprint
          */
         std::vector<std::pair<double,double> > footprint_vector_;
         /*

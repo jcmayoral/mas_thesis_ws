@@ -1,6 +1,3 @@
-geometry_msgs/Pose[] inputPoses
-int16 start
-int16 finish
 ---
-geometry_msgs/Polygon[] polygon_shapes
-bool[] success
+geometry_msgs/Polygon polygon_shapes
+bool success
