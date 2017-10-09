@@ -8,7 +8,7 @@
 #include <footprint_checker/base_collision_checker.h>
 #include <ros/ros.h>
 
-BaseCollisionChecker::BaseCollisionChecker(const ros::NodeHandle &nh):
+BaseCollisionChecker::BaseCollisionChecker(ros::NodeHandle &nh):
         nh_(nh), is_costmap_received_(false), is_point_cloud_received_(false),
         is_pose_received_(false)
 {

@@ -13,6 +13,8 @@
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/Point32.h>
 #include <geometry_msgs/Polygon.h>
+#include <geometry_msgs/PolygonStamped.h>
+
 #include <geometry_msgs/PoseArray.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 
@@ -35,7 +37,7 @@ class CollisionChecker
         CollisionChecker();
 
         CollisionChecker(const std::vector<std::pair<double,double> > footprint_vector,
-                                  const ros::NodeHandle &nh);
+                                  ros::NodeHandle &nh);
         /**
          * Dtor.
          */
@@ -97,12 +99,16 @@ class CollisionChecker
         */
         std::string base_frame_;
 
-
-
         /*
         * get Polygon
         */
         geometry_msgs::Polygon getFootprint();
+
+        /**
+        * Callback to set footprint
+        */
+
+        void footprintCB(const geometry_msgs::PolygonStampedConstPtr &msg);
 
     private:
 
@@ -149,6 +155,8 @@ class CollisionChecker
         * Store maximum number of collisions
         */
         int max_number_of_vertices_in_collision_;
+        ros::Subscriber footprint_sub_;
+
 
 };
 
