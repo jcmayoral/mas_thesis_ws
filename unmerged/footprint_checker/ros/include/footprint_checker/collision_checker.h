@@ -36,8 +36,7 @@ class CollisionChecker
          */
         CollisionChecker();
 
-        CollisionChecker(const std::vector<std::pair<double,double> > footprint_vector,
-                                  ros::NodeHandle &nh);
+        CollisionChecker(ros::NodeHandle &nh);
         /**
          * Dtor.
          */
@@ -53,34 +52,15 @@ class CollisionChecker
         bool isBaseInCollision();
 
         /*
-        * Calculate the center of the Footprint
-        * @return true if center was found
-        */
-        bool getFootprintCenter();
-
-        /*
         * Calculte intermediate footprints between vertices
         */
         void getIntermediateFootprint();
-
-        /*
-        * Get the new footprint according to the rotation and translation of the final pose
-        * @param target_pose_in stores given target pose
-        */
-        void getTransformedFootprint();
 
         /*
         * Check target footprint cell
         * @return true if not collision detected
         */
         bool checkCells();
-
-        /*
-        * get yaw angle
-        * @param target_pose_in stores given target pose
-        * @return true if transformation is completed
-        */
-        void getTargetYaw(geometry_msgs::Pose pose_in, double *yaw);
 
         /*
         * Convert Map from Ooccupancy Grid to Costmap_2d class
@@ -126,16 +106,8 @@ class CollisionChecker
         /*
          * Store Base transformed Footprint
          */
-        geometry_msgs::Polygon base_transformed_footprint_;
-        /*
-        * Stores Base Footprint Center Coordinates
-        */
-        geometry_msgs::Pose footprintCenter_;
+        geometry_msgs::PolygonStamped base_transformed_footprint_;
 
-        /**
-         * Store Base Footprint
-         */
-        std::vector<std::pair<double,double> > footprint_vector_;
         /*
         * Store footprint extended with intermediate points between vertices
         */
@@ -152,11 +124,19 @@ class CollisionChecker
         int scaling_factor_new_footprint_;
 
         /*
-        * Store maximum number of collisions
         */
         int max_number_of_vertices_in_collision_;
+
+        /*
+        * PolygonStamped Subscriber
+        */
         ros::Subscriber footprint_sub_;
 
+        /*
+        * Store maximum number of collisions
+        * Footprint Received Flag
+        */
+        bool is_footprint_received;
 
 };
 

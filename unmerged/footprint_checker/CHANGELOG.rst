@@ -10,6 +10,7 @@ Change Log
 * Msg modifiicaiton Response not arrays just one boolean and 1 polygon
 * node handler of BaseCollisionChecker and CollisionChecker Constructor are not constants anymore.
 * subscriber to local_costmap/footprint message instead of generating one.
+* Removing unused functionalities
 
 
 '0.2.0'

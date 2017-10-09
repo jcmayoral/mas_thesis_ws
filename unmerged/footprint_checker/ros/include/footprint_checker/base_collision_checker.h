@@ -113,11 +113,6 @@ class BaseCollisionChecker
         nav_msgs::OccupancyGrid costmap_in_;
         sensor_msgs::PointCloud2 point_cloud_;
 
-        /**
-         * Store footprint of the base
-         */
-
-        std::vector<std::pair<double,double> > footprint_vector_;
 
         CollisionChecker collision_checker_;
 };
