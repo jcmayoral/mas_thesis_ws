@@ -8,6 +8,7 @@ find_package(catkin REQUIRED
     nav_msgs
     map_msgs
     std_msgs
+    sensor_msgs
     roslint
     costmap_2d
     tf
@@ -35,6 +36,7 @@ catkin_package(
     nav_msgs
     map_msgs
     std_msgs
+    sensor_msgs
     roslint
     costmap_2d
     tf

@@ -11,6 +11,8 @@
 #include <ros/ros.h>
 #include <geometry_msgs/Polygon.h>
 #include <nav_msgs/OccupancyGrid.h>
+#include <sensor_msgs/PointCloud2.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <string>
 #include <vector>
 #include <footprint_checker/collision_checker.h>
@@ -59,6 +61,24 @@ class BaseCollisionChecker
         */
         void costMapCallback(const nav_msgs::OccupancyGrid::ConstPtr &msg);
 
+        /**
+        * CallBack to get PointCloud from LocalPlanner
+        */
+
+        void pointCloudCB(const sensor_msgs::PointCloud2ConstPtr &msg);
+
+        /**
+        * CallBack to get PointCloud from LocalPlanner
+        */
+
+        void localizationCB(const geometry_msgs::PoseWithCovarianceStampedConstPtr &msg);
+
+        /**
+        * Footprint to PointCloud
+        */
+        void updatePointCloud(const geometry_msgs::Polygon footprint);
+
+
     private:
         /**
          * An instance of the ROS Node handle.
@@ -66,20 +86,32 @@ class BaseCollisionChecker
         ros::NodeHandle nh_;
 
         /**
-         * Flag to check if costmap is received.
+         * Flag to check if costmap and point_cloud are received.
          */
         bool is_costmap_received_;
+        bool is_point_cloud_received_;
+        bool is_pose_received_;
 
         /**
          * Subscribers and Publishers
          */
         ros::Subscriber costmap_sub_;
+        ros::Subscriber point_cloud_sub_;
+        ros::Subscriber amcl_sub_;
         ros::Publisher footprint_pub_;
+        ros::Publisher point_cloud_pub_;
+
+        /*
+        * Update for Storing AMCL messages
+        */
+
+        geometry_msgs::PoseWithCovarianceStamped current_pose_;
 
         /**
          * Store costmap
          */
         nav_msgs::OccupancyGrid costmap_in_;
+        sensor_msgs::PointCloud2 point_cloud_;
 
         /**
          * Store footprint of the base

@@ -18,7 +18,7 @@ CollisionChecker::CollisionChecker(){
 CollisionChecker::CollisionChecker(const std::vector<std::pair<double,double> > footprint_vector,
                                    const ros::NodeHandle &nh) :
 convert_map_(false)
-{   
+{
     footprint_vector_ = footprint_vector;
     nh.param("base_frame", base_frame_, std::string("map"));
     nh.param("scalling_factor", scaling_factor_new_footprint_,3);
@@ -33,34 +33,35 @@ CollisionChecker::~CollisionChecker()
 
 }
 
-bool CollisionChecker::isBaseInCollision(geometry_msgs::Pose &target_pose_in,
-                                         footprint_checker::CollisionCheckerMsg::Response &resp)
+geometry_msgs::Polygon CollisionChecker::getFootprint(){
+  return base_transformed_footprint_;
+}
+
+bool CollisionChecker::isBaseInCollision( )
 {
 	bool success = false;
 	int targetCell = 0;
 
 	//Get center of footprint
 	bool center = CollisionChecker::getFootprintCenter();
-	bool target = true;
 
-  	if (center && target){
-        CollisionChecker::getTransformedFootprint(target_pose_in);
+	if (center){
+        CollisionChecker::getTransformedFootprint();
         CollisionChecker::getIntermediateFootprint();
         success = CollisionChecker::checkCells();
 	}
 
-    resp.polygon_shapes.push_back(base_transformed_footprint_);    
-
+  //
 	return success;
 }
 
 void CollisionChecker::convertMap(const nav_msgs::OccupancyGrid& costmap){
 
-    costmap_2d::Costmap2D temporal(costmap.info.height, costmap.info.width, 
-        costmap.info.resolution, costmap.info.origin.position.x, 
+    costmap_2d::Costmap2D temporal(costmap.info.height, costmap.info.width,
+        costmap.info.resolution, costmap.info.origin.position.x,
         costmap.info.origin.position.y,0);
 
-    
+
     for (int i=0; i< costmap.info.height;i++)
         for (int j=0; j< costmap.info.width;j++) {
             unsigned char costmap_value;
@@ -82,8 +83,8 @@ void CollisionChecker::convertMap(const nav_msgs::OccupancyGrid& costmap){
 
 
 bool CollisionChecker::checkCells (){
-   
-    int vertices_in_collision = 0;
+
+  int vertices_in_collision = 0;
 
 	for (int a=0; a < footprint_extended_vector_.size();a++)
     {
@@ -115,7 +116,7 @@ bool CollisionChecker::checkCells (){
     return true;
 }
 
-void CollisionChecker::getTransformedFootprint(geometry_msgs::Pose &target_pose_in){
+void CollisionChecker::getTransformedFootprint(){
 
 	//footprint_translation constains relative translations of the footprint point to the base_link frame
 	int i = 0 ;
@@ -123,11 +124,10 @@ void CollisionChecker::getTransformedFootprint(geometry_msgs::Pose &target_pose_
 	double yaw_center = 0.0;
 
 	// Get Angle of rotation
-	getTargetYaw(target_pose_in, &yaw);	
-	getTargetYaw(footprintCenter_, &yaw_center);	
+	getTargetYaw(footprintCenter_, &yaw_center);
 
 	// setting new footprint
-    base_transformed_footprint_.points.clear();
+  base_transformed_footprint_.points.clear();
 	geometry_msgs::Point32 point;
 
 	while( i < footprint_vector_.size())
@@ -135,30 +135,20 @@ void CollisionChecker::getTransformedFootprint(geometry_msgs::Pose &target_pose_
 
     	// Homogeneous transformation multiplied by the vectors of the footprint
     	//temporal
-    	double x,y;    
+    	double x,y;
+      x = footprint_vector_[i].first;
+      y = footprint_vector_[i].second;
 
-        x = (footprint_vector_[i].first * cos (yaw)) -
-               (footprint_vector_[i].second * sin (yaw)) +
-               target_pose_in.position.x;
+		  i ++;
 
-        y = (footprint_vector_[i].first * sin (yaw)) +
-               (footprint_vector_[i].second * cos (yaw))+
-               target_pose_in.position.y;
-
-		i ++;
-
-		//For Polygon
-		point.x = x;
-		point.y = y;
-		point.z = 0.0;
-        base_transformed_footprint_.points.push_back(point);
+      base_transformed_footprint_.points.push_back(point);
     }
 }
 
 bool CollisionChecker::getFootprintCenter()
 {
 	tf::StampedTransform transform;
-    tf::TransformListener* tf_listener = new tf::TransformListener(); 
+    tf::TransformListener* tf_listener = new tf::TransformListener();
 
     try
         {
@@ -173,13 +163,13 @@ bool CollisionChecker::getFootprintCenter()
             ROS_ERROR_STREAM("Could not lookup transform to base link frame: " << e.what());
             return 0;
         }
-    //Storing center of footprint   
+    //Storing center of footprint
     footprintCenter_.position.x = transform.getOrigin().x();
 	footprintCenter_.position.y = transform.getOrigin().y();
-   
+
 	//Copy orientation
 	tf::quaternionTFToMsg(transform.getRotation().normalize(), footprintCenter_.orientation);
-    return 1;
+  return 1;
 
 }
 
@@ -217,27 +207,27 @@ void CollisionChecker::getIntermediateFootprint()
         int cycle = 1;
 
         if (i < initial_points-1){
-            diffx = (base_transformed_footprint_.points[i+1].x - 
+            diffx = (base_transformed_footprint_.points[i+1].x -
                 base_transformed_footprint_.points[i].x)/scaling_factor_new_footprint_;
- 
-            diffy = (base_transformed_footprint_.points[i+1].y - 
+
+            diffy = (base_transformed_footprint_.points[i+1].y -
                 base_transformed_footprint_.points[i].y)/scaling_factor_new_footprint_;
         }
         else{
-            diffx = (base_transformed_footprint_.points[0].x - 
+            diffx = (base_transformed_footprint_.points[0].x -
                 base_transformed_footprint_.points[i].x)/scaling_factor_new_footprint_;
-            diffy = (base_transformed_footprint_.points[0].y - 
-                base_transformed_footprint_.points[i].y)/scaling_factor_new_footprint_;   
-        }    
+            diffy = (base_transformed_footprint_.points[0].y -
+                base_transformed_footprint_.points[i].y)/scaling_factor_new_footprint_;
+        }
 
         while (cycle <= scaling_factor_new_footprint_){
             double x = base_transformed_footprint_.points[i].x + (diffx*cycle);
             double y = base_transformed_footprint_.points[i].y + (diffy*cycle);
             footprint_extended_vector_.push_back(std::make_pair(x,y));
-            cycle++;     
+            cycle++;
         }
 
-    	// add third row 1    
+    	// add third row 1
         i += 1;
     }
 }
