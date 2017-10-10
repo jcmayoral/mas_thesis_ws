@@ -15,15 +15,12 @@ CollisionChecker::CollisionChecker(){
 }
 
 
-CollisionChecker::CollisionChecker(ros::NodeHandle &nh) :
-convert_map_(false), is_footprint_received(false)
+CollisionChecker::CollisionChecker(ros::NodeHandle &nh) : convert_map_(false)
 {
     nh.param("base_frame", base_frame_, std::string("map"));
     nh.param("scalling_factor", scaling_factor_new_footprint_,3);
     nh.param("max_collisions", max_number_of_vertices_in_collision_,2);
     nh.param("collision_threshold", threshold_,180.0);
-    footprint_sub_ = nh.subscribe("/move_base/local_costmap/footprint",1, &CollisionChecker::footprintCB, this);
-
 }
 
 
@@ -32,32 +29,11 @@ CollisionChecker::~CollisionChecker()
 
 }
 
-void CollisionChecker::footprintCB(const geometry_msgs::PolygonStampedConstPtr &msg){
-    ROS_WARN_ONCE("TODO footprintCB");
-    base_transformed_footprint_.polygon.points.clear();
-
-    for (int i=0; i<msg->polygon.points.size();i++){
-        //ROS_INFO_STREAM(msg->polygon.points[i]);
-        base_transformed_footprint_.polygon.points.push_back(msg->polygon.points[i]);
-    }
-    //base_transformed_footprint_ = *msg;
-    //ROS_WARN_ONCE("TODO footprintCB");
-    is_footprint_received = true;
-}
-
-geometry_msgs::Polygon CollisionChecker::getFootprint(){
-    return base_transformed_footprint_.polygon;
-}
-
-bool CollisionChecker::isBaseInCollision( )
+bool CollisionChecker::isBaseInCollision(geometry_msgs::Polygon polygon)
 {
 	  bool success = false;
-
-	  if (is_footprint_received){
-        CollisionChecker::getIntermediateFootprint();
-        success = CollisionChecker::checkCells();
-	  }
-
+    CollisionChecker::getIntermediateFootprint(polygon);
+    success = CollisionChecker::checkCells();
     return success;
 }
 
@@ -86,7 +62,6 @@ void CollisionChecker::convertMap(const nav_msgs::OccupancyGrid& costmap){
     costmap_ = temporal;
     convert_map_ = true;
 }
-
 
 bool CollisionChecker::checkCells (){
 
@@ -122,11 +97,10 @@ bool CollisionChecker::checkCells (){
     return true;
 }
 
-void CollisionChecker::getIntermediateFootprint()
-{
+void CollisionChecker::getIntermediateFootprint(geometry_msgs::Polygon polygon){
 
 	  int i = 0;
-    int initial_points = base_transformed_footprint_.polygon.points.size();
+    int initial_points = polygon.points.size();
 
     footprint_extended_vector_.clear();
 
@@ -141,22 +115,22 @@ void CollisionChecker::getIntermediateFootprint()
         int cycle = 1;
 
         if (i < initial_points-1){
-            diffx = (base_transformed_footprint_.polygon.points[i+1].x -
-                base_transformed_footprint_.polygon.points[i].x)/scaling_factor_new_footprint_;
+            diffx = (polygon.points[i+1].x -
+                polygon.points[i].x)/scaling_factor_new_footprint_;
 
-            diffy = (base_transformed_footprint_.polygon.points[i+1].y -
-                base_transformed_footprint_.polygon.points[i].y)/scaling_factor_new_footprint_;
+            diffy = (polygon.points[i+1].y -
+                polygon.points[i].y)/scaling_factor_new_footprint_;
         }
         else{
-            diffx = (base_transformed_footprint_.polygon.points[0].x -
-                base_transformed_footprint_.polygon.points[i].x)/scaling_factor_new_footprint_;
-            diffy = (base_transformed_footprint_.polygon.points[0].y -
-                base_transformed_footprint_.polygon.points[i].y)/scaling_factor_new_footprint_;
+            diffx = (polygon.points[0].x -
+                polygon.points[i].x)/scaling_factor_new_footprint_;
+            diffy = (polygon.points[0].y -
+                polygon.points[i].y)/scaling_factor_new_footprint_;
         }
 
         while (cycle <= scaling_factor_new_footprint_){
-            double x = base_transformed_footprint_.polygon.points[i].x + (diffx*cycle);
-            double y = base_transformed_footprint_.polygon.points[i].y + (diffy*cycle);
+            double x = polygon.points[i].x + (diffx*cycle);
+            double y = polygon.points[i].y + (diffy*cycle);
             footprint_extended_vector_.push_back(std::make_pair(x,y));
             cycle++;
         }

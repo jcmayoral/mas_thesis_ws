@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(footprint_checker)
 set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
 
+find_package(PCL REQUIRED)
 find_package(catkin REQUIRED
   COMPONENTS
     roscpp
@@ -19,6 +20,7 @@ find_package(catkin REQUIRED
 include_directories(
   ros/include
   ${catkin_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
 )
 
 add_service_files(
@@ -50,7 +52,7 @@ add_library(${PROJECT_NAME}
 )
 
 add_executable(base_collision_checker_server ros/src/base_collision_checker_node.cpp ros/src/base_collision_checker.cpp ros/src/collision_checker.cpp )
-target_link_libraries(base_collision_checker_server ${catkin_LIBRARIES})
+target_link_libraries(base_collision_checker_server ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 add_dependencies(base_collision_checker_server footprint_checker_gencpp)
 
 

@@ -11,6 +11,7 @@
 #include <ros/ros.h>
 #include <geometry_msgs/Polygon.h>
 #include <nav_msgs/OccupancyGrid.h>
+#include <pcl/kdtree/kdtree.h>
 
 //TO update PointCloud MSGS
 #include <sensor_msgs/PointCloud2.h>
@@ -81,10 +82,21 @@ class BaseCollisionChecker
         /**
         * Footprint to PointCloud
         */
-        void updatePointCloud(const geometry_msgs::Polygon footprint);
+        void updatePointCloud();
+
+        /**
+        * Callback to set footprint
+        */
+
+        void footprintCB(const geometry_msgs::PolygonStampedConstPtr &msg);
 
 
     private:
+
+        /*
+        * Store Base transformed Footprint
+        */
+        geometry_msgs::Polygon footprint_;
         /**
          * An instance of the ROS Node handle.
          */
@@ -96,6 +108,7 @@ class BaseCollisionChecker
         bool is_costmap_received_;
         bool is_point_cloud_received_;
         bool is_pose_received_;
+        bool is_footprint_received;
 
         /**
          * Subscribers and Publishers
@@ -105,7 +118,7 @@ class BaseCollisionChecker
         ros::Subscriber amcl_sub_;
         ros::Publisher footprint_pub_;
         ros::Publisher point_cloud_pub_;
-
+        ros::Subscriber footprint_sub_;
         /*
         * Update for Storing AMCL messages
         */

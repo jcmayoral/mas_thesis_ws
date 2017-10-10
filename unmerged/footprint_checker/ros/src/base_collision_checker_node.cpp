@@ -14,14 +14,14 @@ int main(int argc, char *argv[])
     ros::NodeHandle nh("~");
 
     double loop_rate;
-    
+
     /**
      * Cycle rate in Hz.
      */
-    ros::param::param<double>("~loop_rate", loop_rate, 10.0);    
+    ros::param::param<double>("~loop_rate", loop_rate, 10.0);
     BaseCollisionChecker base_collision_checker(nh);
 
-    ros::ServiceServer service = nh.advertiseService("CollisionCheckerService", 
+    ros::ServiceServer service = nh.advertiseService("CollisionCheckerService",
         &BaseCollisionChecker::runService, &base_collision_checker);
 
     ROS_INFO("Ready to start...");
