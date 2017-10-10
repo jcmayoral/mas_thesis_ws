@@ -11,11 +11,14 @@
 #include <ros/ros.h>
 #include <geometry_msgs/Polygon.h>
 #include <nav_msgs/OccupancyGrid.h>
-#include <pcl/kdtree/kdtree.h>
+#include <pcl/point_cloud.h>
 
 //TO update PointCloud MSGS
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud2_iterator.h>
+#include <pcl_conversions/pcl_conversions.h>
+//#include <pcl/kdtree/kdtree.h>
+#include <pcl/kdtree/kdtree_flann.h>
 
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <string>
