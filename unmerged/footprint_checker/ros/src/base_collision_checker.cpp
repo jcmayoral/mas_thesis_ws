@@ -40,7 +40,7 @@ bool BaseCollisionChecker::runService(footprint_checker::CollisionCheckerMsg::Re
         resp.success = collision_checker_.isBaseInCollision();
         resp.polygon_shapes = collision_checker_.getFootprint();
         updatePointCloud(resp.polygon_shapes);
-        ROS_INFO("Service Finished");
+        ROS_INFO("Service Finished Correctly");
         return true;
     }
     else{
@@ -66,7 +66,32 @@ void BaseCollisionChecker::pointCloudCB(const sensor_msgs::PointCloud2ConstPtr &
 }
 
 void BaseCollisionChecker::updatePointCloud(const geometry_msgs::Polygon footprint){
+
+    /*for (int i=0; i< point_cloud_.fields.size(); i++){
+      ROS_INFO_STREAM("field " << point_cloud_.fields[i]);
+    }*/
+    std::mutex mtx;           // mutex for critical section
+    mtx.lock();
+
+    //needed for add colors to the pointcloud
+    sensor_msgs::PointCloud2Modifier pcd_modifier(point_cloud_);
+    pcd_modifier.resize(point_cloud_.height * point_cloud_.width);
+    pcd_modifier.setPointCloud2FieldsByString(2, "xyz", "rgb");
+    sensor_msgs::PointCloud2Iterator<float> iter_x(point_cloud_, "x");
+    sensor_msgs::PointCloud2Iterator<float> iter_y(point_cloud_, "y");
+    sensor_msgs::PointCloud2Iterator<float> iter_z(point_cloud_, "z");
+    sensor_msgs::PointCloud2Iterator<uint8_t> iter_r(point_cloud_, "r");
+    sensor_msgs::PointCloud2Iterator<uint8_t> iter_g(point_cloud_, "g");
+    sensor_msgs::PointCloud2Iterator<uint8_t> iter_b(point_cloud_, "b");
+
+    for (; iter_z != iter_z.end(); ++iter_z, ++iter_r){
+      ROS_INFO_STREAM(*iter_z << *iter_r);
+      *iter_z = 10;
+      *iter_r = 200;
+    }
+
     point_cloud_pub_.publish(point_cloud_);
+    mtx.unlock();
 }
 
 void BaseCollisionChecker::localizationCB(const geometry_msgs::PoseWithCovarianceStampedConstPtr &msg)
