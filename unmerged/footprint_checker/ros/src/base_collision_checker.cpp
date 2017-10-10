@@ -17,6 +17,7 @@ BaseCollisionChecker::BaseCollisionChecker(ros::NodeHandle &nh):
     amcl_sub_ = nh_.subscribe("/amcl_pose", 1, &BaseCollisionChecker::localizationCB, this);
 
     //From Local_planner
+    footprint_sub_ = nh.subscribe("/move_base/local_costmap/footprint",4, &BaseCollisionChecker::footprintCB, this);
     point_cloud_sub_ = nh_.subscribe("/move_base/DWAPlannerROS/cost_cloud",1, &BaseCollisionChecker::pointCloudCB, this);
     point_cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("overlap_costmap",2);
 
@@ -32,14 +33,13 @@ bool BaseCollisionChecker::runService(footprint_checker::CollisionCheckerMsg::Re
          footprint_checker::CollisionCheckerMsg::Response &resp)
 {
 
-    if (is_costmap_received_ && is_point_cloud_received_ && is_pose_received_){
+    if (is_costmap_received_ && is_point_cloud_received_ && is_pose_received_ && is_footprint_received){
         ROS_INFO_STREAM("Request Received");
 
         collision_checker_.convertMap(costmap_in_);
 
-        resp.success = collision_checker_.isBaseInCollision();
-        resp.polygon_shapes = collision_checker_.getFootprint();
-        updatePointCloud(resp.polygon_shapes);
+        resp.success = collision_checker_.isBaseInCollision(footprint_);
+        updatePointCloud();
         ROS_INFO("Service Finished Correctly");
         return true;
     }
@@ -48,6 +48,12 @@ bool BaseCollisionChecker::runService(footprint_checker::CollisionCheckerMsg::Re
         resp.success = false;
         return false;
     }
+}
+
+void BaseCollisionChecker::footprintCB(const geometry_msgs::PolygonStampedConstPtr &msg){
+    geometry_msgs::PolygonStamped tmp = *msg;
+    is_footprint_received = true;
+    ROS_INFO_ONCE("FootprintCB Received");
 }
 
 void BaseCollisionChecker::costMapCallback(const nav_msgs::OccupancyGrid::ConstPtr &msg)
@@ -60,12 +66,15 @@ void BaseCollisionChecker::costMapCallback(const nav_msgs::OccupancyGrid::ConstP
 
 void BaseCollisionChecker::pointCloudCB(const sensor_msgs::PointCloud2ConstPtr &msg)
 {
+  ROS_INFO_ONCE("PointCloud Received1");
+
     point_cloud_ = *msg;
     is_point_cloud_received_ = true;
     ROS_INFO_ONCE("PointCloud Received");
 }
 
-void BaseCollisionChecker::updatePointCloud(const geometry_msgs::Polygon footprint){
+
+void BaseCollisionChecker::updatePointCloud(){
 
     /*for (int i=0; i< point_cloud_.fields.size(); i++){
       ROS_INFO_STREAM("field " << point_cloud_.fields[i]);
@@ -84,11 +93,17 @@ void BaseCollisionChecker::updatePointCloud(const geometry_msgs::Polygon footpri
     sensor_msgs::PointCloud2Iterator<uint8_t> iter_g(point_cloud_, "g");
     sensor_msgs::PointCloud2Iterator<uint8_t> iter_b(point_cloud_, "b");
 
-    for (; iter_z != iter_z.end(); ++iter_z, ++iter_r){
-      ROS_INFO_STREAM(*iter_z << *iter_r);
-      *iter_z = 10;
-      *iter_r = 200;
-    }
+
+    //for (std::vector<std::pair<double,double> >::iterator it = collision_checker_.footprint_extended_vector_.begin() ;
+      //        it != collision_checker_.footprint_extended_vector_.end(); ++it){
+        //ROS_INFO_STREAM(it->first);
+        for (; iter_z != iter_z.end(); ++iter_z, ++iter_r){
+            //footprint_extended_vector_[a].first;
+            //footprint_extended_vector_[a].second;
+            *iter_z = 10;
+            *iter_r = 200;
+      }
+    //}
 
     point_cloud_pub_.publish(point_cloud_);
     mtx.unlock();

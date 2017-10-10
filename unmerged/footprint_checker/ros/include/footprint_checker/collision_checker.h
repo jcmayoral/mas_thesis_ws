@@ -24,7 +24,6 @@
 #include <footprint_checker/CollisionCheckerMsg.h>
 #include <costmap_2d/costmap_2d.h>
 
-
 class CollisionChecker
 {
     public:
@@ -49,12 +48,12 @@ class CollisionChecker
          * @param target_pose_in stores given target pose
          * @return True if base does not in collision
          */
-        bool isBaseInCollision();
+        bool isBaseInCollision(geometry_msgs::Polygon polygon);
 
         /*
         * Calculte intermediate footprints between vertices
         */
-        void getIntermediateFootprint();
+        void getIntermediateFootprint(geometry_msgs::Polygon polygon);
 
         /*
         * Check target footprint cell
@@ -80,15 +79,10 @@ class CollisionChecker
         std::string base_frame_;
 
         /*
-        * get Polygon
+        * Store footprint extended with intermediate points between vertices
         */
-        geometry_msgs::Polygon getFootprint();
+        std::vector<std::pair<double,double> > footprint_extended_vector_;
 
-        /**
-        * Callback to set footprint
-        */
-
-        void footprintCB(const geometry_msgs::PolygonStampedConstPtr &msg);
 
     private:
 
@@ -101,17 +95,6 @@ class CollisionChecker
         * Store Costmap
         */
         costmap_2d::Costmap2D costmap_;
-
-
-        /*
-         * Store Base transformed Footprint
-         */
-        geometry_msgs::PolygonStamped base_transformed_footprint_;
-
-        /*
-        * Store footprint extended with intermediate points between vertices
-        */
-        std::vector<std::pair<double,double> > footprint_extended_vector_;
 
         /*
         * Select the probability for an occupied cell
@@ -126,17 +109,6 @@ class CollisionChecker
         /*
         */
         int max_number_of_vertices_in_collision_;
-
-        /*
-        * PolygonStamped Subscriber
-        */
-        ros::Subscriber footprint_sub_;
-
-        /*
-        * Store maximum number of collisions
-        * Footprint Received Flag
-        */
-        bool is_footprint_received;
 
 };
 
