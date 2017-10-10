@@ -33,11 +33,15 @@ CollisionChecker::~CollisionChecker()
 }
 
 void CollisionChecker::footprintCB(const geometry_msgs::PolygonStampedConstPtr &msg){
+    ROS_WARN_ONCE("TODO footprintCB");
+    base_transformed_footprint_.polygon.points.clear();
+
     for (int i=0; i<msg->polygon.points.size();i++){
+        //ROS_INFO_STREAM(msg->polygon.points[i]);
         base_transformed_footprint_.polygon.points.push_back(msg->polygon.points[i]);
     }
     //base_transformed_footprint_ = *msg;
-    ROS_WARN_ONCE("TODO footprintCB \n");
+    //ROS_WARN_ONCE("TODO footprintCB");
     is_footprint_received = true;
 }
 

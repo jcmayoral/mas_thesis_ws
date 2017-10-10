@@ -11,10 +11,15 @@
 #include <ros/ros.h>
 #include <geometry_msgs/Polygon.h>
 #include <nav_msgs/OccupancyGrid.h>
+
+//TO update PointCloud MSGS
 #include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/point_cloud2_iterator.h>
+
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <string>
 #include <vector>
+#include <mutex>          // std::mutex
 #include <footprint_checker/collision_checker.h>
 #include <footprint_checker/CollisionCheckerMsg.h>
 
