@@ -67,8 +67,6 @@ void BaseCollisionChecker::costMapCallback(const nav_msgs::OccupancyGrid::ConstP
 
 void BaseCollisionChecker::pointCloudCB(const sensor_msgs::PointCloud2ConstPtr &msg)
 {
-  ROS_INFO_ONCE("PointCloud Received1");
-
     point_cloud_ = *msg;
     is_point_cloud_received_ = true;
     ROS_INFO_ONCE("PointCloud Received");
@@ -86,15 +84,14 @@ void BaseCollisionChecker::updatePointCloud(){
     //needed for add colors to the pointcloud
     sensor_msgs::PointCloud2Modifier pcd_modifier(point_cloud_);
     pcd_modifier.resize(point_cloud_.height * point_cloud_.width);
-    pcd_modifier.setPointCloud2FieldsByString(2, "xyz", "rgb");
+    //pcd_modifier.setPointCloud2FieldsByString(2, "xyz", "rgb");
     sensor_msgs::PointCloud2Iterator<float> iter_x(point_cloud_, "x");
     sensor_msgs::PointCloud2Iterator<float> iter_y(point_cloud_, "y");
     sensor_msgs::PointCloud2Iterator<float> iter_z(point_cloud_, "z");
-    sensor_msgs::PointCloud2Iterator<uint8_t> iter_r(point_cloud_, "r");
-    sensor_msgs::PointCloud2Iterator<uint8_t> iter_g(point_cloud_, "g");
-    sensor_msgs::PointCloud2Iterator<uint8_t> iter_b(point_cloud_, "b");
+    //sensor_msgs::PointCloud2Iterator<uint8_t> iter_r(point_cloud_, "r");
+    //sensor_msgs::PointCloud2Iterator<uint8_t> iter_g(point_cloud_, "g");
+    //sensor_msgs::PointCloud2Iterator<uint8_t> iter_b(point_cloud_, "b");
 
-    //Search
     //conversion
     pcl::PCLPointCloud2 pcl_point_cloud;
     pcl_conversions::toPCL(point_cloud_,pcl_point_cloud);
@@ -103,41 +100,30 @@ void BaseCollisionChecker::updatePointCloud(){
     pcl::fromPCLPointCloud2(pcl_point_cloud,*temp_cloud);
     //end conversion
 
-    pcl::PointXYZ searchPoint;
-    searchPoint.x = 10.0;// collision_checker_.footprint_extended_vector_[0].first;
-    searchPoint.y = 10.0;//collision_checker_.footprint_extended_vector_[0].second;
-
     pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
     kdtree.setInputCloud (temp_cloud);
 
-    int K = 10;
-    std::vector<int> pointIdxNKNSearch(K);
-    std::vector<float> pointNKNSquaredDistance(K);
+    int K = 5;
 
-    if ( kdtree.nearestKSearch (searchPoint, K, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 )
-      {
-        for (size_t i = 0; i < pointIdxNKNSearch.size (); ++i)
-          std::cout << temp_cloud->points[ pointIdxNKNSearch[i] ].x
-                    << " " << temp_cloud->points[ pointIdxNKNSearch[i] ].y
-                    << " " << temp_cloud->points[ pointIdxNKNSearch[i] ].z
-                    << " (squared distance: " << pointNKNSquaredDistance[i] << ")" << std::endl;
-      }
-      // End search
-
-    ROS_INFO_STREAM(collision_checker_.footprint_extended_vector_.size ());
     for (std::vector<std::pair<double,double> >::iterator it = collision_checker_.footprint_extended_vector_.begin() ;
               it != collision_checker_.footprint_extended_vector_.end(); ++it){
+        //Search
         pcl::PointXYZ searchPoint;
         searchPoint.x = it->first;
         searchPoint.y = it->second;
-        ROS_INFO_STREAM(it->first);
-        for (; iter_z != iter_z.end(); ++iter_z, ++iter_r){
-            //IF condition
-            //footprint_extended_vector_[a].first;
-            //footprint_extended_vector_[a].second;
-            *iter_z = 10;
-            *iter_r = 200;
-      }
+        std::vector<int> pointIdxNKNSearch(K);
+        std::vector<float> pointNKNSquaredDistance(K);
+
+        if ( kdtree.nearestKSearch (searchPoint, K, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 ){
+            for (size_t i = 0; i < pointIdxNKNSearch.size (); ++i){
+              //std::cout << temp_cloud->points[ pointIdxNKNSearch[i] ].x
+              //          << " " << temp_cloud->points[ pointIdxNKNSearch[i] ].y
+              //          << " " << temp_cloud->points[ pointIdxNKNSearch[i] ].z
+              //          << " (squared distance: " << pointNKNSquaredDistance[i] << ")" << std::endl;
+              *(iter_z+pointIdxNKNSearch[i]) = 0.05;
+            }
+        }
+        // End search
     }
 
     point_cloud_pub_.publish(point_cloud_);
