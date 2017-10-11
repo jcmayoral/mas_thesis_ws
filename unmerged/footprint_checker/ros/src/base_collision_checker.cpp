@@ -81,18 +81,18 @@ void BaseCollisionChecker::updatePointCloud(){
     std::mutex mtx;           // mutex for critical section
     mtx.lock();
 
-    //needed for add colors to the pointcloud
-    sensor_msgs::PointCloud2Modifier pcd_modifier(point_cloud_);
+    //needed for add colors to the pointcloud //Approach not used
+    //sensor_msgs::PointCloud2Modifier pcd_modifier(point_cloud_);
     //pcd_modifier.setPointCloud2FieldsByString(2, "xyz", "rgb");
-    sensor_msgs::PointCloud2Iterator<float> iter_x(point_cloud_, "x");
-    sensor_msgs::PointCloud2Iterator<float> iter_y(point_cloud_, "y");
-    sensor_msgs::PointCloud2Iterator<float> iter_z(point_cloud_, "z");
+    //sensor_msgs::PointCloud2Iterator<float> iter_x(point_cloud_, "x");
+    //sensor_msgs::PointCloud2Iterator<float> iter_y(point_cloud_, "y");
+    //sensor_msgs::PointCloud2Iterator<float> iter_z(point_cloud_, "z");
     //sensor_msgs::PointCloud2Iterator<uint8_t> iter_r(point_cloud_, "r");
     //sensor_msgs::PointCloud2Iterator<uint8_t> iter_g(point_cloud_, "g");
     //sensor_msgs::PointCloud2Iterator<uint8_t> iter_b(point_cloud_, "b");
     //pcd_modifier.resize(point_cloud_.height * point_cloud_.width);
 
-    //conversion
+    //conversion for native pcl approach
     pcl::PCLPointCloud2 pcl_point_cloud;
     pcl_conversions::toPCL(point_cloud_,pcl_point_cloud);
 
