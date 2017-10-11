@@ -83,7 +83,6 @@ void BaseCollisionChecker::updatePointCloud(){
 
     //needed for add colors to the pointcloud
     sensor_msgs::PointCloud2Modifier pcd_modifier(point_cloud_);
-    pcd_modifier.resize(point_cloud_.height * point_cloud_.width);
     //pcd_modifier.setPointCloud2FieldsByString(2, "xyz", "rgb");
     sensor_msgs::PointCloud2Iterator<float> iter_x(point_cloud_, "x");
     sensor_msgs::PointCloud2Iterator<float> iter_y(point_cloud_, "y");
@@ -91,6 +90,7 @@ void BaseCollisionChecker::updatePointCloud(){
     //sensor_msgs::PointCloud2Iterator<uint8_t> iter_r(point_cloud_, "r");
     //sensor_msgs::PointCloud2Iterator<uint8_t> iter_g(point_cloud_, "g");
     //sensor_msgs::PointCloud2Iterator<uint8_t> iter_b(point_cloud_, "b");
+    //pcd_modifier.resize(point_cloud_.height * point_cloud_.width);
 
     //conversion
     pcl::PCLPointCloud2 pcl_point_cloud;
@@ -120,12 +120,14 @@ void BaseCollisionChecker::updatePointCloud(){
               //          << " " << temp_cloud->points[ pointIdxNKNSearch[i] ].y
               //          << " " << temp_cloud->points[ pointIdxNKNSearch[i] ].z
               //          << " (squared distance: " << pointNKNSquaredDistance[i] << ")" << std::endl;
-              *(iter_z+pointIdxNKNSearch[i]) = 0.05;
+              //*(iter_z+pointIdxNKNSearch[i]) = 1;
+              temp_cloud->points[ pointIdxNKNSearch[i] ].z = 1;
+              //ROS_INFO("a");
             }
         }
         // End search
     }
-
+    pcl::toROSMsg(*temp_cloud, point_cloud_);
     point_cloud_pub_.publish(point_cloud_);
     mtx.unlock();
 }
