@@ -7,7 +7,6 @@ matplotlib.use('TkAgg')
 from FaultDetection import ChangeDetection
 import matplotlib.pyplot as plt
 
-
 class LaserCUSUM(RealTimePlotter,ChangeDetection):
     def __init__(self, max_samples = 500, pace = 2, cusum_window_size = 10 ):
         self.data_ = []
