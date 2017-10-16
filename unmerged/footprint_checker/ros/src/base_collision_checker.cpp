@@ -20,7 +20,7 @@ BaseCollisionChecker::BaseCollisionChecker(ros::NodeHandle &nh):
     footprint_sub_ = nh.subscribe("/move_base/local_costmap/footprint",4, &BaseCollisionChecker::footprintCB, this);
     point_cloud_sub_ = nh_.subscribe("/move_base/DWAPlannerROS/cost_cloud",1, &BaseCollisionChecker::pointCloudCB, this);
     point_cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("overlap_costmap",2);
-    nh.param("collision_checker_threshold", collision_threshold_,25.0);
+    nh.param("collision_checker_threshold", collision_threshold_,30.0);
 
     collision_checker_ = CollisionChecker(nh);
     ROS_INFO("State: INIT");
@@ -108,7 +108,6 @@ void BaseCollisionChecker::updatePointCloud(){
     kdtree.setInputCloud (temp_cloud);
 
     int K = 5;
-    double min_cost = 5000.00;
 
     for (std::vector<std::pair<double,double> >::iterator it = collision_checker_.footprint_extended_vector_.begin() ;
               it != collision_checker_.footprint_extended_vector_.end(); ++it){
@@ -132,13 +131,12 @@ void BaseCollisionChecker::updatePointCloud(){
               //temp_cloud->points[ pointIdxNKNSearch[i] ].z = 1;
               temp_cloud->points[ pointIdxNKNSearch[i] ].r = 255;
               //ROS_INFO("a");
-
             }
-            partial_cost /= pointIdxNKNSearch.size();
 
+            partial_cost /= pointIdxNKNSearch.size();
+            ROS_INFO_STREAM("costs " << partial_cost);
             //if(partial_cost<min_cost){
             if(partial_cost>= collision_threshold_){
-              min_cost = partial_cost;
               for (size_t i = 0; i < pointIdxNKNSearch.size (); ++i){
                 temp_cloud->points[ pointIdxNKNSearch[i] ].b = 255;
                 temp_cloud->points[ pointIdxNKNSearch[i] ].g = 255;
