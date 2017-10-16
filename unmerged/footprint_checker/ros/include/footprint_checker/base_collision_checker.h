@@ -136,6 +136,8 @@ class BaseCollisionChecker
 
 
         CollisionChecker collision_checker_;
+
+        double collision_threshold_;
 };
 
 #endif  // MCR_BASE_COLLISION_CHECKER_BASE_COLLISION_CHECKER_H_

@@ -110,6 +110,9 @@ class CollisionChecker
         */
         int max_number_of_vertices_in_collision_;
 
+
+        geometry_msgs::Quaternion collided_orientations_;
+
 };
 
 #endif  // MCR_BASE_COLLISION_CHECKER_COLLISION_CHECKER_H_

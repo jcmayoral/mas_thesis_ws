@@ -87,6 +87,7 @@ bool CollisionChecker::checkCells (){
        {
            if(vertices_in_collision > max_number_of_vertices_in_collision_) {
            //ROS_INFO_STREAM("Cost value in 1D " << (int)(costmap.data[index]) << " at index "  << index );
+           ROS_INFO_STREAM("Collisions in " << wy/wx);
            //ROS_INFO("Footprint is in collision.");
            return false;
            }
