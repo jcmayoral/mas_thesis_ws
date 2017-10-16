@@ -117,6 +117,8 @@ void BaseCollisionChecker::updatePointCloud(){
         std::vector<int> pointIdxNKNSearch(K);
         std::vector<float> pointNKNSquaredDistance(K);
 
+        double partial_cost = 0.0;
+
         if ( kdtree.nearestKSearch (searchPoint, K, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 ){
             for (size_t i = 0; i < pointIdxNKNSearch.size (); ++i){
               //std::cout << temp_cloud->points[ pointIdxNKNSearch[i] ].x
@@ -124,12 +126,14 @@ void BaseCollisionChecker::updatePointCloud(){
               //          << " " << temp_cloud->points[ pointIdxNKNSearch[i] ].z
               //          << " (squared distance: " << pointNKNSquaredDistance[i] << ")" << std::endl;
               //*(iter_z+pointIdxNKNSearch[i]) = 1;
-              ROS_INFO_STREAM(*(iter_tc + pointIdxNKNSearch[i] ));
+              partial_cost += *(iter_tc + pointIdxNKNSearch[i]);
               //temp_cloud->points[ pointIdxNKNSearch[i] ].z = 1;
               temp_cloud->points[ pointIdxNKNSearch[i] ].r = 255;
               //ROS_INFO("a");
             }
         }
+
+        ROS_INFO_STREAM(partial_cost);
         // End search
     }
     pcl::toROSMsg(*temp_cloud, point_cloud_);
