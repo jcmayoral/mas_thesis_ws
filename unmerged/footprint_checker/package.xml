@@ -2,7 +2,7 @@
   <name>footprint_checker</name>
   <version>0.2.2</version>
   <description>
-    This package provides the functionality to check if base footprint is in collision, the given target pose and the costmap information.
+    This package provides the functionality to check if base footprint is in collision, the given target pose and the costmap information. Based of base_collision_checker package.
   </description>
   <maintainer email="jose.mayoral@smail.inf.h-brs.de">Jose C Mayoral B</maintainer>
   <license>GPLv3</license>
