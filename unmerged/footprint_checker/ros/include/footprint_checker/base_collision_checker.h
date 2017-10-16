@@ -21,6 +21,7 @@
 #include <pcl/kdtree/kdtree_flann.h>
 
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <geometry_msgs/PoseArray.h>
 #include <string>
 #include <vector>
 #include <mutex>          // std::mutex
@@ -58,7 +59,7 @@ class BaseCollisionChecker
         * transform Collided Point in goal_frame to footprint frame
         */
 
-        void transformPoint(pcl::PointXYZRGB point);
+        void transformAndPublishPoints();
 
     private:
         /**
@@ -71,10 +72,6 @@ class BaseCollisionChecker
          */
         BaseCollisionChecker &operator=(const BaseCollisionChecker &other);
 
-        /**
-        * Callback to set input costmap
-        */
-        void costMapCallback(const nav_msgs::OccupancyGrid::ConstPtr &msg);
 
         /**
         * CallBack to get PointCloud from LocalPlanner
@@ -82,11 +79,6 @@ class BaseCollisionChecker
 
         void pointCloudCB(const sensor_msgs::PointCloud2ConstPtr &msg);
 
-        /**
-        * CallBack to get PointCloud from LocalPlanner
-        */
-
-        void localizationCB(const geometry_msgs::PoseWithCovarianceStampedConstPtr &msg);
 
         /**
         * Footprint to PointCloud
@@ -98,7 +90,6 @@ class BaseCollisionChecker
         */
 
         void footprintCB(const geometry_msgs::PolygonStampedConstPtr &msg);
-
 
     private:
 
@@ -118,14 +109,13 @@ class BaseCollisionChecker
         bool is_pose_received_;
         bool is_footprint_received;
 
-        /**
-         * Subscribers and Publishers
+         /* Subscribers and Publishers
          */
         ros::Subscriber point_cloud_sub_;
-        ros::Subscriber amcl_sub_;
-        ros::Publisher footprint_pub_;
-        ros::Publisher point_cloud_pub_;
         ros::Subscriber footprint_sub_;
+        ros::Publisher orientations_pub_;
+        ros::Publisher point_cloud_pub_;
+
         /*
         * Update for Storing AMCL messages
         */
@@ -141,7 +131,7 @@ class BaseCollisionChecker
         FootprintExtender footprint_extender_;
 
         double collision_threshold_;
-        geometry_msgs::Quaternion collided_orientations_;
+        std::vector <geometry_msgs::Pose> collided_pose_;
 
 };
 
