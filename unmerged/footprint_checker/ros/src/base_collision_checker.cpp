@@ -123,9 +123,11 @@ void BaseCollisionChecker::updatePointCloud(){
             }
 
             partial_cost /= pointIdxNKNSearch.size();
-            ROS_INFO_STREAM("costs " << partial_cost);
+            ROS_DEBUG_STREAM("costs " << partial_cost);
             //if(partial_cost<min_cost){
             if(partial_cost>= collision_threshold_){
+              ROS_DEBUG_STREAM("Collision Found in " << searchPoint.x << " , " << searchPoint.y);
+              transformPoint(searchPoint);
               for (size_t i = 0; i < pointIdxNKNSearch.size (); ++i){
                 temp_cloud->points[ pointIdxNKNSearch[i] ].b = 255;
                 temp_cloud->points[ pointIdxNKNSearch[i] ].g = 255;
@@ -137,6 +139,26 @@ void BaseCollisionChecker::updatePointCloud(){
     pcl::toROSMsg(*temp_cloud, point_cloud_);
     point_cloud_pub_.publish(point_cloud_);
     mtx.unlock();
+}
+
+void BaseCollisionChecker::transformPoint(pcl::PointXYZRGB point){
+  geometry_msgs::PoseStamped pose_in, pose_out;
+  tf::TransformListener tf_listener;
+  tf::StampedTransform transform;
+
+  pose_in.header.frame_id = footprint_extender_.base_frame_;
+  pose_in.pose.position.x = point.x;
+  pose_in.pose.position.y = point.y;
+  pose_in.pose.orientation.w = 1.0;
+
+  tf_listener.waitForTransform(footprint_extender_.goal_frame_, footprint_extender_.base_frame_, ros::Time(), ros::Duration(0.5));
+  //tf_listener.lookupTransform(footprint_extender_.goal_frame_, footprint_extender_.base_frame_,ros::Time(),transform);
+
+  //transformPose (const std::string &target_frame, const ros::Time &target_time, const geometry_msgs::PoseStamped &pin, const std::string &fixed_frame, geometry_msgs::PoseStamped &pout) const Transform a Stamped Pose Message into the target frame and time This can throw all that lookupTransform can throw as well as tf::InvalidTransform.
+  tf_listener.transformPose (footprint_extender_.goal_frame_, ros::Time(), pose_in, footprint_extender_.base_frame_, pose_out);
+  ROS_INFO_STREAM(pose_out);
+  //transformPose (const std::string &target_frame, const geometry_msgs::PoseStamped &stamped_in, geometry_msgs::PoseStamped &stamped_out)
+
 }
 
 void BaseCollisionChecker::localizationCB(const geometry_msgs::PoseWithCovarianceStampedConstPtr &msg)

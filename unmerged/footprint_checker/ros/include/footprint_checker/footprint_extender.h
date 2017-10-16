@@ -48,9 +48,10 @@ class FootprintExtender
 
 
         /*
-        * Store base_frame
+        * Store frames
         */
         std::string base_frame_;
+        std::string goal_frame_;
 
         /*
         * Store footprint extended with intermediate points between vertices

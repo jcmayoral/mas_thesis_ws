@@ -24,6 +24,7 @@
 #include <string>
 #include <vector>
 #include <mutex>          // std::mutex
+#include <tf/transform_listener.h>
 #include <footprint_checker/footprint_extender.h>
 #include <footprint_checker/CollisionCheckerMsg.h>
 
@@ -53,6 +54,11 @@ class BaseCollisionChecker
         bool runService(footprint_checker::CollisionCheckerMsg::Request  &req,
         footprint_checker::CollisionCheckerMsg::Response &resp);
 
+        /*
+        * transform Collided Point in goal_frame to footprint frame
+        */
+
+        void transformPoint(pcl::PointXYZRGB point);
 
     private:
         /**
