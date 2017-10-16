@@ -99,11 +99,11 @@ void BaseCollisionChecker::updatePointCloud(){
     pcl::PCLPointCloud2 pcl_point_cloud;
     pcl_conversions::toPCL(point_cloud_,pcl_point_cloud);
 
-    pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr temp_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::fromPCLPointCloud2(pcl_point_cloud,*temp_cloud);
     //end conversion
 
-    pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
+    pcl::KdTreeFLANN<pcl::PointXYZRGB> kdtree;
     kdtree.setInputCloud (temp_cloud);
 
     int K = 5;
@@ -111,7 +111,7 @@ void BaseCollisionChecker::updatePointCloud(){
     for (std::vector<std::pair<double,double> >::iterator it = collision_checker_.footprint_extended_vector_.begin() ;
               it != collision_checker_.footprint_extended_vector_.end(); ++it){
         //Search
-        pcl::PointXYZ searchPoint;
+        pcl::PointXYZRGB searchPoint;
         searchPoint.x = it->first;
         searchPoint.y = it->second;
         std::vector<int> pointIdxNKNSearch(K);
@@ -125,7 +125,8 @@ void BaseCollisionChecker::updatePointCloud(){
               //          << " (squared distance: " << pointNKNSquaredDistance[i] << ")" << std::endl;
               //*(iter_z+pointIdxNKNSearch[i]) = 1;
               ROS_INFO_STREAM(*(iter_tc + pointIdxNKNSearch[i] ));
-              temp_cloud->points[ pointIdxNKNSearch[i] ].z = 1;
+              //temp_cloud->points[ pointIdxNKNSearch[i] ].z = 1;
+              temp_cloud->points[ pointIdxNKNSearch[i] ].r = 255;
               //ROS_INFO("a");
             }
         }
