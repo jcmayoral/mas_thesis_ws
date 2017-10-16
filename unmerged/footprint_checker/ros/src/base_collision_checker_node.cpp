@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
     ros::param::param<double>("~loop_rate", loop_rate, 10.0);
     BaseCollisionChecker base_collision_checker(nh);
 
-    ros::ServiceServer service = nh.advertiseService("CollisionCheckerService",
+    ros::ServiceServer service = nh.advertiseService("~/collision_checker",
         &BaseCollisionChecker::runService, &base_collision_checker);
 
     ROS_INFO("Ready to start...");
