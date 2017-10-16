@@ -163,7 +163,7 @@ void BaseCollisionChecker::transformAndPublishPoints(){
     pose_in.pose = *it;
     tf_listener.transformPose (footprint_extender_.goal_frame_, ros::Time(), pose_in, footprint_extender_.base_frame_, pose_out);
 
-    tf::Quaternion quat = tf::createQuaternionFromYaw(pose_out.pose.position.y/pose_out.pose.position.x);
+    tf::Quaternion quat = tf::createQuaternionFromYaw(atan2(pose_out.pose.position.y,pose_out.pose.position.x));
     tf::quaternionTFToMsg(quat,pose_out.pose.orientation);
     pose_array_.poses.push_back(pose_out.pose);
     ROS_INFO_STREAM(pose_out);
