@@ -106,7 +106,6 @@ class BaseCollisionChecker
          * Flag to check if costmap and point_cloud are received.
          */
         bool is_point_cloud_received_;
-        bool is_pose_received_;
         bool is_footprint_received;
 
          /* Subscribers and Publishers
@@ -115,12 +114,6 @@ class BaseCollisionChecker
         ros::Subscriber footprint_sub_;
         ros::Publisher orientations_pub_;
         ros::Publisher point_cloud_pub_;
-
-        /*
-        * Update for Storing AMCL messages
-        */
-
-        geometry_msgs::PoseWithCovarianceStamped current_pose_;
 
         /**
          * Store costmap
