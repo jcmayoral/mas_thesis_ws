@@ -5,8 +5,8 @@
  * Created on: May 16th, 2016
  * Author: Jose
  */
-#ifndef MCR_BASE_COLLISION_CHECKER_BASE_COLLISION_CHECKER_H_
-#define MCR_BASE_COLLISION_CHECKER_BASE_COLLISION_CHECKER_H_
+#ifndef BASE_COLLISION_CHECKER_H_
+#define BASE_COLLISION_CHECKER_H_
 
 #include <ros/ros.h>
 #include <geometry_msgs/Polygon.h>
@@ -136,4 +136,4 @@ class BaseCollisionChecker
 
 };
 
-#endif  // MCR_BASE_COLLISION_CHECKER_BASE_COLLISION_CHECKER_H_
+#endif  // BASE_COLLISION_CHECKER_H_
