@@ -148,6 +148,10 @@ void BaseCollisionChecker::updatePointCloud(){
 
 void BaseCollisionChecker::transformAndPublishPoints(){
 
+  geometry_msgs::PoseArray pose_array_;
+
+  pose_array_.header.frame_id = footprint_extender_.goal_frame_;
+
   tf::TransformListener tf_listener;
   tf::StampedTransform transform;
   tf_listener.waitForTransform(footprint_extender_.goal_frame_, footprint_extender_.base_frame_, ros::Time(), ros::Duration(0.5));
@@ -158,9 +162,11 @@ void BaseCollisionChecker::transformAndPublishPoints(){
     pose_in.header.frame_id = footprint_extender_.base_frame_;
     pose_in.pose = *it;
     tf_listener.transformPose (footprint_extender_.goal_frame_, ros::Time(), pose_in, footprint_extender_.base_frame_, pose_out);
-    ROS_INFO_STREAM(pose_out);
+    pose_array_.poses.push_back(pose_out.pose);
+    //ROS_INFO_STREAM(pose_out);
   }
 
+  orientations_pub_.publish(pose_array_);
 
   //transformPose (const std::string &target_frame, const ros::Time &target_time, const geometry_msgs::PoseStamped &pin, const std::string &fixed_frame, geometry_msgs::PoseStamped &pout) const Transform a Stamped Pose Message into the target frame and time This can throw all that lookupTransform can throw as well as tf::InvalidTransform.
   //transformPose (const std::string &target_frame, const geometry_msgs::PoseStamped &stamped_in, geometry_msgs::PoseStamped &stamped_out)
