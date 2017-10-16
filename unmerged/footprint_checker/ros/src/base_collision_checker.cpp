@@ -38,6 +38,7 @@ bool BaseCollisionChecker::runService(footprint_checker::CollisionCheckerMsg::Re
         updatePointCloud();
         ROS_INFO("Service Finished Correctly");
         resp.success = true;
+        resp.potential_collisions = collided_poses_array_;
         return true;
     }
     else{
@@ -63,7 +64,7 @@ void BaseCollisionChecker::pointCloudCB(const sensor_msgs::PointCloud2ConstPtr &
 
 void BaseCollisionChecker::updatePointCloud(){
 
-    collided_pose_.clear();
+    collided_poses_.clear();
     /*for (int i=0; i< point_cloud_.fields.size(); i++){
       ROS_INFO_STREAM("field " << point_cloud_.fields[i]);
     }*/
@@ -131,7 +132,7 @@ void BaseCollisionChecker::updatePointCloud(){
               tmp_pose.position.x = searchPoint.x;
               tmp_pose.position.y = searchPoint.y;
               tmp_pose.orientation.w = 1.0;
-              collided_pose_.push_back(tmp_pose);
+              collided_poses_.push_back(tmp_pose);
 
               for (size_t i = 0; i < pointIdxNKNSearch.size (); ++i){
                 temp_cloud->points[ pointIdxNKNSearch[i] ].b = 255;
@@ -149,16 +150,15 @@ void BaseCollisionChecker::updatePointCloud(){
 
 void BaseCollisionChecker::transformAndPublishPoints(){
 
-  geometry_msgs::PoseArray pose_array_;
-  pose_array_.poses.clear();
-  pose_array_.header.frame_id = footprint_extender_.goal_frame_;
+  collided_poses_array_.poses.clear();
+  collided_poses_array_.header.frame_id = footprint_extender_.goal_frame_;
 
   tf::TransformListener tf_listener;
   tf::StampedTransform transform;
   tf_listener.waitForTransform(footprint_extender_.goal_frame_, footprint_extender_.base_frame_, ros::Time(), ros::Duration(0.5));
   //tf_listener.lookupTransform(footprint_extender_.goal_frame_, footprint_extender_.base_frame_,ros::Time(),transform);
 
-  for (std::vector<geometry_msgs::Pose>::iterator it = collided_pose_.begin() ; it != collided_pose_.end(); ++it){
+  for (std::vector<geometry_msgs::Pose>::iterator it = collided_poses_.begin() ; it != collided_poses_.end(); ++it){
     geometry_msgs::PoseStamped pose_in, pose_out;
     pose_in.header.frame_id = footprint_extender_.base_frame_;
     pose_in.pose = *it;
@@ -166,11 +166,11 @@ void BaseCollisionChecker::transformAndPublishPoints(){
 
     tf::Quaternion quat = tf::createQuaternionFromYaw(atan2(pose_out.pose.position.y,pose_out.pose.position.x));
     tf::quaternionTFToMsg(quat,pose_out.pose.orientation);
-    pose_array_.poses.push_back(pose_out.pose);
+    collided_poses_array_.poses.push_back(pose_out.pose);
     ROS_DEBUG_STREAM("Collision in base_footprint " << pose_out);
   }
 
-  orientations_pub_.publish(pose_array_);
+  orientations_pub_.publish(collided_poses_array_);
 
   //transformPose (const std::string &target_frame, const ros::Time &target_time, const geometry_msgs::PoseStamped &pin, const std::string &fixed_frame, geometry_msgs::PoseStamped &pout) const Transform a Stamped Pose Message into the target frame and time This can throw all that lookupTransform can throw as well as tf::InvalidTransform.
   //transformPose (const std::string &target_frame, const geometry_msgs::PoseStamped &stamped_in, geometry_msgs::PoseStamped &stamped_out)
