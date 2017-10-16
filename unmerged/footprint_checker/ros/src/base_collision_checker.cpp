@@ -90,7 +90,10 @@ void BaseCollisionChecker::updatePointCloud(){
     //sensor_msgs::PointCloud2Iterator<uint8_t> iter_r(point_cloud_, "r");
     //sensor_msgs::PointCloud2Iterator<uint8_t> iter_g(point_cloud_, "g");
     //sensor_msgs::PointCloud2Iterator<uint8_t> iter_b(point_cloud_, "b");
+    sensor_msgs::PointCloud2Iterator<float> iter_tc(point_cloud_, "total_cost");
+
     //pcd_modifier.resize(point_cloud_.height * point_cloud_.width);
+
 
     //conversion for native pcl approach
     pcl::PCLPointCloud2 pcl_point_cloud;
@@ -121,6 +124,7 @@ void BaseCollisionChecker::updatePointCloud(){
               //          << " " << temp_cloud->points[ pointIdxNKNSearch[i] ].z
               //          << " (squared distance: " << pointNKNSquaredDistance[i] << ")" << std::endl;
               //*(iter_z+pointIdxNKNSearch[i]) = 1;
+              ROS_INFO_STREAM(*(iter_tc + pointIdxNKNSearch[i] ));
               temp_cloud->points[ pointIdxNKNSearch[i] ].z = 1;
               //ROS_INFO("a");
             }
