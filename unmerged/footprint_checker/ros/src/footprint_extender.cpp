@@ -18,6 +18,7 @@ FootprintExtender::FootprintExtender(){
 FootprintExtender::FootprintExtender(ros::NodeHandle &nh)
 {
     nh.param("base_frame", base_frame_, std::string("map"));
+    nh.param("goal_frame", goal_frame_, std::string("base_footprint"));
     nh.param("scalling_factor", scaling_factor_new_footprint_,3);
 }
 
