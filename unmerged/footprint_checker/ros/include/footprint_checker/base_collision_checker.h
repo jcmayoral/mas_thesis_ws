@@ -131,7 +131,8 @@ class BaseCollisionChecker
         FootprintExtender footprint_extender_;
 
         double collision_threshold_;
-        std::vector <geometry_msgs::Pose> collided_pose_;
+        std::vector <geometry_msgs::Pose> collided_poses_;
+        geometry_msgs::PoseArray collided_poses_array_;
 
 };
 
