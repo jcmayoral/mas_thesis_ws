@@ -44,11 +44,11 @@ catkin_package(
 
 add_library(${PROJECT_NAME}
   ros/src/base_collision_checker.cpp
-  ros/src/collision_checker.cpp
+  ros/src/footprint_extender.cpp
   ros/src/base_collision_checker_node.cpp
 )
 
-add_executable(base_collision_checker_server ros/src/base_collision_checker_node.cpp ros/src/base_collision_checker.cpp ros/src/collision_checker.cpp )
+add_executable(base_collision_checker_server ros/src/base_collision_checker_node.cpp ros/src/base_collision_checker.cpp ros/src/footprint_extender.cpp )
 target_link_libraries(base_collision_checker_server ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 add_dependencies(base_collision_checker_server footprint_checker_gencpp)
 
