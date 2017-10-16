@@ -5,8 +5,8 @@
  * Created on: May 16th, 2016
  * Author: Jose
  */
-#ifndef MCR_BASE_COLLISION_CHECKER_COLLISION_CHECKER_H_
-#define MCR_BASE_COLLISION_CHECKER_COLLISION_CHECKER_H_
+#ifndef FOOTPRINT_EXTENDER_H_
+#define FOOTPRINT_EXTENDER_H_
 
 #include <vector>
 #include <string>
@@ -68,4 +68,4 @@ class FootprintExtender
 
 };
 
-#endif  // MCR_BASE_COLLISION_CHECKER_COLLISION_CHECKER_H_
+#endif  // FOOTPRINT_EXTENDER_H_
