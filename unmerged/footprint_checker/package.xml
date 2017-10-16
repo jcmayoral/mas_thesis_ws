@@ -1,6 +1,6 @@
 <package>
   <name>footprint_checker</name>
-  <version>0.2.1</version>
+  <version>0.2.2</version>
   <description>
     This package provides the functionality to check if base footprint is in collision, the given target pose and the costmap information.
   </description>
@@ -14,11 +14,9 @@
     <build_depend>roscpp</build_depend>
     <build_depend>geometry_msgs</build_depend>
     <build_depend>sensor_msgs</build_depend>
-    <build_depend>nav_msgs</build_depend>
     <build_depend>map_msgs</build_depend>
     <build_depend>std_msgs</build_depend>
     <build_depend>roslint</build_depend>
-    <build_depend>costmap_2d</build_depend>
     <build_depend>tf</build_depend>
     <build_depend>message_generation</build_depend>
 
@@ -26,10 +24,8 @@
     <run_depend>roscpp</run_depend>
     <run_depend>geometry_msgs</run_depend>
     <run_depend>sensor_msgs</run_depend>
-    <run_depend>nav_msgs</run_depend>
     <run_depend>map_msgs</run_depend>
     <run_depend>std_msgs</run_depend>
     <run_depend>roslint</run_depend>
-    <run_depend>costmap_2d</run_depend>
     <run_depend>tf</run_depend>
 </package>

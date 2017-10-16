@@ -9,11 +9,10 @@
 #include <ros/ros.h>
 
 BaseCollisionChecker::BaseCollisionChecker(ros::NodeHandle &nh):
-        nh_(nh), is_costmap_received_(false), is_point_cloud_received_(false),
+        nh_(nh), is_point_cloud_received_(false),
         is_pose_received_(false), collision_threshold_(20.0)
 {
     footprint_pub_ = nh_.advertise<geometry_msgs::Polygon>("footprint_out", 10);
-    costmap_sub_ = nh_.subscribe("/move_base/global_costmap/costmap", 1, &BaseCollisionChecker::costMapCallback, this);
     amcl_sub_ = nh_.subscribe("/amcl_pose", 1, &BaseCollisionChecker::localizationCB, this);
 
     //From Local_planner
@@ -22,7 +21,7 @@ BaseCollisionChecker::BaseCollisionChecker(ros::NodeHandle &nh):
     point_cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("overlap_costmap",2);
     nh.param("collision_checker_threshold", collision_threshold_,30.0);
 
-    collision_checker_ = CollisionChecker(nh);
+    footprint_extender_ = FootprintExtender(nh);
     ROS_INFO("State: INIT");
 }
 
@@ -33,21 +32,19 @@ BaseCollisionChecker::~BaseCollisionChecker()
 bool BaseCollisionChecker::runService(footprint_checker::CollisionCheckerMsg::Request  &req,
          footprint_checker::CollisionCheckerMsg::Response &resp)
 {
+    resp.success = false;
 
-    if (is_costmap_received_ && is_point_cloud_received_ && is_pose_received_ && is_footprint_received){
+    if (is_point_cloud_received_ && is_pose_received_ && is_footprint_received){
         ROS_INFO_STREAM("Request Received");
-
-        collision_checker_.convertMap(costmap_in_);
-
-        resp.success = collision_checker_.isBaseInCollision(footprint_);
+        footprint_extender_.getIntermediateFootprint(footprint_);
         updatePointCloud();
         ROS_INFO("Service Finished Correctly");
+        resp.success = true;
         return true;
     }
     else{
         ROS_WARN("Subscribing Topics Missing Not Received");
-        resp.success = false;
-        return false;
+        return true;
     }
 }
 
@@ -57,14 +54,6 @@ void BaseCollisionChecker::footprintCB(const geometry_msgs::PolygonStampedConstP
     is_footprint_received = true;
     ROS_INFO_ONCE("FootprintCB Received");
 }
-
-void BaseCollisionChecker::costMapCallback(const nav_msgs::OccupancyGrid::ConstPtr &msg)
-{
-    costmap_in_ = *msg;
-    is_costmap_received_ = true;
-    ROS_INFO_ONCE("Costmap Received");
-}
-
 
 void BaseCollisionChecker::pointCloudCB(const sensor_msgs::PointCloud2ConstPtr &msg)
 {
@@ -109,8 +98,8 @@ void BaseCollisionChecker::updatePointCloud(){
 
     int K = 5;
 
-    for (std::vector<std::pair<double,double> >::iterator it = collision_checker_.footprint_extended_vector_.begin() ;
-              it != collision_checker_.footprint_extended_vector_.end(); ++it){
+    for (std::vector<std::pair<double,double> >::iterator it = footprint_extender_.footprint_extended_vector_.begin() ;
+              it != footprint_extender_.footprint_extended_vector_.end(); ++it){
         //Search
         pcl::PointXYZRGB searchPoint;
         searchPoint.x = it->first;

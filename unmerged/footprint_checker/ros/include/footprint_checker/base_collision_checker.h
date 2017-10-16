@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 #include <mutex>          // std::mutex
-#include <footprint_checker/collision_checker.h>
+#include <footprint_checker/footprint_extender.h>
 #include <footprint_checker/CollisionCheckerMsg.h>
 
 /**
@@ -108,7 +108,6 @@ class BaseCollisionChecker
         /**
          * Flag to check if costmap and point_cloud are received.
          */
-        bool is_costmap_received_;
         bool is_point_cloud_received_;
         bool is_pose_received_;
         bool is_footprint_received;
@@ -116,7 +115,6 @@ class BaseCollisionChecker
         /**
          * Subscribers and Publishers
          */
-        ros::Subscriber costmap_sub_;
         ros::Subscriber point_cloud_sub_;
         ros::Subscriber amcl_sub_;
         ros::Publisher footprint_pub_;
@@ -131,13 +129,14 @@ class BaseCollisionChecker
         /**
          * Store costmap
          */
-        nav_msgs::OccupancyGrid costmap_in_;
         sensor_msgs::PointCloud2 point_cloud_;
 
 
-        CollisionChecker collision_checker_;
+        FootprintExtender footprint_extender_;
 
         double collision_threshold_;
+        geometry_msgs::Quaternion collided_orientations_;
+
 };
 
 #endif  // MCR_BASE_COLLISION_CHECKER_BASE_COLLISION_CHECKER_H_

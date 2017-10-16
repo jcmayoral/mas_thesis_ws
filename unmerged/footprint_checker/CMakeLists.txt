@@ -12,7 +12,6 @@ find_package(catkin REQUIRED
     std_msgs
     sensor_msgs
     roslint
-    costmap_2d
     tf
     message_generation
 )
@@ -36,12 +35,10 @@ catkin_package(
   CATKIN_DEPENDS
     roscpp
     geometry_msgs
-    nav_msgs
     map_msgs
     std_msgs
     sensor_msgs
     roslint
-    costmap_2d
     tf
 )
 

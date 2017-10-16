@@ -2,6 +2,13 @@
 Change Log
 ==========
 
+'0.2.2'
+-------------------------
+
+* Removing collision_checker with costmap
+* PointCloud Colors modified... red to useful and white to most likely to collide
+* collision_checker changed to footprint_extender
+
 '0.2.1'
 -------------------------
 
