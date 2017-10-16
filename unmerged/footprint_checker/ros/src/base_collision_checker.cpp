@@ -63,6 +63,7 @@ void BaseCollisionChecker::pointCloudCB(const sensor_msgs::PointCloud2ConstPtr &
 
 void BaseCollisionChecker::updatePointCloud(){
 
+    collided_pose_.clear();
     /*for (int i=0; i< point_cloud_.fields.size(); i++){
       ROS_INFO_STREAM("field " << point_cloud_.fields[i]);
     }*/
@@ -166,7 +167,7 @@ void BaseCollisionChecker::transformAndPublishPoints(){
     tf::Quaternion quat = tf::createQuaternionFromYaw(atan2(pose_out.pose.position.y,pose_out.pose.position.x));
     tf::quaternionTFToMsg(quat,pose_out.pose.orientation);
     pose_array_.poses.push_back(pose_out.pose);
-    ROS_INFO_STREAM(pose_out);
+    ROS_DEBUG_STREAM("Collision in base_footprint " << pose_out);
   }
 
   orientations_pub_.publish(pose_array_);
