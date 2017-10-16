@@ -8,6 +8,7 @@ Change Log
 * Removing collision_checker with costmap
 * PointCloud Colors modified... red to useful and white to most likely to collide
 * collision_checker changed to footprint_extender
+* removing predecated functions
 
 '0.2.1'
 -------------------------

@@ -9,12 +9,10 @@
 #include <ros/ros.h>
 
 BaseCollisionChecker::BaseCollisionChecker(ros::NodeHandle &nh):
-        nh_(nh), is_point_cloud_received_(false),
-        is_pose_received_(false), collision_threshold_(20.0)
+        nh_(nh), is_point_cloud_received_(false), collision_threshold_(20.0),
+        is_footprint_received(false)
 {
-    footprint_pub_ = nh_.advertise<geometry_msgs::Polygon>("footprint_out", 10);
-    amcl_sub_ = nh_.subscribe("/amcl_pose", 1, &BaseCollisionChecker::localizationCB, this);
-
+    orientations_pub_ = nh_.advertise<geometry_msgs::PoseArray>("collisions_orientations", 10);
     //From Local_planner
     footprint_sub_ = nh.subscribe("/move_base/local_costmap/footprint",4, &BaseCollisionChecker::footprintCB, this);
     point_cloud_sub_ = nh_.subscribe("/move_base/DWAPlannerROS/cost_cloud",1, &BaseCollisionChecker::pointCloudCB, this);
@@ -34,7 +32,7 @@ bool BaseCollisionChecker::runService(footprint_checker::CollisionCheckerMsg::Re
 {
     resp.success = false;
 
-    if (is_point_cloud_received_ && is_pose_received_ && is_footprint_received){
+    if (is_point_cloud_received_ && is_footprint_received){
         ROS_INFO_STREAM("Request Received");
         footprint_extender_.getIntermediateFootprint(footprint_);
         updatePointCloud();
@@ -127,7 +125,13 @@ void BaseCollisionChecker::updatePointCloud(){
             //if(partial_cost<min_cost){
             if(partial_cost>= collision_threshold_){
               ROS_DEBUG_STREAM("Collision Found in " << searchPoint.x << " , " << searchPoint.y);
-              transformPoint(searchPoint);
+              //transformPoint(searchPoint);
+              geometry_msgs::Pose tmp_pose;
+              tmp_pose.position.x = searchPoint.x;
+              tmp_pose.position.y = searchPoint.y;
+              tmp_pose.orientation.w = 1.0;
+              collided_pose_.push_back(tmp_pose);
+
               for (size_t i = 0; i < pointIdxNKNSearch.size (); ++i){
                 temp_cloud->points[ pointIdxNKNSearch[i] ].b = 255;
                 temp_cloud->points[ pointIdxNKNSearch[i] ].g = 255;
@@ -136,34 +140,29 @@ void BaseCollisionChecker::updatePointCloud(){
         }
         // End search
     }
+    transformAndPublishPoints();
     pcl::toROSMsg(*temp_cloud, point_cloud_);
     point_cloud_pub_.publish(point_cloud_);
     mtx.unlock();
 }
 
-void BaseCollisionChecker::transformPoint(pcl::PointXYZRGB point){
-  geometry_msgs::PoseStamped pose_in, pose_out;
+void BaseCollisionChecker::transformAndPublishPoints(){
+
   tf::TransformListener tf_listener;
   tf::StampedTransform transform;
-
-  pose_in.header.frame_id = footprint_extender_.base_frame_;
-  pose_in.pose.position.x = point.x;
-  pose_in.pose.position.y = point.y;
-  pose_in.pose.orientation.w = 1.0;
-
   tf_listener.waitForTransform(footprint_extender_.goal_frame_, footprint_extender_.base_frame_, ros::Time(), ros::Duration(0.5));
   //tf_listener.lookupTransform(footprint_extender_.goal_frame_, footprint_extender_.base_frame_,ros::Time(),transform);
 
+  for (std::vector<geometry_msgs::Pose>::iterator it = collided_pose_.begin() ; it != collided_pose_.end(); ++it){
+    geometry_msgs::PoseStamped pose_in, pose_out;
+    pose_in.header.frame_id = footprint_extender_.base_frame_;
+    pose_in.pose = *it;
+    tf_listener.transformPose (footprint_extender_.goal_frame_, ros::Time(), pose_in, footprint_extender_.base_frame_, pose_out);
+    ROS_INFO_STREAM(pose_out);
+  }
+
+
   //transformPose (const std::string &target_frame, const ros::Time &target_time, const geometry_msgs::PoseStamped &pin, const std::string &fixed_frame, geometry_msgs::PoseStamped &pout) const Transform a Stamped Pose Message into the target frame and time This can throw all that lookupTransform can throw as well as tf::InvalidTransform.
-  tf_listener.transformPose (footprint_extender_.goal_frame_, ros::Time(), pose_in, footprint_extender_.base_frame_, pose_out);
-  ROS_INFO_STREAM(pose_out);
   //transformPose (const std::string &target_frame, const geometry_msgs::PoseStamped &stamped_in, geometry_msgs::PoseStamped &stamped_out)
 
-}
-
-void BaseCollisionChecker::localizationCB(const geometry_msgs::PoseWithCovarianceStampedConstPtr &msg)
-{
-    current_pose_ = *msg;
-    is_pose_received_ = true;
-    ROS_INFO_ONCE("Localization Received");
 }
