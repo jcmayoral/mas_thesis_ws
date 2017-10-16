@@ -6,7 +6,6 @@
  * Author: Jose
  */
 #include <footprint_checker/base_collision_checker.h>
-#include <ros/ros.h>
 
 BaseCollisionChecker::BaseCollisionChecker(ros::NodeHandle &nh):
         nh_(nh), is_point_cloud_received_(false), collision_threshold_(20.0),

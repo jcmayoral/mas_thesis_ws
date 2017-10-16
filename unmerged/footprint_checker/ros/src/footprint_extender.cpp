@@ -6,7 +6,6 @@
  * Author: Jose Carlos Mayoral
  */
 #include <footprint_checker/footprint_extender.h>
-#include <ros/ros.h>
 #include <math.h>
 using namespace std;
 
