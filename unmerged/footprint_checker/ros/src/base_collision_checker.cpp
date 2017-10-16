@@ -12,7 +12,7 @@ BaseCollisionChecker::BaseCollisionChecker(ros::NodeHandle &nh):
         nh_(nh), is_point_cloud_received_(false), collision_threshold_(20.0),
         is_footprint_received(false)
 {
-    orientations_pub_ = nh_.advertise<geometry_msgs::PoseArray>("collisions_orientations", 10);
+    orientations_pub_ = nh_.advertise<geometry_msgs::PoseArray>("collisions_orientations", 1);
     //From Local_planner
     footprint_sub_ = nh.subscribe("/move_base/local_costmap/footprint",4, &BaseCollisionChecker::footprintCB, this);
     point_cloud_sub_ = nh_.subscribe("/move_base/DWAPlannerROS/cost_cloud",1, &BaseCollisionChecker::pointCloudCB, this);
@@ -149,7 +149,7 @@ void BaseCollisionChecker::updatePointCloud(){
 void BaseCollisionChecker::transformAndPublishPoints(){
 
   geometry_msgs::PoseArray pose_array_;
-
+  pose_array_.poses.clear();
   pose_array_.header.frame_id = footprint_extender_.goal_frame_;
 
   tf::TransformListener tf_listener;
@@ -162,8 +162,11 @@ void BaseCollisionChecker::transformAndPublishPoints(){
     pose_in.header.frame_id = footprint_extender_.base_frame_;
     pose_in.pose = *it;
     tf_listener.transformPose (footprint_extender_.goal_frame_, ros::Time(), pose_in, footprint_extender_.base_frame_, pose_out);
+
+    tf::Quaternion quat = tf::createQuaternionFromYaw(pose_out.pose.position.y/pose_out.pose.position.x);
+    tf::quaternionTFToMsg(quat,pose_out.pose.orientation);
     pose_array_.poses.push_back(pose_out.pose);
-    //ROS_INFO_STREAM(pose_out);
+    ROS_INFO_STREAM(pose_out);
   }
 
   orientations_pub_.publish(pose_array_);
