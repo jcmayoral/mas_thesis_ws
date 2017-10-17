@@ -7,9 +7,6 @@ find_package(catkin REQUIRED
   COMPONENTS
     roscpp
     geometry_msgs
-    nav_msgs
-    map_msgs
-    std_msgs
     sensor_msgs
     roslint
     tf
@@ -35,8 +32,6 @@ catkin_package(
   CATKIN_DEPENDS
     roscpp
     geometry_msgs
-    map_msgs
-    std_msgs
     sensor_msgs
     roslint
     tf
