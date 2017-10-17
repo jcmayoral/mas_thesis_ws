@@ -9,7 +9,7 @@ KineticMonitor::KineticMonitor(ros::NodeHandle &nh):
 {
     //From Local_planner
     twist_sub_ = nh.subscribe("/cmd_vel",4, &KineticMonitor::twistCB, this);
-    nh.param("~/platform_mass", mass_,30.0);
+    nh.param("/platform_mass", mass_,30.0);
     ROS_INFO("State: INIT");
 }
 
