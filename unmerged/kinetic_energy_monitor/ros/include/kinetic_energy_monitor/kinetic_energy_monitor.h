@@ -61,7 +61,7 @@ class KineticMonitor
         double mass_;
 
         bool request_received_;
-
+        int max_number_elements_;
 };
 
 #endif  // KINETIC_MONITOR_H_
