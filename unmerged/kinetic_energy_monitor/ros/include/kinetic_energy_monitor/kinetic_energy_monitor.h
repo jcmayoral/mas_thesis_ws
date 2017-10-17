@@ -7,7 +7,6 @@
 
 #include <ros/ros.h>
 #include <vector>
-#include <mutex>          // std::mutex
 #include <geometry_msgs/Twist.h>
 #include <std_msgs/Header.h>
 #include <kinetic_energy_monitor/KineticEnergyMonitorMsg.h>
@@ -60,6 +59,8 @@ class KineticMonitor
 
         std::vector <geometry_msgs::Twist> twist_historial_;
         double mass_;
+
+        bool request_received_;
 
 };
 

@@ -8,7 +8,7 @@ int main(int argc, char *argv[])
 {
     ros::init(argc, argv, "base_collision_checker_server");
 
-    ros::NodeHandle nh("~");
+    ros::NodeHandle nh;
 
     double loop_rate;
 

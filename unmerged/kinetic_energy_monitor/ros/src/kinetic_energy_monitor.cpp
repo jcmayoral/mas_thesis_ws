@@ -5,16 +5,18 @@
 #include <kinetic_energy_monitor/kinetic_energy_monitor.h>
 
 KineticMonitor::KineticMonitor(ros::NodeHandle &nh):
-        nh_(nh), mass_(20)
+        nh_(nh), mass_(20), request_received_(false)
 {
     //From Local_planner
-    twist_sub_ = nh.subscribe("/cmd_vel",4, &KineticMonitor::twistCB, this);
+    twist_sub_ = nh.subscribe("/base/twist_mux/command_navigation",1, &KineticMonitor::twistCB, this);//TODO launch file with remap topic
     nh.param("/platform_mass", mass_,30.0);
     ROS_INFO("State: INIT");
+    ROS_INFO_STREAM("Subscribing Speed to "<< twist_sub_.getTopic());
 }
 
 KineticMonitor::~KineticMonitor()
 {
+  twist_sub_.shutdown();
 }
 
 bool KineticMonitor::runService(KineticEnergyMonitorMsg::Request  &req,
