@@ -1,0 +1,4 @@
+std_msgs/Header collision_time
+---
+bool success
+float64 energy_lost
