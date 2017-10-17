@@ -24,7 +24,6 @@ bool KineticMonitor::runService(KineticEnergyMonitorMsg::Request  &req,
          KineticEnergyMonitorMsg::Response &resp)
 {
     if (twist_historial_.size() > 1){
-        ROS_INFO_STREAM("Request Received");
         resp.energy_lost = calculateDrop(req.collision_time);
         resp.success = true;
         return true;
@@ -39,14 +38,24 @@ bool KineticMonitor::runService(KineticEnergyMonitorMsg::Request  &req,
 double KineticMonitor::calculateDrop(std_msgs::Header collision_time){
 
   double energy = 0.0;
+
+  for (std::vector<geometry_msgs::TwistStamped>::iterator it = twist_historial_.begin() ; it != twist_historial_.end(); ++it){
+    ROS_INFO_STREAM(it->header.stamp);
+  }
+
   return energy;
 
 }
 
 void KineticMonitor::twistCB(const geometry_msgs::TwistConstPtr &msg){
+
     if (twist_historial_.size()==max_number_elements_)
     {
       twist_historial_.erase(twist_historial_.begin());
     }
-    twist_historial_.push_back(*msg);
+    geometry_msgs::TwistStamped tmp;
+    tmp.header.stamp = ros::Time::now();
+    tmp.twist = *msg;
+    twist_historial_.push_back(tmp);
+
 }
