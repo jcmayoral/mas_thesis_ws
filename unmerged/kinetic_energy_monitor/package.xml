@@ -1,0 +1,31 @@
+<package>
+  <name>kinetic_energy_monitor  </name>
+  <version>0.0.1</version>
+  <description>
+    This package monitors the speed of a platform an return the kinetic energy monitor for elastic collision.
+  </description>
+  <maintainer email="jose.mayoral@smail.inf.h-brs.de">Jose C Mayoral B</maintainer>
+  <license>GPLv3</license>
+
+  <author email="jose.mayoral@smail.inf.h-brs.de">Jose C Mayoral B</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+    <build_depend>roscpp</build_depend>
+    <build_depend>geometry_msgs</build_depend>
+    <build_depend>sensor_msgs</build_depend>
+    <build_depend>map_msgs</build_depend>
+    <build_depend>std_msgs</build_depend>
+    <build_depend>roslint</build_depend>
+    <build_depend>tf</build_depend>
+    <build_depend>message_generation</build_depend>
+
+    <run_depend>message_runtime</run_depend>
+    <run_depend>roscpp</run_depend>
+    <run_depend>geometry_msgs</run_depend>
+    <run_depend>sensor_msgs</run_depend>
+    <run_depend>map_msgs</run_depend>
+    <run_depend>std_msgs</run_depend>
+    <run_depend>roslint</run_depend>
+    <run_depend>tf</run_depend>
+</package>
