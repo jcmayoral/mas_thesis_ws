@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
     ros::param::param<double>("~loop_rate", loop_rate, 10.0);
     KineticMonitor kinetic_monitor(nh);
 
-    ros::ServiceServer service = nh.advertiseService("/collision_checker",
+    ros::ServiceServer service = nh.advertiseService("/kinetic_energy_drop",
         &KineticMonitor::runService, &kinetic_monitor);
 
     ROS_INFO("Ready to start...");
