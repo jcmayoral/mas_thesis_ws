@@ -6,7 +6,7 @@
 #define KINETIC_MONITOR_H_
 
 #include <ros/ros.h>
-#include <vector>
+#include <list>
 #include <geometry_msgs/TwistStamped.h>
 #include <std_msgs/Header.h>
 #include <kinetic_energy_monitor/KineticEnergyMonitorMsg.h>
@@ -57,7 +57,7 @@ class KineticMonitor
          */
         ros::Subscriber twist_sub_;
 
-        std::vector <geometry_msgs::TwistStamped> twist_historial_;
+        std::list <geometry_msgs::TwistStamped> twist_historial_;
         double mass_;
 
         bool request_received_;
