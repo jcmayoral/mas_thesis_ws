@@ -41,10 +41,10 @@ class KineticMonitor
         double calculateDrop(std_msgs::Header collision_time);
 
         /**
-        * Callback to set footprint
+        * Callback to Twists
         */
-
-        void twistCB(const geometry_msgs::TwistConstPtr &msg);
+        void openLoopTwistCB(const geometry_msgs::TwistConstPtr &msg);
+        void closeLoopTwistCB(const geometry_msgs::TwistConstPtr &msg);
 
     private:
 
@@ -55,9 +55,12 @@ class KineticMonitor
 
          /* Subscribers and Publishers
          */
-        ros::Subscriber twist_sub_;
+        ros::Subscriber open_loop_twist_sub_;
+        ros::Subscriber close_loop_twist_sub_;
 
-        std::list <geometry_msgs::TwistStamped> twist_historial_;
+        std::list <geometry_msgs::TwistStamped> twist_historial_open_loop_;
+        std::list <geometry_msgs::TwistStamped> twist_historial_close_loop_;
+
         double mass_;
 
         bool request_received_;
