@@ -39,8 +39,11 @@ double KineticMonitor::calculateDrop(std_msgs::Header collision_time){
 
   double energy = 0.0;
 
-  for (std::vector<geometry_msgs::TwistStamped>::iterator it = twist_historial_.begin() ; it != twist_historial_.end(); ++it){
-    ROS_INFO_STREAM(it->header.stamp);
+  for (std::list<geometry_msgs::TwistStamped>::iterator it = twist_historial_.begin() ; it != twist_historial_.end(); ++it){
+    ROS_INFO_STREAM("Loooking for " << collision_time.stamp << ", " << " Stored" << it->header.stamp);
+    if (collision_time.stamp >= it->header.stamp){
+      ROS_WARN_STREAM("Collision Warning: " << collision_time.stamp << ", " << " in " << it->header.stamp);
+    }
   }
 
   return energy;
@@ -51,7 +54,7 @@ void KineticMonitor::twistCB(const geometry_msgs::TwistConstPtr &msg){
 
     if (twist_historial_.size()==max_number_elements_)
     {
-      twist_historial_.erase(twist_historial_.begin());
+      twist_historial_.pop_front();
     }
     geometry_msgs::TwistStamped tmp;
     tmp.header.stamp = ros::Time::now();
