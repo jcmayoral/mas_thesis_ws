@@ -44,19 +44,31 @@ double KineticMonitor::calculateDrop(std_msgs::Header collision_time){
   std::list<geometry_msgs::TwistStamped>::iterator it = twist_historial_open_loop_.begin();
   std::list<geometry_msgs::TwistStamped>::iterator it2 = twist_historial_close_loop_.begin();
 
-  for ( ; it != twist_historial_open_loop_.end() || it2 != twist_historial_close_loop_.end(); ++it, ++it2){
-
-    ROS_INFO_STREAM("Loooking for " << collision_time.stamp << ", " << " Stored" << it->header.stamp);
-    double diff_speed_x = it->twist.linear.x - it2->twist.linear.x;
-    double diff_speed_y = it->twist.linear.y - it2->twist.linear.y;
-    double diff_speed_z = it->twist.angular.z - it2->twist.angular.z;
-    ROS_INFO_STREAM("differences " << diff_speed_x << ", " << diff_speed_y << ", " << diff_speed_z);
-
-    if (collision_time.stamp >= it->header.stamp && collision_time.stamp >= it2 -> header.stamp){
-      ROS_WARN_STREAM("Collision Warning: " << collision_time.stamp << ", " << " in " << it->header.stamp);
-    }
+  if (twist_historial_open_loop_.size() != twist_historial_close_loop_.size()){
+    ROS_ERROR("Missing Messages");
+    return energy;
   }
 
+  double diff_speed_x_last, diff_speed_x = 0;
+  double diff_speed_y_last, diff_speed_y = 0;
+  double diff_speed_z_last, diff_speed_z = 0;
+
+  for ( ; it != twist_historial_open_loop_.end() || it2 != twist_historial_close_loop_.end(); ++it, ++it2){
+
+    //ROS_INFO_STREAM("Loooking for " << collision_time.stamp << ", " << " Stored" << it->header.stamp);
+    diff_speed_x = it->twist.linear.x - it2->twist.linear.x;
+    diff_speed_y = it->twist.linear.y - it2->twist.linear.y;
+    diff_speed_z = it->twist.angular.z - it2->twist.angular.z;
+    //ROS_INFO_STREAM("differences " << diff_speed_x << ", " << diff_speed_y << ", " << diff_speed_z);
+
+    if (collision_time.stamp >= it->header.stamp && collision_time.stamp >= it2 -> header.stamp){
+      break;
+    }
+    diff_speed_x_last = diff_speed_x;
+    diff_speed_y_last = diff_speed_y;
+    diff_speed_z_last = diff_speed_z;
+  }
+  energy = (diff_speed_x - diff_speed_x_last) + (diff_speed_y - diff_speed_y_last) + (diff_speed_z - diff_speed_z_last);
   return energy;
 
 }
@@ -73,7 +85,6 @@ void KineticMonitor::openLoopTwistCB(const geometry_msgs::TwistConstPtr &msg){
     twist_historial_open_loop_.push_back(tmp);
 
 }
-
 
 void KineticMonitor::closeLoopTwistCB(const nav_msgs::OdometryConstPtr &msg){
 
