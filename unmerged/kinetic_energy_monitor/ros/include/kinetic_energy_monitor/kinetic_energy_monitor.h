@@ -8,6 +8,7 @@
 #include <ros/ros.h>
 #include <list>
 #include <geometry_msgs/TwistStamped.h>
+#include <nav_msgs/Odometry.h>
 #include <std_msgs/Header.h>
 #include <kinetic_energy_monitor/KineticEnergyMonitorMsg.h>
 
@@ -44,7 +45,7 @@ class KineticMonitor
         * Callback to Twists
         */
         void openLoopTwistCB(const geometry_msgs::TwistConstPtr &msg);
-        void closeLoopTwistCB(const geometry_msgs::TwistConstPtr &msg);
+        void closeLoopTwistCB(const nav_msgs::OdometryConstPtr &msg);
 
     private:
 

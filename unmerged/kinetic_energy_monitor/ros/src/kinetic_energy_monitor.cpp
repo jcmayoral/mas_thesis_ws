@@ -9,7 +9,7 @@ KineticMonitor::KineticMonitor(ros::NodeHandle &nh):
 {
     //From Local_planner
     open_loop_twist_sub_ = nh.subscribe("/base/twist_mux/command_navigation",1, &KineticMonitor::openLoopTwistCB, this);//TODO launch file with remap topic
-    close_loop_twist_sub_ = nh.subscribe("/base/twist_mux/command_safe",1, &KineticMonitor::closeLoopTwistCB, this);//TODO launch file with remap topic
+    close_loop_twist_sub_ = nh.subscribe("/base/odometry_controller/odometry",1, &KineticMonitor::closeLoopTwistCB, this);//TODO launch file with remap topic
 
     nh.param("/platform_mass", mass_,30.0);
     nh.param("/queue_size", max_number_elements_,3);
@@ -75,15 +75,16 @@ void KineticMonitor::openLoopTwistCB(const geometry_msgs::TwistConstPtr &msg){
 }
 
 
-void KineticMonitor::closeLoopTwistCB(const geometry_msgs::TwistConstPtr &msg){
+void KineticMonitor::closeLoopTwistCB(const nav_msgs::OdometryConstPtr &msg){
 
     if (twist_historial_close_loop_.size()==max_number_elements_)
     {
       twist_historial_close_loop_.pop_front();
     }
+
     geometry_msgs::TwistStamped tmp;
     tmp.header.stamp = ros::Time::now();
-    tmp.twist = *msg;
+    tmp.twist = msg->twist.twist;
     twist_historial_close_loop_.push_back(tmp);
 
 }
