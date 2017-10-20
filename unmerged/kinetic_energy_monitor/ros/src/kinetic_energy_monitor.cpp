@@ -5,13 +5,14 @@
 #include <kinetic_energy_monitor/kinetic_energy_monitor.h>
 
 KineticMonitor::KineticMonitor(ros::NodeHandle &nh):
-        nh_(nh), mass_(20), request_received_(false), max_number_elements_(3)
+        nh_(nh), mass_(20), radius_(1), request_received_(false), max_number_elements_(3)
 {
     //From Local_planner
     open_loop_twist_sub_ = nh.subscribe("/base/twist_mux/command_navigation",1, &KineticMonitor::openLoopTwistCB, this);//TODO launch file with remap topic
     close_loop_twist_sub_ = nh.subscribe("/base/odometry_controller/odometry",1, &KineticMonitor::closeLoopTwistCB, this);//TODO launch file with remap topic
 
     nh.param("/platform_mass", mass_,30.0);
+    nh.param("/rotation_radius", radius_,30.0);
     nh.param("/queue_size", max_number_elements_,3);
     ROS_INFO("State: INIT");
 }
@@ -39,14 +40,12 @@ bool KineticMonitor::runService(KineticEnergyMonitorMsg::Request  &req,
 
 double KineticMonitor::calculateDrop(std_msgs::Header collision_time){
 
-  double energy = 0.0;
-
   std::list<geometry_msgs::TwistStamped>::iterator it = twist_historial_open_loop_.begin();
   std::list<geometry_msgs::TwistStamped>::iterator it2 = twist_historial_close_loop_.begin();
 
   if (twist_historial_open_loop_.size() != twist_historial_close_loop_.size()){
     ROS_ERROR("Missing Messages");
-    return energy;
+    return 0.0;
   }
 
   double diff_speed_x_last, diff_speed_x = 0;
@@ -68,7 +67,18 @@ double KineticMonitor::calculateDrop(std_msgs::Header collision_time){
     diff_speed_y_last = diff_speed_y;
     diff_speed_z_last = diff_speed_z;
   }
-  energy = (diff_speed_x - diff_speed_x_last) + (diff_speed_y - diff_speed_y_last) + (diff_speed_z - diff_speed_z_last);
+
+  double speed_0 = sqrt(pow(diff_speed_x_last,2) + pow(diff_speed_y_last,2)) + radius_ * diff_speed_z_last;
+  double speed_1 = sqrt(pow(diff_speed_x,2) + pow(diff_speed_y,2)) + radius_ * diff_speed_z;
+  ROS_INFO_STREAM("coefficient of restitution" << speed_1/speed_0);
+
+  double linear_speed = sqrt(pow(diff_speed_x - diff_speed_x_last,2) + pow(diff_speed_y - diff_speed_y_last,2));
+  double angular_speed = radius_ * (diff_speed_z - diff_speed_z_last);
+  double force = mass_ * (linear_speed + angular_speed);
+  double energy = 0.5 * force;
+
+
+  ROS_INFO_STREAM("Collision Force " << mass_ * (linear_speed + angular_speed));
   return energy;
 
 }

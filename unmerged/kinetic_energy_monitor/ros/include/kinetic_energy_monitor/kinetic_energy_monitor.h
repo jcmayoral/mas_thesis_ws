@@ -63,6 +63,7 @@ class KineticMonitor
         std::list <geometry_msgs::TwistStamped> twist_historial_close_loop_;
 
         double mass_;
+        double radius_;
 
         bool request_received_;
         int max_number_elements_;
