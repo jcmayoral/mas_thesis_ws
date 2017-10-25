@@ -1,5 +1,5 @@
 <package>
-  <name>kinetic_energy_monitor  </name>
+  <name>kinetic_energy_monitor</name>
   <version>0.0.1</version>
   <description>
     This package monitors the speed of a platform an return the kinetic energy monitor for elastic collision.
