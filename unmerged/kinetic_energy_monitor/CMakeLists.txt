@@ -21,11 +21,12 @@ include_directories(
 )
 
 add_service_files(
+  DIRECTORY srv
   FILES
   KineticEnergyMonitorMsg.srv
 )
 
-generate_messages(DEPENDENCIES std_msgs)
+generate_messages(DEPENDENCIES std_msgs geometry_msgs)
 
 catkin_package(
   INCLUDE_DIRS ros/include
@@ -44,9 +45,9 @@ add_library(${PROJECT_NAME}
   ros/src/kinetic_energy_monitor.cpp
 )
 
-add_executable(kinetic_energy_monitor_server ros/src/kinetic_energy_monitor_node.cpp ros/src/ ros/src/kinetic_energy_monitor.cpp )
+add_executable(kinetic_energy_monitor_server ros/src/kinetic_energy_monitor_node.cpp ros/src/ ros/src/kinetic_energy_monitor.cpp)
+add_dependencies(kinetic_energy_monitor_server kinetic_energy_monitor_gencpp)
 target_link_libraries(kinetic_energy_monitor_server ${catkin_LIBRARIES} ${PCL_LIBRARIES})
-add_dependencies(kinetic_energy_monitor_server kinetic_energy_monitor_gencpp ${kinetic_energy_monitor_EXPORTED_TARGETS})
 
 
 install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}
