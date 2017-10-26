@@ -2,3 +2,4 @@ robocup
 .vscode/
 .idea/
 cmake-build-debug/
+*.pyc
