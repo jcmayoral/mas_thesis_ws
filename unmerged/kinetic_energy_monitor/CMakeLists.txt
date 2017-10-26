@@ -49,7 +49,6 @@ add_executable(kinetic_energy_monitor_server ros/src/kinetic_energy_monitor_node
 target_link_libraries(kinetic_energy_monitor_server ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 add_dependencies(kinetic_energy_monitor_server kinetic_energy_monitor_gencpp)
 
-
 install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
