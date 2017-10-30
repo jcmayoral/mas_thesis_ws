@@ -5,7 +5,10 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
+        - /Diagnosis1
         - /Diagnosis1/Description1
+        - /Diagnosis1/Description1/overlap_cloud1/Status1
+        - /Diagnosis1/Description1/potential_orientations_collisions1
         - /Camera_C_Detector1
         - /Camera_C_Detector1/Image1
       Splitter Ratio: 0.5
@@ -395,17 +398,17 @@ Visualization Manager:
               Size (Pixels): 3
               Size (m): 0.01
               Style: Flat Squares
-              Topic: /base_collision_checker_server/overlap_costmap
+              Topic: /base_collision_checker/overlap_costmap
               Unreliable: false
               Use Fixed Frame: true
               Use rainbow: true
               Value: true
             - Arrow Length: 0.3
               Class: rviz/PoseArray
-              Color: 255; 25; 0
+              Color: 255; 85; 0
               Enabled: true
               Name: potential_orientations_collisions
-              Topic: /base_collision_checker_server/collisions_orientations
+              Topic: /base_collision_checker/collisions_orientations
               Unreliable: false
               Value: true
             - Alpha: 1
@@ -461,7 +464,7 @@ Visualization Manager:
           Max Color: 255; 255; 255
           Max Intensity: 999999
           Min Color: 0; 0; 0
-          Min Intensity: -5.43558e-09
+          Min Intensity: 0
           Name: LaserScan
           Position Transformer: XYZ
           Queue Size: 10
@@ -596,22 +599,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 10.1331
+      Distance: 1.02925
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 3.98295
-        Y: 0.619624
-        Z: 0.140434
+        X: 2.94722
+        Y: 3.0164
+        Z: 1.26421
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.724797
+      Pitch: 1.1348
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.38766
+      Yaw: 1.32947
     Saved: ~
 Window Geometry:
   Displays:
