@@ -4,7 +4,8 @@ import rospkg
 
 from qt_gui.plugin import Plugin
 from python_qt_binding import loadUi
-from python_qt_binding.QtGui import QWidget
+from python_qt_binding.QtGui import QWidget, QLabel
+from collision_visualizer.ledwidget import LedWidget
 
 class MyPlugin(Plugin):
 
@@ -21,27 +22,38 @@ class MyPlugin(Plugin):
                       dest="quiet",
                       help="Put plugin in silent mode")
         args, unknowns = parser.parse_known_args(context.argv())
-        if not args.quiet:
-            print 'arguments: ', args
-            print 'unknowns: ', unknowns
+        #if not args.quiet:
+        #    print 'arguments: ', args
+        #    print 'unknowns: ', unknowns
 
         # Create QWidget
-        self._widget = QWidget()
+        #self._widget = QWidget()
         # Get path to UI file which should be in the "resource" folder of this package
-        ui_file = os.path.join(rospkg.RosPack().get_path('collision_visualizer'), 'resource', 'MyPlugin.ui')
+        #ui_file = os.path.join(rospkg.RosPack().get_path('collision_visualizer'), 'resource', 'MyPlugin.ui')
         # Extend the widget with all attributes and children from UI file
-        loadUi(ui_file, self._widget)
+        #loadUi(ui_file, self._widget)
         # Give QObjects reasonable names
-        self._widget.setObjectName('MyPluginUi')
+        #self._widget.setObjectName('MyPluginUi')
         # Show _widget.windowTitle on left-top of each plugin (when
         # it's set in _widget). This is useful when you open multiple
         # plugins at once. Also if you open multiple instances of your
         # plugin at once, these lines add number to make it easy to
         # tell from pane to pane.
+        #if context.serial_number() > 1:
+        #    self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
+        # Add widget to the user interface
+        #context.add_widget(self._widget)
+
+        for i in range(4):
+            led = LedWidget()
+            led.setObjectName("collision_state_" + str(i))
+            text = QLabel("a")
+            text.setObjectName("label_"+str(i))
+            context.add_widget(text)
+            context.add_widget(led)
+
         if context.serial_number() > 1:
             self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
-        # Add widget to the user interface
-        context.add_widget(self._widget)
 
     def shutdown_plugin(self):
         # TODO unregister all publishers here
