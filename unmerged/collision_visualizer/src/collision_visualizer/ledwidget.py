@@ -1,6 +1,8 @@
 from python_qt_binding.QtGui import QWidget
 from PyQt4.QtGui import *
 from PyQt4.QtCore import Qt, QTimer, QSize
+import rospy
+from fusion_msgs.msg import sensorFusionMsg
 
 
 class LedWidget(QWidget):
@@ -21,6 +23,17 @@ class LedWidget(QWidget):
         self._timer.timeout.connect(self.toggleState)
 
         self.setDiameter(self._diameter)
+
+    def initializeSubscriber(self,sensor_id = 0):
+        rospy.Subscriber("/collisions_" + str(sensor_id), sensorFusionMsg, self.topicCB)
+
+    def topicCB(self, msg):
+        if msg.msg == 2:
+            print "Collision"
+            self.setState(False)
+        else:
+            print "nice"
+            self.setState(True)
 
     def paintEvent(self, event):
         painter = QPainter()
@@ -46,8 +59,6 @@ class LedWidget(QWidget):
         gradient = QRadialGradient(x + self._diameter / 2, y + self._diameter / 2,
                                    self._diameter * 0.4, self._diameter * 0.4, self._diameter * 0.4)
         gradient.setColorAt(0, Qt.white)
-
-        self.setState(True)
 
         if self._state:
             gradient.setColorAt(1, Qt.green)

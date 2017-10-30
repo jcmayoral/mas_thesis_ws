@@ -47,7 +47,8 @@ class MyPlugin(Plugin):
         for i in range(4):
             led = LedWidget()
             led.setObjectName("collision_state_" + str(i))
-            text = QLabel("a")
+            led.initializeSubscriber(i)
+            text = QLabel("collision_state_" + str(i))
             text.setObjectName("label_"+str(i))
             context.add_widget(text)
             context.add_widget(led)
