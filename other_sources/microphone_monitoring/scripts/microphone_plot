@@ -1,0 +1,5 @@
+#!/usr/bin/env python3
+from microphone_monitoring.Plotter import Plotter
+
+if __name__ == '__main__':
+    main = Plotter(6,1)
