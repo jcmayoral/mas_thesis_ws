@@ -1,5 +1,0 @@
-#!/usr/bin/env python3
-from fault_detection_laser.FusionLaser import FusionLaser
-
-if __name__ == '__main__':
-    main = FusionLaser(10)

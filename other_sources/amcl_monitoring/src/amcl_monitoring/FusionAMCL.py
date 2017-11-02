@@ -1,11 +1,11 @@
 import rospy
 from FaultDetection import ChangeDetection
-from geometry_msgs.msg import AccelStamped
+from geometry_msgs.msg import PoseWithCovarianceStamped
 from sensor_msgs.msg import LaserScan
 from fusion_msgs.msg import sensorFusionMsg
 import numpy as np
 
-class FusionLaser(ChangeDetection):
+class FusionAMCL(ChangeDetection):
     def __init__(self, cusum_window_size = 10, frame="base_link", sensor_id="laser1", threshold = 100):
         self.data_ = []
         self.data_.append([0,0,0])
@@ -15,16 +15,16 @@ class FusionLaser(ChangeDetection):
         self.frame = frame
         self.sensor_id = sensor_id
         self.threshold = threshold
-        ChangeDetection.__init__(self,10,721)
+        ChangeDetection.__init__(self,3)
         rospy.init_node("laser_cusum", anonymous=True)
-        rospy.Subscriber("/scan_unified", LaserScan, self.laserCB)
+        rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.amclCB)
         self.pub = rospy.Publisher('collisions_1', sensorFusionMsg, queue_size=10)
         rospy.spin()
 
-    def laserCB(self, msg):
-
+    def amclCB(self, msg):
+        data = [msg.pose.covariance[0],msg.pose.covariance[1], msg.pose.covariance[35]]
         while (self.i< self.window_size):
-            self.addData([i/msg.range_max for i in msg.ranges])
+            self.addData(data)
             self.i = self.i+1
             if len(self.samples) is self.window_size:
                 self.samples.pop(0)
@@ -42,12 +42,10 @@ class FusionLaser(ChangeDetection):
         msg.header.frame_id = self.frame
         msg.window_size = self.window_size
 
-
         #Detecting Collisions
         if any(t > self.threshold for t in cur):
             msg.msg = sensorFusionMsg.ERROR
 
         msg.sensor_id.data = self.sensor_id
-        print (len(cur))
         msg.data = cur
         self.pub.publish(msg)
