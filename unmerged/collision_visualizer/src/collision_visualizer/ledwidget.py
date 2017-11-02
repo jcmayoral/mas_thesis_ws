@@ -13,7 +13,7 @@ class LedWidget(QWidget):
 
         self._diamX = 0
         self._diamY = 0
-        self._diameter = 30
+        self._diameter = 100
         #self._alignment = Qt.AlignCenter
         self._state = True
         self._flashing = False
