@@ -9,7 +9,7 @@ import pyaudio
 #import _thread
 
 class Plotter(RealTimePlotter):
-    def __init__(self, threshold = 10, pace = 1):
+    def __init__(self, threshold = 100, pace = 10):
         self.data_ = []
         self.step_ = []
         print ("Plotter Constructor Initialized")
@@ -28,11 +28,10 @@ class Plotter(RealTimePlotter):
         #_thread.start_new_thread( self.read, () )
         r = rospy.Rate(10)
         plt.show(block=False)
+
         while not rospy.is_shutdown():
-            print ('ok...')
             self.read()
             r.sleep()
-        plt.show()
         self.stream.stop_stream()
         plt.close("all")
 

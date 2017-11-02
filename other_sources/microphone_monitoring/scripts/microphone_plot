@@ -2,4 +2,4 @@
 from microphone_monitoring.Plotter import Plotter
 
 if __name__ == '__main__':
-    main = Plotter(6,1)
+    main = Plotter(100,10)
