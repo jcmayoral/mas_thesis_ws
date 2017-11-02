@@ -1,0 +1,5 @@
+#!/usr/bin/env python3
+from microphone_monitoring.FusionMicrophone import FusionMicrophone
+
+if __name__ == '__main__':
+    main = FusionLaser(10)
