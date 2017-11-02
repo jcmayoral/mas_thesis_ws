@@ -4,7 +4,8 @@ import rospkg
 
 from qt_gui.plugin import Plugin
 from python_qt_binding import loadUi
-from python_qt_binding.QtGui import QWidget, QLabel, QGridLayout, QHBoxLayout
+import PyQt4.QtCore
+from python_qt_binding.QtGui import QWidget, QLabel, QFont, QHBoxLayout, QVBoxLayout
 from collision_visualizer.ledwidget import LedWidget
 
 class MyPlugin(Plugin):
@@ -43,14 +44,26 @@ class MyPlugin(Plugin):
         self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
         # Add widget to the user interface
         #context.add_widget(self._widget)
-        layout = QHBoxLayout(self._widget)
+        layout = QVBoxLayout(self._widget)
+        layout.setAlignment(PyQt4.QtCore.Qt.AlignJustify)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSizeConstraint(1)
 
+        
         for i in range(4):
             led = LedWidget()
             led.setObjectName("collision_state_" + str(i))
             led.initializeSubscriber(i)
+            led.setAlignment(PyQt4.QtCore.Qt.AlignCenter)
+
             text = QLabel("collision_state_" + str(i))
             text.setObjectName("label_"+str(i))
+            #text.setGeometry(10, 10, 100, 100);
+            text.resize(100,100)
+            text.setAlignment(PyQt4.QtCore.Qt.AlignCenter)
+            font = QFont()
+            font.setPointSize(20)
+            text.setFont(font)
             #context.add_widget(text)
             #context.add_widget(led)
 
@@ -59,6 +72,7 @@ class MyPlugin(Plugin):
             #context.add_widget(led)
             layout.addWidget(led)
             layout.addWidget(text)
+        
         context.add_widget(self._widget)
 
         #context.add_widget(gridLayout)
