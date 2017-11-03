@@ -49,14 +49,14 @@ class MyPlugin(Plugin):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSizeConstraint(1)
 
-        
+
         for i in range(4):
             led = LedWidget()
             led.setObjectName("collision_state_" + str(i))
             led.initializeSubscriber(i)
             led.setAlignment(PyQt4.QtCore.Qt.AlignCenter)
 
-            text = QLabel("collision_state_" + str(i))
+            text = QLabel("sensing_source_" + str(i))
             text.setObjectName("label_"+str(i))
             #text.setGeometry(10, 10, 100, 100);
             text.resize(100,100)
@@ -72,7 +72,7 @@ class MyPlugin(Plugin):
             #context.add_widget(led)
             layout.addWidget(led)
             layout.addWidget(text)
-        
+
         context.add_widget(self._widget)
 
         #context.add_widget(gridLayout)
