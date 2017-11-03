@@ -5,7 +5,7 @@ import numpy as np
 import pyaudio
 
 class FusionMicrophone(ChangeDetection):
-    def __init__(self, cusum_window_size = 10, frame="base_link", sensor_id="microphone1", threshold = 60000):
+    def __init__(self, cusum_window_size = 10, frame="base_link", sensor_id="microphone1", threshold = 1000000):
         self.data_ = []
         self.data_.append([0,0,0])
         self.i = 0
