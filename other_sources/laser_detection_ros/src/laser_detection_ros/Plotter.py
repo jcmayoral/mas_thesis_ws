@@ -13,7 +13,7 @@ class Plotter(RealTimePlotter):
         super().__init__(threshold,pace,False)
         self.ax.legend("False")
         rospy.init_node("laser_plotter", anonymous=True)
-        rospy.Subscriber("/scan_unified", LaserScan, self.laserCB)
+        rospy.Subscriber("/scan_combined", LaserScan, self.laserCB)
         plt.show()
         rospy.spin()
         plt.close("all")
