@@ -48,7 +48,7 @@ class FusionLaser(ChangeDetection):
 
         #if any(t > self.threshold for t in cur):
         print (np.sum(cur)/721)
-        if np.sum(cur) > self.threshold:
+        if np.sum(cur)/721 > self.threshold:
             msg.msg = sensorFusionMsg.ERROR
 
         msg.sensor_id.data = self.sensor_id

@@ -9,14 +9,14 @@ import matplotlib.pyplot as plt
 
 
 class LaserCUSUM(RealTimePlotter,ChangeDetection):
-    def __init__(self, max_samples = 500, pace = 2, cusum_window_size = 10 ):
+    def __init__(self, max_samples = 500, pace = 2, cusum_window_size = 15):
         self.data_ = []
         self.step_ = []
         self.i = 0
         self.msg = 0
         self.window_size = cusum_window_size
         RealTimePlotter.__init__(self,max_samples,pace,False)
-        ChangeDetection.__init__(self,1,1)
+        ChangeDetection.__init__(self,1)
         rospy.init_node("laser_detection_ros_cusum", anonymous=True)
         rospy.Subscriber("/scan_unified", LaserScan, self.laserCB)
         plt.show()
