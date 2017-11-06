@@ -6,7 +6,7 @@ from fusion_msgs.msg import sensorFusionMsg
 import numpy as np
 
 class FusionLaser(ChangeDetection):
-    def __init__(self, cusum_window_size = 10, frame="base_link", sensor_id="laser1", threshold = 100):
+    def __init__(self, cusum_window_size = 10, frame="base_link", sensor_id="laser1", threshold = 10000):
         self.data_ = []
         self.data_.append([0,0,0])
         self.i = 0
@@ -15,10 +15,10 @@ class FusionLaser(ChangeDetection):
         self.frame = frame
         self.sensor_id = sensor_id
         self.threshold = threshold
-        ChangeDetection.__init__(self,10,721)
+        ChangeDetection.__init__(self,721)
         rospy.init_node("laser_cusum", anonymous=True)
         rospy.Subscriber("/scan_unified", LaserScan, self.laserCB)
-        self.pub = rospy.Publisher('collisions_1', sensorFusionMsg, queue_size=10)
+        self.pub = rospy.Publisher('collisions_3', sensorFusionMsg, queue_size=10)
         rospy.spin()
 
     def laserCB(self, msg):
@@ -44,10 +44,13 @@ class FusionLaser(ChangeDetection):
 
 
         #Detecting Collisions
-        if any(t > self.threshold for t in cur):
+        #if any(t > self.threshold for t in cur):
+
+        #if any(t > self.threshold for t in cur):
+        print (np.sum(cur)/721)
+        if np.sum(cur) > self.threshold:
             msg.msg = sensorFusionMsg.ERROR
 
         msg.sensor_id.data = self.sensor_id
-        print (len(cur))
         msg.data = cur
         self.pub.publish(msg)
