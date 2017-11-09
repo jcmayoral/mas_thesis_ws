@@ -23,3 +23,6 @@
 [submodule "odometry/invio"]
 	path = odometry/invio
 	url = https://github.com/Trexter/invio.git
+[submodule "move_base_flex"]
+	path = move_base_flex
+	url = https://github.com/magazino/move_base_flex.git
