@@ -55,13 +55,14 @@ class FusionMicrophone(ChangeDetection):
         cur[np.isnan(cur)] = 0
 
         #Filling Message
+        msg.header.stamp = rospy.Time.now()
         msg.header.frame_id = self.frame
         msg.window_size = self.window_size
 
 
         #Detecting Collisions
         suma = np.sum(np.array(self.cum_sum, dtype = object))
-        print (suma)
+        #print (suma)
         if suma > self.threshold:
             msg.msg = sensorFusionMsg.ERROR
 
