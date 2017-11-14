@@ -4,6 +4,10 @@ from fusion_msgs.msg import sensorFusionMsg
 import numpy as np
 import pyaudio
 
+#Dynamic Reconfigure
+from dynamic_reconfigure.server import Server
+from microphone_monitoring.cfg import microphoneConfig
+
 class FusionMicrophone(ChangeDetection):
     def __init__(self, cusum_window_size = 10, frame="base_link", sensor_id="microphone1", threshold = 1000000):
         self.data_ = []
@@ -26,6 +30,7 @@ class FusionMicrophone(ChangeDetection):
         r = rospy.Rate(10)
         self.pub = rospy.Publisher('collisions_1', sensorFusionMsg, queue_size=10)
 
+        self.dyn_reconfigure_srv = Server(microphoneConfig, self.dynamic_reconfigureCB)
 
         while not rospy.is_shutdown():
             self.run()
@@ -34,6 +39,13 @@ class FusionMicrophone(ChangeDetection):
         self.stream.stop_stream()
 
         rospy.spin()
+
+    def dynamic_reconfigureCB(self,config, level):
+        for k, v in config.iteritems():
+            print (k, ":", v)
+        self.threshold = config["threshold"]
+        return config
+
 
     def run(self):
         data = self.stream.read(1024)

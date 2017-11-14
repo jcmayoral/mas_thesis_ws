@@ -13,7 +13,7 @@ class Plotter(RealTimePlotter):
         self.data_ = []
         self.step_ = []
         print ("Plotter Constructor Initialized")
-        super().__init__(threshold,pace,False)
+        RealTimePlotter.__init__(self,threshold,pace,False)
         #self.ax.legend("True")
         rospy.init_node("microphone_plotter", anonymous=True)
         audio = pyaudio.PyAudio()
