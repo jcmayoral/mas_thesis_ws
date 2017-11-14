@@ -18,7 +18,7 @@ class FusionMicrophone(ChangeDetection):
         self.frame = frame
         self.sensor_id = sensor_id
         self.threshold = threshold
-        rospy.init_node("microphone_fusion", anonymous=True)
+        rospy.init_node("microphone_fusion", anonymous=False)
         ChangeDetection.__init__(self,1)
 
         audio = pyaudio.PyAudio()
@@ -41,8 +41,6 @@ class FusionMicrophone(ChangeDetection):
         rospy.spin()
 
     def dynamic_reconfigureCB(self,config, level):
-        for k, v in config.iteritems():
-            print (k, ":", v)
         self.threshold = config["threshold"]
         return config
 
