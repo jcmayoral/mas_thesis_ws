@@ -9,7 +9,7 @@ from dynamic_reconfigure.server import Server
 from microphone_monitoring.cfg import microphoneConfig
 
 class FusionMicrophone(ChangeDetection):
-    def __init__(self, cusum_window_size = 10, frame="base_link", sensor_id="microphone1", threshold = 1000000):
+    def __init__(self, cusum_window_size = 10, frame="base_link", sensor_id="microphone1", threshold = 1000, frames_number=1024):
         self.data_ = []
         self.data_.append([0,0,0])
         self.i = 0
@@ -18,6 +18,7 @@ class FusionMicrophone(ChangeDetection):
         self.frame = frame
         self.sensor_id = sensor_id
         self.threshold = threshold
+        self.frames_number = frames_number
         rospy.init_node("microphone_fusion", anonymous=False)
         ChangeDetection.__init__(self,1)
 
@@ -42,11 +43,12 @@ class FusionMicrophone(ChangeDetection):
 
     def dynamic_reconfigureCB(self,config, level):
         self.threshold = config["threshold"]
+        self.window_size = config["window_size"]
         return config
 
 
     def run(self):
-        data = self.stream.read(1)
+        data = self.stream.read(self.frames_number)
         amplitude = np.fromstring(data, np.int16)
 
         if self.i< self.window_size:
