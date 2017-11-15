@@ -10,6 +10,7 @@ project(laser_detection_ros)
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   rospy
+  dynamic_reconfigure
 )
 
 ## System dependencies are found with CMake's conventions
@@ -87,10 +88,10 @@ find_package(catkin REQUIRED COMPONENTS
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
+generate_dynamic_reconfigure_options(
+  cfg/laser.cfg
 #   cfg/DynReconf2.cfg
-# )
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -104,7 +105,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES accelerometer_ros
-#  CATKIN_DEPENDS geometry_msgs rospy
+  CATKIN_DEPENDS geometry_msgs rospy dynamic_reconfigure
 #  DEPENDS system_lib
 )
 
