@@ -46,7 +46,7 @@ class FusionMicrophone(ChangeDetection):
 
 
     def run(self):
-        data = self.stream.read(1024)
+        data = self.stream.read(1)
         amplitude = np.fromstring(data, np.int16)
 
         if self.i< self.window_size:

@@ -2,4 +2,4 @@
 from microphone_monitoring.FusionMicrophone import FusionMicrophone
 
 if __name__ == '__main__':
-    main = FusionMicrophone(5)
+    main = FusionMicrophone(50)

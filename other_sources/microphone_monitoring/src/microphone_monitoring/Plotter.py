@@ -36,7 +36,7 @@ class Plotter(RealTimePlotter):
         plt.close("all")
 
     def read(self):
-        data = self.stream.read(1024)
+        data = self.stream.read(1)
         amplitude = np.fromstring(data, np.int16)
         self.step_.append(self.i)
         self.i = self.i + 1
