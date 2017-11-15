@@ -5,6 +5,10 @@ from sensor_msgs.msg import LaserScan
 from fusion_msgs.msg import sensorFusionMsg
 import numpy as np
 
+from dynamic_reconfigure.server import Server
+from amcl_monitoring.cfg import amclConfig
+
+
 class FusionAMCL(ChangeDetection):
     def __init__(self, cusum_window_size = 10, frame="base_link", sensor_id="laser1", threshold = 100):
         self.data_ = []
@@ -15,11 +19,19 @@ class FusionAMCL(ChangeDetection):
         self.frame = frame
         self.sensor_id = sensor_id
         self.threshold = threshold
+        self.weight = 1.0
         ChangeDetection.__init__(self,3)
-        rospy.init_node("laser_cusum", anonymous=True)
+        rospy.init_node("amcl_fusion", anonymous=False)
         rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.amclCB)
         self.pub = rospy.Publisher('collisions_1', sensorFusionMsg, queue_size=10)
+        self.dyn_reconfigure_srv = Server(amclConfig, self.dynamic_reconfigureCB)
         rospy.spin()
+
+    def dynamic_reconfigureCB(self,config, level):
+        self.threshold = config["threshold"]
+        self.window_size = config["window_size"]
+        self.weight = config["weight"]
+        return config
 
     def amclCB(self, msg):
         data = [msg.pose.covariance[0],msg.pose.covariance[1], msg.pose.covariance[35]]
@@ -48,4 +60,5 @@ class FusionAMCL(ChangeDetection):
 
         msg.sensor_id.data = self.sensor_id
         msg.data = cur
+        msg.weight = self.weight
         self.pub.publish(msg)

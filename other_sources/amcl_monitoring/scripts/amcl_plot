@@ -1,5 +1,5 @@
-#!/usr/bin/env python3
-from amcl_monitoring.Plotter import Plotter
+#!/usr/bin/env python
+from amcl_monitoring_tools.Plotter import Plotter
 
 if __name__ == '__main__':
     main = Plotter(6,1)
