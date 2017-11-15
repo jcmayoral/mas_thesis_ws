@@ -9,6 +9,7 @@ project(microphone_monitoring)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
+  fusion_msgs
   rospy
   dynamic_reconfigure
 )
