@@ -1,5 +1,5 @@
-#!/usr/bin/env python3
-from amcl_monitoring.FusionAMCL import FusionAMCL
+#!/usr/bin/env python
+from amcl_monitoring_tools.FusionAMCL import FusionAMCL
 
 if __name__ == '__main__':
     main = FusionAMCL(10)
