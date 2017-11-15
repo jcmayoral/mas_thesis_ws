@@ -5,6 +5,9 @@ from sensor_msgs.msg import LaserScan
 from fusion_msgs.msg import sensorFusionMsg
 import numpy as np
 
+from dynamic_reconfigure.server import Server
+from laser_detection_ros.cfg import laserConfig
+
 class FusionLaser(ChangeDetection):
     def __init__(self, cusum_window_size = 10, frame="base_link", sensor_id="laser1", threshold = 10000):
         self.data_ = []
@@ -15,11 +18,19 @@ class FusionLaser(ChangeDetection):
         self.frame = frame
         self.sensor_id = sensor_id
         self.threshold = threshold
+        self.weight = 1.0
         ChangeDetection.__init__(self,721)
-        rospy.init_node("laser_cusum", anonymous=True)
+        rospy.init_node("laser_fusion", anonymous=False)
         rospy.Subscriber("/scan_unified", LaserScan, self.laserCB)
         self.pub = rospy.Publisher('collisions_3', sensorFusionMsg, queue_size=10)
+        self.dyn_reconfigure_srv = Server(laserConfig, self.dynamic_reconfigureCB)
         rospy.spin()
+
+    def dynamic_reconfigureCB(self,config, level):
+        self.threshold = config["threshold"]
+        self.window_size = config["window_size"]
+        self.weight = config["weight"]
+        return config
 
     def laserCB(self, msg):
 
@@ -42,7 +53,6 @@ class FusionLaser(ChangeDetection):
         msg.header.frame_id = self.frame
         msg.window_size = self.window_size
 
-
         #Detecting Collisions
         #if any(t > self.threshold for t in cur):
 
@@ -53,4 +63,6 @@ class FusionLaser(ChangeDetection):
 
         msg.sensor_id.data = self.sensor_id
         msg.data = cur
+        msg.weight = self.weight
+
         self.pub.publish(msg)
