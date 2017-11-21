@@ -76,7 +76,7 @@ class FusionMicrophone(ChangeDetection):
 
         #Detecting Collisions
         suma = np.sum(np.array(self.cum_sum, dtype = object))
-        #print (suma)
+        print (suma)
         if suma > self.threshold:
             msg.msg = sensorFusionMsg.ERROR
 
