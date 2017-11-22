@@ -1,4 +1,5 @@
 robocup
+rosbag_test
 .vscode/
 .idea/
 cmake-build-debug/
