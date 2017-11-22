@@ -8,7 +8,7 @@ project(amcl_monitoring)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  geometry_msgs
+  nav_msgs
   rospy
   dynamic_reconfigure
 )
@@ -70,7 +70,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   geometry_msgs
+#   nav_msgs
 # )
 
 ################################################
@@ -105,7 +105,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES accelerometer_ros
-  CATKIN_DEPENDS geometry_msgs rospy dynamic_reconfigure
+  CATKIN_DEPENDS nav_msgs rospy dynamic_reconfigure
 #  DEPENDS system_lib
 )
 

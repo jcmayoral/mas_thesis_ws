@@ -1,6 +1,6 @@
 import rospy
 from MyStatics.RealTimePlotter import RealTimePlotter
-from geometry_msgs.msg import PoseWithCovarianceStamped
+from nav_msgs.msg import Odometry
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
@@ -10,16 +10,16 @@ class Plotter(RealTimePlotter):
         self.data_ = []
         self.step_ = []
         print ("Plotter Constructor Initialized")
-        super().__init__(threshold,pace,True)
+        RealTimePlotter.__init__(self,threshold,pace,True)
         #self.ax.legend("True")
         rospy.init_node("amcl_plotter", anonymous=True)
-        rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.amclCB)
+        rospy.Subscriber("/odom", Odometry, self.amclCB)
         plt.show()
         rospy.spin()
         plt.close("all")
 
     def amclCB(self, msg):
-        data = [msg.pose.covariance[0],msg.pose.covariance[1], msg.pose.covariance[35]]
+        data = [msg.twist.twist.linear.x,msg.twist.twist.linear.y,msg.twist.twist.angular.z]
         self.step_.append(msg.header.seq)
         self.data_.append(data)
         self.update(msg.header.seq,self.step_,self.data_)
