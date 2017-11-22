@@ -1,6 +1,6 @@
 import rospy
 from MyStatics.RealTimePlotter import RealTimePlotter
-from geometry_msgs.msg import PoseWithCovarianceStamped
+from nav_msgs.msg import Odometry
 import numpy as np
 import matplotlib
 matplotlib.use('TkAgg')
@@ -17,13 +17,13 @@ class AMCLMonitoring(RealTimePlotter,ChangeDetection):
         RealTimePlotter.__init__(self,max_samples,pace,True)
         ChangeDetection.__init__(self,1,1)
         rospy.init_node("amcl_monitoring_cusum", anonymous=True)
-        rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.amclCB)
+        rospy.Subscriber("/odom", Odometry, self.amclCB)
         plt.show()
         rospy.spin()
         plt.close("all")
 
     def amclCB(self, msg):
-        data = [msg.pose.covariance[0],msg.pose.covariance[1], msg.pose.covariance[35]]
+        data = [msg.twist.twist.linear.x,msg.twist.twist.linear.y,msg.twist.twist.angular.z]
         while (self.i< self.window_size):
             self.addData(data)
             self.i = self.i+1
