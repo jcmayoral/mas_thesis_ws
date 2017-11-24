@@ -15,7 +15,7 @@ class AMCLMonitoring(RealTimePlotter,ChangeDetection):
         self.msg = 0
         self.window_size = cusum_window_size
         RealTimePlotter.__init__(self,max_samples,pace,True)
-        ChangeDetection.__init__(self,1,1)
+        ChangeDetection.__init__(self,3)
         rospy.init_node("amcl_monitoring_cusum", anonymous=True)
         rospy.Subscriber("/odom", Odometry, self.amclCB)
         plt.show()
