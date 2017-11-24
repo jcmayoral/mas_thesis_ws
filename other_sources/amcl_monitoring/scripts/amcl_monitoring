@@ -2,4 +2,4 @@
 from amcl_monitoring_tools.AMCLMonitoring import AMCLMonitoring
 
 if __name__ == '__main__':
-    main = AMCLMonitoring(30,2,10)
+    main = AMCLMonitoring(4,1,2)
