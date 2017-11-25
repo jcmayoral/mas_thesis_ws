@@ -12,6 +12,7 @@ class BagRecorder():
         rospy.Subscriber("/cmd_vel", Twist, self.mainCB, "/cmd_vel")
         rospy.Subscriber("/odom", Odometry, self.mainCB, "/odom")
         rospy.Subscriber("/scan_front", LaserScan, self.mainCB, "/scan_front") 
+        rospy.Subscriber("/scan_rear", LaserScan, self.mainCB, "/scan_rear") 
         rospy.Subscriber("/arm_cam3d/rgb/image_raw", Image, self.mainCB, "/arm_cam3d/rgb/image_raw")
         rospy.loginfo("Initializing")
 
