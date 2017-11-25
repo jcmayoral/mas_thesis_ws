@@ -70,11 +70,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-<<<<<<< HEAD
 #   nav_msgs
-=======
-#   geometry_msgs
->>>>>>> 35fda42350962d05d696d3f30131f5e198ef65d7
 # )
 
 ################################################
@@ -109,11 +105,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES accelerometer_ros
-<<<<<<< HEAD
   CATKIN_DEPENDS nav_msgs rospy dynamic_reconfigure
-=======
-  CATKIN_DEPENDS geometry_msgs rospy dynamic_reconfigure
->>>>>>> 35fda42350962d05d696d3f30131f5e198ef65d7
 #  DEPENDS system_lib
 )
 
