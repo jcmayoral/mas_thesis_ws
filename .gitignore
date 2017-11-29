@@ -3,3 +3,4 @@ robocup
 .idea/
 cmake-build-debug/
 *.pyc
+*.bag
