@@ -12,7 +12,7 @@ class ControllerMonitoring(RealTimePlotter):
         self.step_ = []
         print ("Plotter Constructor Initialized")
         rospy.init_node("velocity_controller_monitoring")
-        super().__init__(threshold,pace,True)
+        RealTimePlotter.__init__(self,threshold,pace,True)
         #self.ax.legend("True")
         rospy.Subscriber("/base/twist_mux/command_navigation", Twist, self.openLoopCB)
         rospy.Subscriber("/base/odometry_controller/odometry", Odometry, self.closeLoopCB)
