@@ -7,6 +7,7 @@ import sys
 
 class MyBagRecorder():
     def __init__(self,file_name):
+        self.busy = False
         self.bag = rosbag.Bag(file_name +'.bag', 'w')
         rospy.Subscriber("/accel", AccelStamped, self.mainCB, "/accel")
         rospy.Subscriber("/cmd_vel", Twist, self.mainCB, "/cmd_vel")
@@ -20,7 +21,11 @@ class MyBagRecorder():
         rospy.loginfo("Initializing")
 
     def writeToBag(self,topic, msgs):
+        while (self.busy is True):
+            pass
+        self.busy = True
         self.bag.write(topic, msgs)
+        self.busy = False
 
     def mainCB(self,msg, topic_name):
         self.writeToBag(topic_name, msg)
