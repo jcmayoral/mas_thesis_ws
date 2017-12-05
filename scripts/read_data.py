@@ -1,3 +1,4 @@
+from __future__ import print_function
 import rosbag
 from geometry_msgs.msg import AccelStamped, Twist
 from nav_msgs.msg import Odometry
@@ -23,16 +24,21 @@ for topic_name, msg_type in zip(mytopics,mytypes):
     publisher = rospy.Publisher(topic_name, msg_type)
     myPublishers.append([publisher,topic_name])
 
-print myPublishers
 bag = rosbag.Bag(file_name)
 
-r = rospy.Rate(50)
+start_time = bag.get_start_time()
+end_time = bag.get_end_time()
+duration_time = end_time - start_time
+
+r = rospy.Rate(100)
 
 for topic, msg, t in bag.read_messages(topics=mytopics):
+    print (t.to_sec() - start_time, " of " , duration_time, end="\r")
     for p, topic_name in myPublishers:
         if topic_name == topic:
             #print "printing on ", topic_name
             p.publish(msg)
             r.sleep()
+            break
 
 bag.close()
