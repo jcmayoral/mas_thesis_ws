@@ -37,10 +37,6 @@ class MyBagReader():
                     break
         self.bag.close()
 
-
-
-
-
 rospy.init_node("my_bag_reader")
 file_name = '/home/jose/ROS/thesis_ws/my_ws/src/mas_thesis_ws/scripts/test.bag'
 
