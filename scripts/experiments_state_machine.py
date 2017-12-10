@@ -18,6 +18,8 @@ import rosbag
 from geometry_msgs.msg import AccelStamped, Twist
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Image, LaserScan
+from std_msgs.msg import Empty, String
+
 
 # define state ReadBag
 class MyBagReader(smach.State):
@@ -35,12 +37,12 @@ class MyBagReader(smach.State):
             self.myPublishers.append([publisher,topic_name])
 
         smach.State.__init__(self,
-                             outcomes=['outcome1','outcome2'],
+                             outcomes=['RESTART_READER','END_READER'],
                              input_keys=['foo_counter_in', 'shared_string'],
                              output_keys=['foo_counter_out'])
 
     def execute(self, userdata):
-        rospy.loginfo('Executing state FOO')
+        rospy.loginfo('Executing state Reader')
 
         file_name = self.path + userdata.shared_string + str(userdata.foo_counter_in)+".bag"
         self.bag = rosbag.Bag(file_name)
@@ -49,6 +51,8 @@ class MyBagReader(smach.State):
         end_time = self.bag.get_end_time()
 
         duration_time = end_time - start_time
+
+        finish_pub = rospy.Publisher("finish_reading", String, queue_size=1)
 
         r = rospy.Rate(100)
 
@@ -62,47 +66,135 @@ class MyBagReader(smach.State):
                     break
         self.bag.close()
 
+
         if userdata.foo_counter_in < 2:
             userdata.foo_counter_out = userdata.foo_counter_in + 1
-            return 'outcome1'
+            fb = String()
+            fb.data = "NEXT_BAG"
+            finish_pub.publish(fb)
+            return 'RESTART_READER'
         else:
-            return 'outcome2'
+            fb = String()
+            fb.data = "END_BAG"
+            finish_pub.publish(fb)
+            print ("send fb")
+            rospy.sleep(1)
+            return 'END_READER'
 
-# define state Bar
-class Bar(smach.State):
+class RestartReader(smach.State):
     def __init__(self):
         smach.State.__init__(self,
-                             outcomes=['outcome1'],
+                             outcomes=['NEXT_BAG'],
                              input_keys=['bar_counter_in'])
+        self.monitor_reset_pub = rospy.Publisher('/sm_reset', Empty, queue_size=1)
 
     def execute(self, userdata):
-        rospy.loginfo('Executing state BAR')
-        rospy.loginfo('Counter = %f'%userdata.bar_counter_in)
-        return 'outcome1'
+        rospy.loginfo('Executing state RESTART READER')
+        #rospy.loginfo('Counter = %f'%userdata.bar_counter_in)
+        self.monitor_reset_pub.publish(Empty())
+        rospy.sleep(1)
+        return 'NEXT_BAG'
 
+# define state Monitor
+class Monitor(smach.State):
+    def __init__(self):
+        smach.State.__init__(self,
+                             outcomes=['NEXT_MONITOR', 'END_MONITOR'])
+        rospy.Subscriber("/finish_reading", String, self.fb_cb)
+
+    def fb_cb(self,msg):
+        print ("CALLBACKKKKKKKKKKKKKKKKKKKKKKkk")
+        self.next_bag_request = True
+        self.stop_bag_request = False
+        if msg.data == "NEXT_BAG":
+            print ("NEXT BAG")
+        else:
+            self.stop_bag_request = True
+
+
+    def execute(self, userdata):
+
+        self.next_bag_request = False
+        rospy.loginfo('Executing state MONITORING')
+        #rospy.sleep(20)#TODO
+
+        while not self.next_bag_request:
+            pass #TODO
+
+        self.next_bag_request = False
+
+        if self.stop_bag_request:
+            print ("END_MONITOR")
+            return 'END_MONITOR'
+        else:
+            print ("NEXT_MONITOR")
+            return 'NEXT_MONITOR'
+
+def monitor_cb(ud, msg):
+    print ("FB FROM WAIT_FOR_READING -> switching to monitor")
+
+def reader_cb(ud, msg):
+    if msg.data == "NEXT_BAG":
+        print ("NEXT BAG")
+        return False
+    return True
 
 def main():
 
     rospy.init_node('smach_example_state_machine')
 
     # Create a SMACH state machine
-    sm = smach.StateMachine(outcomes=['outcome4'])
+    sm = smach.StateMachine(outcomes=['END_SM'])
     sm.userdata.sm_counter = 1
     sm.userdata.bag_family = "static" #TODO
 
-    # Open the container
-    with sm:
-        # Add states to the container
-        smach.StateMachine.add('READ', MyBagReader(),
-                               transitions={'outcome1':'BAR',
-                                            'outcome2':'outcome4'},
+    monitoring_sm = smach.StateMachine(outcomes=['END_MONITORING_SM', 'RESTART_MONITOR'])
+
+    with monitoring_sm:
+        smach.StateMachine.add('WAIT_FOR_MONITORING', smach_ros.MonitorState("/sm_reset", Empty, monitor_cb), transitions={'invalid':'MONITORING', 'valid':'WAIT_FOR_MONITORING', 'preempted':'WAIT_FOR_MONITORING'})
+        #smach.StateMachine.add('MONITORING', smach_ros.MonitorState("/finish_reading", String, reader_cb), transitions={'invalid':'WAIT_FOR_MONITORING', 'valid':'END_MONITORING_SM', 'preempted':'WAIT_FOR_MONITORING'})
+        smach.StateMachine.add('MONITORING', Monitor(),
+                       transitions={'NEXT_MONITOR':'WAIT_FOR_MONITORING', 'END_MONITOR':'END_MONITORING_SM'})
+
+    reading_sm = smach.StateMachine(outcomes=['END_READING_SM', 'RESTART_READER'])
+    reading_sm.userdata.sm_counter = 1
+    reading_sm.userdata.bag_family = "static" #TODO
+
+    with reading_sm:
+        smach.StateMachine.add('WAIT_FOR_READING', RestartReader(),
+                       transitions={'NEXT_BAG':'READING'},
+                       remapping={'bar_counter_in':'sm_counter'})
+        smach.StateMachine.add('READING', MyBagReader(),
+                               transitions={'RESTART_READER':'WAIT_FOR_READING',
+                                            'END_READER':'END_READING_SM'},
                                remapping={'foo_counter_in':'sm_counter',
                                           'shared_string':'bag_family',
                                           'foo_counter_out':'sm_counter'})
-        smach.StateMachine.add('BAR', Bar(),
-                               transitions={'outcome1':'READ'},
-                               remapping={'bar_counter_in':'sm_counter'})
 
+    # Open the container
+    with sm:
+        #Concurrent
+
+        sm_con = smach.Concurrence(outcomes=['END_CON', 'RESTART'],
+                                   default_outcome='RESTART',
+                                   outcome_map={'RESTART':
+                                       { 'MONITORING_SM':'RESTART_MONITOR',
+                                         'READ_SM' : 'RESTART_READER'},
+                                         'END_CON':
+                                         {'READ_SM': 'END_READING_SM',
+                                          'MONITORING_SM': 'END_MONITORING_SM'}})
+        sm_con.userdata.sm_counter = 1
+        sm_con.userdata.bag_family = "static" #TODO
+        # Open the container
+        with sm_con:
+            # Add states to the container
+            #smach.Concurrence.add('WAIT_MONITOR', smach_ros.MonitorState("/sm_reset", Empty, monitor_cb))
+            smach.Concurrence.add('MONITORING_SM', monitoring_sm)
+            smach.Concurrence.add('READ_SM', reading_sm)
+
+        smach.StateMachine.add('CON', sm_con,
+                       transitions={'RESTART':'CON',
+                                    'END_CON':'END_SM'})
 
     # Execute SMACH plan
     #outcome = sm.execute()
