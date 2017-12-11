@@ -65,10 +65,11 @@ class MyBagReader(smach.State):
                     p.publish(msg)
                     r.sleep()
                     break
+        print ("\n")
         self.bag.close()
 
 
-        if userdata.foo_counter_in < 2:
+        if userdata.foo_counter_in < 10:  #n number of bag files
             userdata.foo_counter_out = userdata.foo_counter_in + 1
             fb = String()
             fb.data = "NEXT_BAG"
@@ -96,10 +97,10 @@ class RestartReader(smach.State):
         monitor_reset_pub = rospy.Publisher('/sm_reset', Empty, queue_size=1)
         while monitor_reset_pub.get_num_connections() < 1:
             pass
-        print (monitor_reset_pub.get_num_connections())
+        #print (monitor_reset_pub.get_num_connections())
         monitor_reset_pub.publish(Empty())
-        print ("Send EMPTY")
-        rospy.sleep(0.2)
+        #print ("Send EMPTY")
+        rospy.sleep(0.5)
         return 'NEXT_BAG'
 
 # define state Monitor
@@ -108,18 +109,23 @@ class Monitor(smach.State):
         smach.State.__init__(self,
                              outcomes=['NEXT_MONITOR', 'END_MONITOR'])
         rospy.Subscriber("/finish_reading", String, self.fb_cb)
+        self.current_counter = 0
 
         for i in range(5):
             rospy.Subscriber("/collisions_"+str(i), sensorFusionMsg, self.collision_cb)
 
     def collision_cb(self,msg):
-        print ("collision_cb")
+        if msg.msg == 2:
+            self.current_counter = self.current_counter + 1
 
     def fb_cb(self,msg):
+        #print ("CB", msg)
         self.next_bag_request = True
         self.stop_bag_request = False
+        print ("current_counter" , self.current_counter)
+
         if msg.data == "NEXT_BAG":
-            print ("NEXT BAG")
+            self.current_counter = 0
         else:
             self.stop_bag_request = True
 
@@ -132,17 +138,18 @@ class Monitor(smach.State):
         while not self.next_bag_request:
             pass #TODO
 
+        rospy.sleep(0.2)
         self.next_bag_request = False
 
         if self.stop_bag_request:
             print ("END_MONITOR")
             return 'END_MONITOR'
         else:
-            print ("NEXT_MONITOR")
+            #print ("NEXT_MONITOR")
             return 'NEXT_MONITOR'
 
 def monitor_cb(ud, msg):
-    print ("FB FROM WAIT_FOR_READING -> switching to monitor")
+    #print ("FB FROM WAIT_FOR_READING -> switching to monitor")
     return False
 
 def main():
