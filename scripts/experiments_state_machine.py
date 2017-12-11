@@ -15,12 +15,13 @@ import rospy
 import smach
 import smach_ros
 import rosbag
+import math
 from geometry_msgs.msg import AccelStamped, Twist
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Image, LaserScan
 from std_msgs.msg import Empty, String
 from fusion_msgs.msg import sensorFusionMsg
-
+import numpy as np
 
 # define state ReadBag
 class MyBagReader(smach.State):
@@ -69,7 +70,7 @@ class MyBagReader(smach.State):
         self.bag.close()
 
 
-        if userdata.foo_counter_in < 10:  #n number of bag files
+        if userdata.foo_counter_in < 35:  #n number of bag files
             userdata.foo_counter_out = userdata.foo_counter_in + 1
             fb = String()
             fb.data = "NEXT_BAG"
@@ -105,16 +106,29 @@ class RestartReader(smach.State):
 
 # define state Monitor
 class Monitor(smach.State):
-    def __init__(self):
+    def __init__(self, experiment_type):
         smach.State.__init__(self,
-                             outcomes=['NEXT_MONITOR', 'END_MONITOR'])
+                             outcomes=['NEXT_MONITOR', 'END_MONITOR'],)
         rospy.Subscriber("/finish_reading", String, self.fb_cb)
         self.current_counter = 0
+        self.accel_thr = list()
+        self.cam_thr = list()
 
-        for i in range(5):
-            rospy.Subscriber("/collisions_"+str(i), sensorFusionMsg, self.collision_cb)
+        if experiment_type is "collisions_counter":
+            for i in range(5):
+                rospy.Subscriber("/collisions_"+str(i), sensorFusionMsg, self.counter_cb)
+        if experiment_type is "threshold_calculator":
+            for i in range(5):
+                rospy.Subscriber("/collisions_"+str(i), sensorFusionMsg, self.threshold_cb)
 
-    def collision_cb(self,msg):
+    def threshold_cb(self,msg):
+        if msg.sensor_id.data == "accel1":
+            self.accel_thr.append(msg.data)
+        if msg.sensor_id.data == "cam1":
+            self.cam_thr.append(msg.data)
+        #print (msg.data)
+
+    def counter_cb(self,msg):
         if msg.msg == 2:
             self.current_counter = self.current_counter + 1
 
@@ -122,11 +136,13 @@ class Monitor(smach.State):
         #print ("CB", msg)
         self.next_bag_request = True
         self.stop_bag_request = False
-        print ("current_counter" , self.current_counter)
 
         if msg.data == "NEXT_BAG":
             self.current_counter = 0
-        else:
+        else:#FINISH
+            print ("current_counter" , self.current_counter)
+            print ("accel_thr" , max(self.accel_thr) , " number of samples " , len(self.accel_thr))
+            print ("cam_thr" , max(self.cam_thr), " number of samples " , len(self.cam_thr))
             self.stop_bag_request = True
 
     def execute(self, userdata):
@@ -142,15 +158,13 @@ class Monitor(smach.State):
         self.next_bag_request = False
 
         if self.stop_bag_request:
-            print ("END_MONITOR")
             return 'END_MONITOR'
         else:
             #print ("NEXT_MONITOR")
             return 'NEXT_MONITOR'
 
 def monitor_cb(ud, msg):
-    #print ("FB FROM WAIT_FOR_READING -> switching to monitor")
-    return False
+    return None
 
 def main():
 
@@ -167,22 +181,25 @@ def main():
     reading_sm.userdata.bag_family = "static" #TODO
 
     with reading_sm:
-        smach.StateMachine.add('WAIT_FOR_READING', RestartReader(),
+        smach.StateMachine.add('RESET_READING', RestartReader(),
                        transitions={'NEXT_BAG':'READING'},
                        remapping={'bar_counter_in':'sm_counter'})
         smach.StateMachine.add('READING', MyBagReader(),
-                               transitions={'RESTART_READER':'WAIT_FOR_READING',
+                               transitions={'RESTART_READER':'RESET_READING',
                                             'END_READER':'END_READING_SM'},
                                remapping={'foo_counter_in':'sm_counter',
                                           'shared_string':'bag_family',
                                           'foo_counter_out':'sm_counter'})
 
     monitoring_sm = smach.StateMachine(outcomes=['END_MONITORING_SM'])
+    #experiment_type = "collisions_counter" #TODO
+    experiment_type = "threshold_calculator" #TODO
 
     with monitoring_sm:
-        smach.StateMachine.add('WAIT_FOR_MONITORING', smach_ros.MonitorState("/sm_reset", Empty, monitor_cb), transitions={'invalid':'MONITORING', 'valid':'WAIT_FOR_MONITORING', 'preempted':'WAIT_FOR_MONITORING'})
-        smach.StateMachine.add('MONITORING', Monitor(),
-                       transitions={'NEXT_MONITOR':'WAIT_FOR_MONITORING', 'END_MONITOR':'END_MONITORING_SM'})
+        smach.StateMachine.add('WAIT_FOR_READER', smach_ros.MonitorState("/sm_reset", Empty, monitor_cb),
+                                transitions={'invalid':'COLLISION_COUNTER', 'valid':'WAIT_FOR_READER', 'preempted':'WAIT_FOR_READER'})
+        smach.StateMachine.add('COLLISION_COUNTER', Monitor(experiment_type),
+                       transitions={'NEXT_MONITOR':'WAIT_FOR_READER', 'END_MONITOR':'END_MONITORING_SM'})
 
     # Open the container
     with sm:
