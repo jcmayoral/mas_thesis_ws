@@ -19,6 +19,7 @@ from geometry_msgs.msg import AccelStamped, Twist
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Image, LaserScan
 from std_msgs.msg import Empty, String
+from fusion_msgs.msg import sensorFusionMsg
 
 
 # define state ReadBag
@@ -107,6 +108,12 @@ class Monitor(smach.State):
         smach.State.__init__(self,
                              outcomes=['NEXT_MONITOR', 'END_MONITOR'])
         rospy.Subscriber("/finish_reading", String, self.fb_cb)
+
+        for i in range(5):
+            rospy.Subscriber("/collisions_"+str(i), sensorFusionMsg, self.collision_cb)
+
+    def collision_cb(self,msg):
+        print ("collision_cb")
 
     def fb_cb(self,msg):
         self.next_bag_request = True
