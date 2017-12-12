@@ -21,6 +21,7 @@ from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Image, LaserScan
 from std_msgs.msg import Empty, String
 from fusion_msgs.msg import sensorFusionMsg
+from dynamic_reconfigure.client import Client
 import numpy as np
 
 # define state ReadBag
@@ -103,6 +104,31 @@ class RestartReader(smach.State):
         #print ("Send EMPTY")
         rospy.sleep(0.5)
         return 'NEXT_BAG'
+
+class Setup(smach.State):
+    def __init__(self):
+        smach.State.__init__(self,
+                             outcomes=['SETUP_DONE', 'FINISH'])
+        #rospy.spin()
+        self.window_size_ = 2
+        self.acc_client = Client("accelerometer_fusion", timeout=3, config_callback=self.callback)
+        rospy.sleep(0.2)
+
+
+    def callback(self,config):
+        print (config)
+        #rospy.loginfo("Config set to {double_param}, {int_param}, {double_param}, ".format(**config))
+
+    def execute(self, userdata):
+        rospy.loginfo('Executing SETUP')
+        self.acc_client.update_configuration({"window_size":self.window_size_})
+        rospy.sleep(0.5)
+        if self.window_size_ < 20:
+            self.window_size_ = self.window_size_ +1
+            return 'SETUP_DONE'
+        else:
+            return 'FINISH'
+
 
 # define state Monitor
 class Monitor(smach.State):
@@ -197,14 +223,16 @@ def main():
 
     with monitoring_sm:
         smach.StateMachine.add('WAIT_FOR_READER', smach_ros.MonitorState("/sm_reset", Empty, monitor_cb),
-                                transitions={'invalid':'COLLISION_COUNTER', 'valid':'WAIT_FOR_READER', 'preempted':'WAIT_FOR_READER'})
-        smach.StateMachine.add('COLLISION_COUNTER', Monitor(experiment_type),
+                                transitions={'invalid':'MONITOR', 'valid':'WAIT_FOR_READER', 'preempted':'WAIT_FOR_READER'})
+        smach.StateMachine.add('MONITOR', Monitor(experiment_type),
                        transitions={'NEXT_MONITOR':'WAIT_FOR_READER', 'END_MONITOR':'END_MONITORING_SM'})
 
     # Open the container
     with sm:
-        #Concurrent
+        smach.StateMachine.add('SETUP', Setup(),
+                       transitions={'SETUP_DONE':'CON', 'FINISH': 'END_SM'})
 
+        #Concurrent
         sm_con = smach.Concurrence(outcomes=['END_CON'],
                                    default_outcome='END_CON',
                                    outcome_map={#'RESTART':
@@ -222,8 +250,7 @@ def main():
 
         smach.StateMachine.add('CON', sm_con,
                        transitions={#'RESTART':'CON',
-                                    'END_CON':'END_SM'})
-
+                                    'END_CON':'SETUP'})
     # Execute SMACH plan
     #rospy.sleep(10)
     #outcome = sm.execute()
