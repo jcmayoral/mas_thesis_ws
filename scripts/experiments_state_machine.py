@@ -83,6 +83,7 @@ class MyBagReader(smach.State):
             fb.data = "END_BAG"
             finish_pub.publish(fb)
             rospy.sleep(2)
+            userdata.foo_counter_out = 1
             return 'END_READER'
 
 class RestartReader(smach.State):
@@ -108,37 +109,51 @@ class RestartReader(smach.State):
 class Setup(smach.State):
     def __init__(self):
         smach.State.__init__(self,
-                             outcomes=['SETUP_DONE', 'FINISH'])
+                             outcomes=['SETUP_DONE', 'FINISH'],
+                             input_keys=['counter_in'],
+                             output_keys=['counter_out'])
         #rospy.spin()
-        self.window_size_ = 2
         self.acc_client = Client("accelerometer_fusion", timeout=3, config_callback=self.callback)
         rospy.sleep(0.2)
 
 
     def callback(self,config):
-        print (config)
+        #print (config)
+        pass
         #rospy.loginfo("Config set to {double_param}, {int_param}, {double_param}, ".format(**config))
 
     def execute(self, userdata):
         rospy.loginfo('Executing SETUP')
-        self.acc_client.update_configuration({"window_size":self.window_size_})
+        self.acc_client.update_configuration({"window_size": userdata.counter_in})
         rospy.sleep(0.5)
-        if self.window_size_ < 20:
-            self.window_size_ = self.window_size_ +1
+        if userdata.counter_in < 20:
+            userdata.counter_out = userdata.counter_in +1
             return 'SETUP_DONE'
         else:
             return 'FINISH'
 
+class Plotter(smach.State):
+    def __init__(self):
+        smach.State.__init__(self,
+                             outcomes=['PLOT_DONE'])
+    def execute(self, userdata):
+        rospy.loginfo('Executing SETUP')
+        rospy.sleep(0.5)
+        return 'PLOT_DONE'
 
 # define state Monitor
 class Monitor(smach.State):
     def __init__(self, experiment_type):
         smach.State.__init__(self,
-                             outcomes=['NEXT_MONITOR', 'END_MONITOR'],)
+                             outcomes=['NEXT_MONITOR', 'END_MONITOR'],
+                              input_keys=['acc_cum', 'cam_cum'],
+                              output_keys=['acc_cum', 'cam_cum'])
         rospy.Subscriber("/finish_reading", String, self.fb_cb)
         self.current_counter = 0
         self.accel_thr = list()
         self.cam_thr = list()
+        self.acc_cum = list()
+        self.cam_cum = list()
 
         if experiment_type is "collisions_counter":
             for i in range(5):
@@ -166,9 +181,10 @@ class Monitor(smach.State):
         if msg.data == "NEXT_BAG":
             self.current_counter = 0
         else:#FINISH
-            print ("current_counter" , self.current_counter)
+            #print ("current_counter" , self.current_counter)
             print ("accel_thr" , max(self.accel_thr) , " number of samples " , len(self.accel_thr))
             print ("cam_thr" , max(self.cam_thr), " number of samples " , len(self.cam_thr))
+
             self.stop_bag_request = True
 
     def execute(self, userdata):
@@ -184,6 +200,10 @@ class Monitor(smach.State):
         self.next_bag_request = False
 
         if self.stop_bag_request:
+            userdata.acc_cum.append(max(self.accel_thr))
+            userdata.cam_cum.append(max(self.cam_thr))
+            del self.accel_thr[:]
+            del self.cam_thr[:]
             return 'END_MONITOR'
         else:
             #print ("NEXT_MONITOR")
@@ -198,7 +218,7 @@ def main():
 
     # Create a SMACH state machine
     sm = smach.StateMachine(outcomes=['END_SM'])
-    sm.userdata.sm_counter = 1
+    sm.userdata.window_size = 1
     sm.userdata.bag_family = "static" #TODO
 
 
@@ -218,6 +238,8 @@ def main():
                                           'foo_counter_out':'sm_counter'})
 
     monitoring_sm = smach.StateMachine(outcomes=['END_MONITORING_SM'])
+    monitoring_sm.userdata.acc_results = list()
+    monitoring_sm.userdata.cam_results = list()
     #experiment_type = "collisions_counter" #TODO
     experiment_type = "threshold_calculator" #TODO
 
@@ -225,12 +247,16 @@ def main():
         smach.StateMachine.add('WAIT_FOR_READER', smach_ros.MonitorState("/sm_reset", Empty, monitor_cb),
                                 transitions={'invalid':'MONITOR', 'valid':'WAIT_FOR_READER', 'preempted':'WAIT_FOR_READER'})
         smach.StateMachine.add('MONITOR', Monitor(experiment_type),
-                       transitions={'NEXT_MONITOR':'WAIT_FOR_READER', 'END_MONITOR':'END_MONITORING_SM'})
+                       transitions={'NEXT_MONITOR':'WAIT_FOR_READER', 'END_MONITOR':'END_MONITORING_SM'},
+                       remapping={'acc_cum':'acc_results',
+                                  'cam_cum':'cam_results'})
 
     # Open the container
     with sm:
         smach.StateMachine.add('SETUP', Setup(),
-                       transitions={'SETUP_DONE':'CON', 'FINISH': 'END_SM'})
+                       transitions={'SETUP_DONE':'CON', 'FINISH': 'PLOT_RESULTS'},
+                       remapping={'counter_in':'window_size',
+                                  'counter_out':'window_size'})
 
         #Concurrent
         sm_con = smach.Concurrence(outcomes=['END_CON'],
@@ -251,6 +277,9 @@ def main():
         smach.StateMachine.add('CON', sm_con,
                        transitions={#'RESTART':'CON',
                                     'END_CON':'SETUP'})
+        smach.StateMachine.add('PLOT_RESULTS', Plotter(),
+                       transitions={'PLOT_DONE':'END_SM'})
+
     # Execute SMACH plan
     #rospy.sleep(10)
     #outcome = sm.execute()
