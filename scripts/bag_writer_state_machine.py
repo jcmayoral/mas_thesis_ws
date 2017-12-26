@@ -1,9 +1,10 @@
 import rosbag
 import rospy
 import smach
-import smach_ros
+from smach_ros import SimpleActionState
 import roslib
 import actionlib
+from actionlib_msgs.msg import GoalStatus
 from geometry_msgs.msg import AccelStamped, Twist
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Image, LaserScan
@@ -55,44 +56,46 @@ class MyBagRecorder(smach.State):
         self.bag.close()
         self.is_finished = True
 
-class MoveClient():
-    def __init__(self):
-        client = actionlib.SimpleActionClient('move_base_safe_server', MoveBaseSafeAction)
-        client.wait_for_server()
-        smach.State.__init__(self,
-                             outcomes=['GOAL_ACHIEVED','GOAL_NOT_ACHIEVED'],
-                             input_keys=['goal_location'])
-
-    def execute(self,userdata)
-        goal = MoveBaseSafeGoal()
-        goal.arm_safe_position = 'folded'
-        try:
-            goal.source_location = "START"
-            goal.destination_location = userdata.goal_location
-            timeout = 150.0
-            rospy.loginfo('Sending action lib goal to move_base_safe_server, source : ' +
-                            goal.source_location + ' , destination : ' + goal.destination_location)
-            client.send_goal(goal)
-            client.wait_for_result(rospy.Duration.from_sec(int(timeout)))
-            print client.get_result()
-            return "GOAL_ACHIEVED"
-       except:
-           pass
-       else:
-           rospy.logerr('Arguments were not received in the proper format !')
-           rospy.loginfo('usage : move_base_safe SOURCE DESTINATION')
-
-
 rospy.init_node("my_bag_recorder")
 
 file_name = 'test'
+#bagRecord = MyBagRecorder(file_name)
 
-if len(sys.argv) > 1:
-  file_name=str(sys.argv[1])
+#while not rospy.is_shutdown():
+#    rospy.spin()
 
-bagRecord = MyBagRecorder(file_name)
+ #smach.StateMachine.add('SEND_GOAL',
+#                           SimpleActionState('action_server_namespace',
+#                                             MoveBaseSafeAction),
+#                           transitions={'succeeded':'APPROACH_PLUG'})
 
-while not rospy.is_shutdown():
-    rospy.spin()
+sm = smach.StateMachine(['succeeded','aborted','preempted','END_SM'])
+sm.userdata.goal_location = "couch_table"
+with sm:
+    def goal_cb(userdata, goal):
+        print "Sending to " , userdata.goal_location
+        goal = MoveBaseSafeGoal()
+        goal.arm_safe_position = 'folded'
+        goal.source_location = 'START'
+        goal.destination_location = userdata.goal_location
+        return goal
 
-bagRecord.close()
+    def result_cb(userdata, status, result):
+        print type(status)
+        print result
+        if status == GoalStatus.SUCCEEDED or status == GoalStatus.PREEMPTED:
+            return 'succeeded'
+
+    smach.StateMachine.add('TRIGGER_MOVE',
+                      SimpleActionState('move_base_safe_server',
+                                        MoveBaseSafeAction,
+                                        goal_cb=goal_cb,
+                                        result_cb=result_cb,
+                                        server_wait_timeout=rospy.Duration(200.0),
+                                        exec_timeout = rospy.Duration(150.0),
+                                        input_keys=['goal_location']),
+                      transitions={'succeeded':'END_SM', 'aborted':'END_SM'},
+                      remapping={'gripper_input':'userdata_input'})
+
+#bagRecord.close()
+outcome = sm.execute()
