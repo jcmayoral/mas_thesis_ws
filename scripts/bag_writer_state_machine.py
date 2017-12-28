@@ -11,12 +11,29 @@ from sensor_msgs.msg import Image, LaserScan
 import sys
 from mdr_move_base_safe.msg import MoveBaseSafeAction, MoveBaseSafeGoal
 
+class Setup(smach.State):
+    def __init__(self):
+        smach.State.__init__(self,
+                             outcomes=['SETUP_DONE', 'FINISH_REQUEST'],
+                             input_keys=['counter_in', 'restart_requested'],
+                             output_keys=['counter_out', 'restart_requested_out'])
+
+    def execute(self, userdata):
+        rospy.loginfo('Executing SETUP')
+        rospy.sleep(0.5)
+        if userdata.counter_in < 3:
+            userdata.counter_out = userdata.counter_in +1
+            userdata.restart_requested_out = True
+            return 'SETUP_DONE'
+        else:
+            userdata.restart_requested_out = None
+            return 'FINISH_REQUEST'
 
 class MyBagRecorder(smach.State):
-    def __init__(self,file_name):
+    def __init__(self):
         self.busy = False
-        self.bag = rosbag.Bag(file_name +'.bag', 'w')
-        self.is_finished = False
+        self.bag = rosbag.Bag('starter.bag', 'w')
+        #self.is_finished = False
         rospy.Subscriber("/accel", AccelStamped, self.mainCB, "/accel")
         rospy.Subscriber("/cmd_vel", Twist, self.mainCB, "/cmd_vel")
         rospy.Subscriber("/base/twist_mux/command_navigation", Twist, self.mainCB, "/base/twist_mux/command_navigation")
@@ -29,17 +46,30 @@ class MyBagRecorder(smach.State):
         rospy.Subscriber("/cam3d/rgb/image_raw", Image, self.mainCB, "/cam3d/rgb/image_raw")
 
         smach.State.__init__(self,
-                             outcomes=['RESTART_RECORD','END_RECORD'],
-                             input_keys=['foo_counter_in', 'shared_string'],
-                             output_keys=['foo_counter_out'])
+                             outcomes=['RECORD_STARTED','END_RECORD'],
+                             input_keys=['counter_in', 'shared_string', 'restart_requested'],
+                             output_keys=['counter_out', 'restart_requested_out'])
         rospy.loginfo("Initializing")
 
     def execute(self, userdata):
 
-        while not self.is_finished:
-            pass
+        #while not self.is_finished:
+        #    pass
 
-        self.is_finished = False
+        #self.is_finished = False
+
+        if userdata.restart_requested:
+            print ("NEW FILE")
+            self.close()
+            self.bag = rosbag.Bag(userdata.shared_string + str(userdata.counter_in) +'.bag', 'w')
+            #userdata.counter_out = userdata.counter_in + 1
+            userdata.restart_requested_out = False
+            return "RECORD_STARTED"
+
+        if userdata.restart_requested is None:
+            print ("EXITING")
+            self.close()
+            return "END_RECORD"
 
     def writeToBag(self,topic, msgs):
         while (self.busy is True):
@@ -54,7 +84,7 @@ class MyBagRecorder(smach.State):
     def close(self):
         rospy.loginfo("Closing Bag File")
         self.bag.close()
-        self.is_finished = True
+        #self.is_finished = True
 
 rospy.init_node("my_bag_recorder")
 
@@ -71,6 +101,10 @@ file_name = 'test'
 
 sm = smach.StateMachine(['succeeded','aborted','preempted','END_SM'])
 sm.userdata.goal_location = "couch_table"
+sm.userdata.sm_counter = 0
+sm.userdata.bag_family = "testing_bag"
+sm.userdata.restart_requested = True
+
 with sm:
     def goal_cb(userdata, goal):
         print "Sending to " , userdata.goal_location
@@ -86,6 +120,19 @@ with sm:
         if status == GoalStatus.SUCCEEDED or status == GoalStatus.PREEMPTED:
             return 'succeeded'
 
+    smach.StateMachine.add('SETUP', Setup(),
+                       transitions={'SETUP_DONE':'START_WRITER', 'FINISH_REQUEST': 'START_WRITER'},
+                       remapping={'counter_in':'sm_counter',
+                                  'counter_out':'sm_counter',
+                                  'restart_requested_out':'restart_requested'})
+
+    smach.StateMachine.add('START_WRITER', MyBagRecorder(),
+                   transitions={'RECORD_STARTED':'TRIGGER_MOVE', 'END_RECORD': 'END_SM'},
+                   remapping={'counter_in':'sm_counter',
+                              'counter_out':'sm_counter',
+                              'shared_string':'bag_family',
+                              'restart_requested_out':'restart_requested'})
+
     smach.StateMachine.add('TRIGGER_MOVE',
                       SimpleActionState('move_base_safe_server',
                                         MoveBaseSafeAction,
@@ -94,8 +141,7 @@ with sm:
                                         server_wait_timeout=rospy.Duration(200.0),
                                         exec_timeout = rospy.Duration(150.0),
                                         input_keys=['goal_location']),
-                      transitions={'succeeded':'END_SM', 'aborted':'END_SM'},
-                      remapping={'gripper_input':'userdata_input'})
+                      transitions={'succeeded':'SETUP', 'aborted':'SETUP'})
 
 #bagRecord.close()
 outcome = sm.execute()
