@@ -61,8 +61,10 @@ class MyBagRecorder(smach.State):
         if userdata.restart_requested:
             print ("NEW FILE")
             self.close()
+            self.busy = True # Filter error of cb when file is already closed
             self.bag = rosbag.Bag(userdata.shared_string + str(userdata.counter_in) +'.bag', 'w')
             #userdata.counter_out = userdata.counter_in + 1
+            self.busy = False # End Filter
             userdata.restart_requested_out = False
             return "RECORD_STARTED"
 
