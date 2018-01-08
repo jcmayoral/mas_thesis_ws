@@ -8,6 +8,7 @@ from actionlib_msgs.msg import GoalStatus
 from geometry_msgs.msg import AccelStamped, Twist
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Image, LaserScan
+import random
 import sys
 from mdr_move_base_safe.msg import MoveBaseSafeAction, MoveBaseSafeGoal
 
@@ -60,6 +61,7 @@ class MyBagRecorder(smach.State):
 
         if userdata.restart_requested:
             print ("NEW FILE")
+            rospy.sleep(0.5)
             self.close()
             self.is_finished = True # Filter error of cb when file is already closed
             self.bag = rosbag.Bag(userdata.shared_string + str(userdata.counter_in) +'.bag', 'w')
@@ -104,18 +106,28 @@ file_name = 'test'
 #                           transitions={'succeeded':'APPROACH_PLUG'})
 
 sm = smach.StateMachine(['succeeded','aborted','preempted','END_SM'])
-sm.userdata.goal_location = "couch_table"
+sm.userdata.goal_location = list()
+sm.userdata.goal_location.append("couch_table")
+sm.userdata.goal_location.append("kitchen")
+sm.userdata.last_location = "START"
 sm.userdata.sm_counter = 0
 sm.userdata.bag_family = "testing_bag"
 sm.userdata.restart_requested = True
 
 with sm:
     def goal_cb(userdata, goal):
-        print "Sending to " , userdata.goal_location
+
+        while True:
+            current_goal = random.choice(userdata.goal_location)
+            if not current_goal == userdata.last_location:
+                break
+
+        print "Sending to " , current_goal
         goal = MoveBaseSafeGoal()
         goal.arm_safe_position = 'folded'
         goal.source_location = 'START'
-        goal.destination_location = userdata.goal_location
+        goal.destination_location = current_goal
+        userdata.last_location = current_goal
         return goal
 
     def result_cb(userdata, status, result):
@@ -144,7 +156,8 @@ with sm:
                                         result_cb=result_cb,
                                         server_wait_timeout=rospy.Duration(200.0),
                                         exec_timeout = rospy.Duration(150.0),
-                                        input_keys=['goal_location']),
+                                        input_keys=['goal_location', 'last_location'],
+                                        output_keys=['last_location']),
                       transitions={'succeeded':'SETUP', 'aborted':'SETUP'})
 
 #bagRecord.close()
