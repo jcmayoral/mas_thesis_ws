@@ -110,6 +110,7 @@ sm.userdata.goal_location = list()
 sm.userdata.goal_location.append("couch_table")
 sm.userdata.goal_location.append("kitchen")
 sm.userdata.goal_location.append("dinner_table")
+sm.userdata.goal_location.append("kitchen")
 sm.userdata.last_location = "START"
 sm.userdata.sm_counter = 0
 sm.userdata.bag_family = "testing_bag"
