@@ -16,13 +16,14 @@ class FusionLaser(ChangeDetection):
         self.msg = 0
         self.window_size = cusum_window_size
         self.frame = frame
-        self.sensor_id = sensor_id
-        self.threshold = threshold
+        self.threshold = kkthreshold
         self.weight = 1.0
         ChangeDetection.__init__(self,721)
         rospy.init_node("laser_fusion", anonymous=False)
         rospy.Subscriber("/scan_unified", LaserScan, self.laserCB)
-        self.pub = rospy.Publisher('collisions_3', sensorFusionMsg, queue_size=10)
+        sensor_number = rospy.get_param("~sensor_number", 0)
+        self.sensor_id = rospy.get_param("~sensor_id", sensor_id)
+        self.pub = rospy.Publisher('collisions_'+ str(sensor_number), sensorFusionMsg, queue_size=10)
         self.dyn_reconfigure_srv = Server(laserConfig, self.dynamic_reconfigureCB)
         rospy.spin()
 
