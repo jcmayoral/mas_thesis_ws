@@ -16,7 +16,6 @@ class FusionMicrophone(ChangeDetection):
         self.msg = 0
         self.window_size = cusum_window_size
         self.frame = frame
-        self.sensor_id = sensor_id
         self.threshold = threshold
         self.frames_number = frames_number
         self.weight = 1.0
@@ -30,8 +29,9 @@ class FusionMicrophone(ChangeDetection):
                             frames_per_buffer=1024)
         self.stream.start_stream()
         r = rospy.Rate(10)
-        self.pub = rospy.Publisher('collisions_1', sensorFusionMsg, queue_size=10)
-
+        sensor_number = rospy.get_param("~sensor_number", 0)
+        self.sensor_id = rospy.get_param("~sensor_id", sensor_id)
+        self.pub = rospy.Publisher('collisions_'+ str(sensor_number), sensorFusionMsg, queue_size=10)
         self.dyn_reconfigure_srv = Server(microphoneConfig, self.dynamic_reconfigureCB)
 
         while not rospy.is_shutdown():

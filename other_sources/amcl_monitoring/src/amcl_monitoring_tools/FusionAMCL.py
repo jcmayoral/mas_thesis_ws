@@ -17,13 +17,14 @@ class FusionAMCL(ChangeDetection):
         self.msg = 0
         self.window_size = cusum_window_size
         self.frame = frame
-        self.sensor_id = sensor_id
         self.threshold = threshold
         self.weight = 1.0
         ChangeDetection.__init__(self,3)
         rospy.init_node("amcl_fusion", anonymous=False)
         rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.amclCB)
-        self.pub = rospy.Publisher('collisions_1', sensorFusionMsg, queue_size=10)
+        sensor_number = rospy.get_param("~sensor_number", 0)
+        self.sensor_id = rospy.get_param("~sensor_id", sensor_id)
+        self.pub = rospy.Publisher('collisions_'+ str(sensor_number), sensorFusionMsg, queue_size=10)
         self.dyn_reconfigure_srv = Server(amclConfig, self.dynamic_reconfigureCB)
         rospy.spin()
 

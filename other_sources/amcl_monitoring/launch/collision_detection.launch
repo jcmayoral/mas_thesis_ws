@@ -1,12 +1,13 @@
 <?xml version="1.0"?>
 
 <launch>
-  
-  <arg name="sensor_id" default="cam1" />
 
-  <node pkg="vision_utils_ros" type="vision_utils_ros" respawn="false" name="vision_utils_ros" output="screen">
-    <remap from="~/camera" to="/cam3d/rgb/image_raw"/>
+  <arg name="sensor_id" default="lidar_1" />
+  <arg name="sensor_number" default="4" />
+
+  <node pkg="amcl_monitoring" type="amcl_for_fusion" respawn="false" name="amcl_collisions" output="screen">
     <param name="sensor_id" type="string" value="$(arg sensor_id)"/>
+    <param name="sensor_number" type="int" value="$(arg sensor_number)"/>
   </node>
-</launch>
 
+</launch>

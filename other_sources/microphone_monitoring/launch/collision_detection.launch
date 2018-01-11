@@ -1,12 +1,13 @@
 <?xml version="1.0"?>
 
 <launch>
-  
-  <arg name="sensor_id" default="cam1" />
 
-  <node pkg="vision_utils_ros" type="vision_utils_ros" respawn="false" name="vision_utils_ros" output="screen">
+  <arg name="sensor_id" default="mic_1" />
+  <arg name="sensor_number" default="3" />
+
+  <node pkg="microphone_monitoring" type="microphone_for_fusion" respawn="false" name="mic_collisions" output="screen">
     <remap from="~/camera" to="/cam3d/rgb/image_raw"/>
     <param name="sensor_id" type="string" value="$(arg sensor_id)"/>
+    <param name="sensor_number" type="int" value="$(arg sensor_number)"/>
   </node>
 </launch>
-

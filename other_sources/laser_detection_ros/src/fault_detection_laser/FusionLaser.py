@@ -16,7 +16,7 @@ class FusionLaser(ChangeDetection):
         self.msg = 0
         self.window_size = cusum_window_size
         self.frame = frame
-        self.threshold = kkthreshold
+        self.threshold = threshold
         self.weight = 1.0
         ChangeDetection.__init__(self,721)
         rospy.init_node("laser_fusion", anonymous=False)
