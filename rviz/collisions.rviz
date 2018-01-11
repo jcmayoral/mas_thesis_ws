@@ -5,12 +5,9 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
-        - /Diagnosis1
         - /Diagnosis1/Description1
         - /Diagnosis1/Description1/potential_orientations_collisions1
-        - /Camera_C_Detector1
         - /Camera_C_Detector1/Image1
-        - /MarkerArray1
       Splitter Ratio: 0.5
     Tree Height: 595
   - Class: rviz/Selection
@@ -31,7 +28,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: LaserScan
+    SyncSource: ""
 Visualization Manager:
   Class: ""
   Displays:
@@ -583,6 +580,18 @@ Visualization Manager:
         {}
       Queue Size: 100
       Value: true
+    - Class: rviz/Group
+      Displays:
+        - Arrow Length: 0.3
+          Class: rviz/PoseArray
+          Color: 255; 25; 0
+          Enabled: true
+          Name: Measured Collision Orientations
+          Topic: ""
+          Unreliable: false
+          Value: true
+      Enabled: true
+      Name: Isolation
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
