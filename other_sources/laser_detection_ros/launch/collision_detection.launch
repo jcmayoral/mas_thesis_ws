@@ -2,11 +2,10 @@
 
 <launch>
 
-  <arg name="sensor_id" default="cam1" />
-  <arg name="sensor_number" default="1" />
+  <arg name="sensor_id" default="lidar_1" />
+  <arg name="sensor_number" default="2" />
 
-  <node pkg="vision_utils_ros" type="vision_utils_ros" respawn="false" name="vision_utils_ros" output="screen">
-    <remap from="~/camera" to="/cam3d/rgb/image_raw"/>
+  <node pkg="laser_detection_ros" type="laser_for_fusion" respawn="false" name="laser_collisions" output="screen">
     <param name="sensor_id" type="string" value="$(arg sensor_id)"/>
     <param name="sensor_number" type="int" value="$(arg sensor_number)"/>
   </node>
