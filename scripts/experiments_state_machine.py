@@ -23,6 +23,7 @@ from std_msgs.msg import Empty, String
 from fusion_msgs.msg import sensorFusionMsg
 from dynamic_reconfigure.client import Client
 import numpy as np
+import matplotlib.pyplot as plt
 
 # define state ReadBag
 class MyBagReader(smach.State):
@@ -135,9 +136,15 @@ class Setup(smach.State):
 class Plotter(smach.State):
     def __init__(self):
         smach.State.__init__(self,
-                             outcomes=['PLOT_DONE'])
+                             outcomes=['PLOT_DONE'],
+                             input_keys=['data_in', 'data_in'])
     def execute(self, userdata):
         rospy.loginfo('Executing SETUP')
+        plt.plot(userdata.data_in)
+        f = open( 'file', 'w' )
+        for item in userdata.data_in:
+            f.write("'{0}'".format(item))
+        f.close()
         rospy.sleep(0.5)
         return 'PLOT_DONE'
 
@@ -274,11 +281,14 @@ def main():
             smach.Concurrence.add('READ_SM', reading_sm)
             smach.Concurrence.add('MONITORING_SM', monitoring_sm)
 
+        sm.userdata.data_in = monitoring_sm.userdata.acc_results #TODO
+
         smach.StateMachine.add('CON', sm_con,
                        transitions={#'RESTART':'CON',
                                     'END_CON':'SETUP'})
         smach.StateMachine.add('PLOT_RESULTS', Plotter(),
-                       transitions={'PLOT_DONE':'END_SM'})
+                       transitions={'PLOT_DONE':'END_SM'},
+                       remapping={'data_in': 'data_in'})
 
     # Execute SMACH plan
     #rospy.sleep(10)
@@ -291,6 +301,7 @@ def main():
     # Execute the state machine
     outcome = sm.execute()
     # Wait for ctrl-c to stop the application
+    plt.show()
     sis.stop()
 
 if __name__ == '__main__':
