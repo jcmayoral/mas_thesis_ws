@@ -72,7 +72,7 @@ class MyBagReader(smach.State):
         self.bag.close()
 
 
-        if userdata.foo_counter_in < 35:  #n number of bag files
+        if userdata.foo_counter_in < 35:  #n number of bag files // TODO default 35
             userdata.foo_counter_out = userdata.foo_counter_in + 1
             fb = String()
             fb.data = "NEXT_BAG"
@@ -127,8 +127,8 @@ class Setup(smach.State):
         rospy.loginfo('Executing SETUP')
         self.acc_client.update_configuration({"window_size": userdata.counter_in})
         rospy.sleep(0.5)
-        if userdata.counter_in < 20:
-            userdata.counter_out = userdata.counter_in +1
+        if userdata.counter_in < 50: # Define max TODO
+            userdata.counter_out = userdata.counter_in + 3
             return 'SETUP_DONE'
         else:
             return 'FINISH'
@@ -140,10 +140,14 @@ class Plotter(smach.State):
                              input_keys=['data_in', 'data_in'])
     def execute(self, userdata):
         rospy.loginfo('Executing SETUP')
-        plt.plot(userdata.data_in)
+        data = np.array(userdata.data_in)
+        plt.plot(data, label='accelerometer')
+        plt.title('Acceleromter Thresholding') # subplot 211 title
+        plt.savefig('accelerometer_threshold.png') # TODO
+
         f = open( 'file', 'w' )
         for item in userdata.data_in:
-            f.write("'{0}'".format(item))
+            f.write("'{0}'/n".format(item))
         f.close()
         rospy.sleep(0.5)
         return 'PLOT_DONE'
@@ -225,7 +229,7 @@ def main():
 
     # Create a SMACH state machine
     sm = smach.StateMachine(outcomes=['END_SM'])
-    sm.userdata.window_size = 1
+    sm.userdata.window_size = 2
     sm.userdata.bag_family = "static" #TODO
 
 
