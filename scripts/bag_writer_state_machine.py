@@ -22,7 +22,7 @@ class Setup(smach.State):
     def execute(self, userdata):
         rospy.loginfo('Executing SETUP')
         rospy.sleep(0.5)
-        if userdata.counter_in < 3:
+        if userdata.counter_in < 50:
             userdata.counter_out = userdata.counter_in +1
             userdata.restart_requested_out = True
             return 'SETUP_DONE'
@@ -33,8 +33,8 @@ class Setup(smach.State):
 class MyBagRecorder(smach.State):
     def __init__(self):
         self.busy = False
-        self.bag = rosbag.Bag('starter.bag', 'w')
         self.is_finished = False
+        self.is_bag_started = False
         rospy.Subscriber("/accel", AccelStamped, self.mainCB, "/accel")
         rospy.Subscriber("/cmd_vel", Twist, self.mainCB, "/cmd_vel")
         rospy.Subscriber("/base/twist_mux/command_navigation", Twist, self.mainCB, "/base/twist_mux/command_navigation")
@@ -45,12 +45,18 @@ class MyBagRecorder(smach.State):
         rospy.Subscriber("/scan_unified", LaserScan, self.mainCB, "/scan_unified")
         rospy.Subscriber("/arm_cam3d/rgb/image_raw", Image, self.mainCB, "/arm_cam3d/rgb/image_raw")
         rospy.Subscriber("/cam3d/rgb/image_raw", Image, self.mainCB, "/cam3d/rgb/image_raw")
-
+        self.startBag()
         smach.State.__init__(self,
                              outcomes=['RECORD_STARTED','END_RECORD'],
                              input_keys=['counter_in', 'shared_string', 'restart_requested'],
                              output_keys=['counter_out', 'restart_requested_out'])
         rospy.loginfo("Initializing")
+
+    def startBag(self):
+        self.bag = rosbag.Bag('starter.bag', 'w')
+        self.is_finished = False
+        self.is_bag_started= True
+        rospy.sleep(5)
 
     def execute(self, userdata):
 
@@ -66,6 +72,8 @@ class MyBagRecorder(smach.State):
             self.is_finished = True # Filter error of cb when file is already closed
             self.bag = rosbag.Bag(userdata.shared_string + str(userdata.counter_in) +'.bag', 'w')
             #userdata.counter_out = userdata.counter_in + 1
+            self.is_bag_started = True
+            rospy.sleep(0.5)
             self.is_finished = False # End Filter
             userdata.restart_requested_out = False
             return "RECORD_STARTED"
@@ -80,7 +88,7 @@ class MyBagRecorder(smach.State):
         while (self.busy):
             pass
         self.busy = True
-        if not self.is_finished:
+        if not self.is_finished and self.is_bag_started:
             self.bag.write(topic, msgs)
         self.busy = False
 
@@ -89,6 +97,7 @@ class MyBagRecorder(smach.State):
 
     def close(self):
         rospy.loginfo("Closing Bag File")
+        self.is_bag_started = False
         self.bag.close()
         self.is_finished = True
 
@@ -109,11 +118,15 @@ sm = smach.StateMachine(['succeeded','aborted','preempted','END_SM'])
 sm.userdata.goal_location = list()
 sm.userdata.goal_location.append("couch_table")
 sm.userdata.goal_location.append("kitchen")
-sm.userdata.goal_location.append("dinner_table")
-sm.userdata.goal_location.append("kitchen")
+#sm.userdata.goal_location.append("dinner_table")
+sm.userdata.goal_location.append("narrow_passge")
+sm.userdata.goal_location.append("small_dining_room")
+#sm.userdata.goal_location.append("lamp")
+#sm.userdata.goal_location.append("exit")
+sm.userdata.goal_location.append("exit")
 sm.userdata.last_location = "START"
-sm.userdata.sm_counter = 0
-sm.userdata.bag_family = "testing_bag"
+sm.userdata.sm_counter = 31
+sm.userdata.bag_family = "cob3-attempt-2001-"#"testing_bag"
 sm.userdata.restart_requested = True
 
 with sm:
