@@ -22,7 +22,7 @@ class Setup(smach.State):
     def execute(self, userdata):
         rospy.loginfo('Executing SETUP')
         rospy.sleep(0.5)
-        if userdata.counter_in < 50:
+        if userdata.counter_in < 70:
             userdata.counter_out = userdata.counter_in +1
             userdata.restart_requested_out = True
             return 'SETUP_DONE'
@@ -125,7 +125,7 @@ sm.userdata.goal_location.append("small_dining_room")
 #sm.userdata.goal_location.append("exit")
 sm.userdata.goal_location.append("exit")
 sm.userdata.last_location = "START"
-sm.userdata.sm_counter = 31
+sm.userdata.sm_counter = 50
 sm.userdata.bag_family = "cob3-attempt-2001-"#"testing_bag"
 sm.userdata.restart_requested = True
 
@@ -137,7 +137,7 @@ with sm:
             if not current_goal == userdata.last_location:
                 break
 
-        print "Sending to " , current_goal
+        print "Sending to " , current_goal, " File Number " , userdata.sm_counter
         goal = MoveBaseSafeGoal()
         goal.arm_safe_position = 'folded'
         goal.source_location = 'START'
@@ -171,7 +171,7 @@ with sm:
                                         result_cb=result_cb,
                                         server_wait_timeout=rospy.Duration(200.0),
                                         exec_timeout = rospy.Duration(150.0),
-                                        input_keys=['goal_location', 'last_location'],
+                                        input_keys=['goal_location', 'last_location', 'sm_counter'],
                                         output_keys=['last_location']),
                       transitions={'succeeded':'SETUP', 'aborted':'SETUP'})
 
