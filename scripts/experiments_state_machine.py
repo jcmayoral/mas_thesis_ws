@@ -121,8 +121,8 @@ class Setup(smach.State):
     def __init__(self):
         smach.State.__init__(self,
                              outcomes=['SETUP_DONE', 'FINISH'],
-                             input_keys=['counter_in'],
-                             output_keys=['counter_out'])
+                             input_keys=['counter_in','acc_results', 'cam_results', 'result_cum', 'results_'],
+                             output_keys=['counter_out','acc_results', 'cam_results', 'result_cum', 'results_'])
         #rospy.spin()
         self.acc_client = Client("accelerometer_process", timeout=3, config_callback=self.callback)
         self.cam_client = Client("vision_utils_ros", timeout=3, config_callback=self.callback)
@@ -141,10 +141,12 @@ class Setup(smach.State):
         self.acc_client.update_configuration({"reset": True})
         self.cam_client.update_configuration({"mode": 1})
         rospy.sleep(0.5)
-        if userdata.counter_in < 30: # Define max TODO
+        if userdata.counter_in < 50: # Define max TODO
             userdata.counter_out = userdata.counter_in + 5
             return 'SETUP_DONE'
         else:
+            userdata.results_['accel'] = userdata.acc_results
+            userdata.results_['cam'] = userdata.cam_results
             return 'FINISH'
 
 class Plotter(smach.State):
@@ -168,7 +170,7 @@ class Plotter(smach.State):
         plt.savefig('camera_motion_threshold.png') # TODO
 
         f = open( 'file', 'w' )
-        for key, value in user.data_in.iteritems():
+        for key, value in userdata.data_in.iteritems():
         #for item in userdata.data_in:
             f.write("'{0}'/n".format(key))
             f.write("'{0}'/n".format(value))
@@ -198,7 +200,7 @@ class Monitor(smach.State):
                 rospy.Subscriber("/collisions_"+str(i), sensorFusionMsg, self.threshold_cb)
 
     def threshold_cb(self,msg):
-        if msg.sensor_id.data == "accel1":
+        if msg.sensor_id.data == "accelerometer_1":
             self.accel_thr.append(msg.data)
         if msg.sensor_id.data == "cam1":
             self.cam_thr.append(msg.data)
@@ -241,8 +243,6 @@ class Monitor(smach.State):
             del self.cam_thr[:]
             return 'END_MONITOR'
         else:
-            userdata.result_cum['accel'] = userdata.acc_cum
-            userdata.result_cum['cam'] = userdata.cam_cum
             #print ("NEXT_MONITOR")
             return 'NEXT_MONITOR'
 
@@ -257,6 +257,9 @@ def main():
     sm = smach.StateMachine(outcomes=['END_SM'])
     sm.userdata.window_size = 2
     sm.userdata.bag_family = "static" #TODO
+    sm.userdata.results_ = dict()
+    sm.userdata.acc_results = list()
+    sm.userdata.cam_results = list()
 
 
     reading_sm = smach.StateMachine(outcomes=['END_READING_SM'])
@@ -275,9 +278,10 @@ def main():
                                           'foo_counter_out':'sm_counter'})
 
     monitoring_sm = smach.StateMachine(outcomes=['END_MONITORING_SM'])
-    monitoring_sm.userdata.results_ = dict()
-    monitoring_sm.userdata.acc_results = list()
-    monitoring_sm.userdata.cam_results = list()
+    monitoring_sm.userdata.results_ = sm.userdata.results_
+    monitoring_sm.userdata.acc_results = sm.userdata.acc_results
+    monitoring_sm.userdata.cam_results = sm.userdata.cam_results
+
     #experiment_type = "collisions_counter" #TODO
     experiment_type = "threshold_calculator" #TODO
 
@@ -286,16 +290,19 @@ def main():
                                 transitions={'invalid':'MONITOR', 'valid':'WAIT_FOR_READER', 'preempted':'WAIT_FOR_READER'})
         smach.StateMachine.add('MONITOR', Monitor(experiment_type),
                        transitions={'NEXT_MONITOR':'WAIT_FOR_READER', 'END_MONITOR':'END_MONITORING_SM'},
-                       remapping={'acc_cum':'acc_results',
-                                  'cam_cum':'cam_results',
-                                  'result_cum':'results_'})
+                       remapping={'result_cum':'results_',
+                                  'acc_cum':'acc_results',
+                                  'cam_cum':'cam_results',})
 
     # Open the container
     with sm:
         smach.StateMachine.add('SETUP', Setup(),
                        transitions={'SETUP_DONE':'CON', 'FINISH': 'PLOT_RESULTS'},
                        remapping={'counter_in':'window_size',
-                                  'counter_out':'window_size'})
+                                  'counter_out':'window_size',
+                                  'result_cum':'results_',
+                                  'acc_cum':'acc_results',
+                                  'cam_cum':'cam_results'})
 
         #Concurrent
         sm_con = smach.Concurrence(outcomes=['END_CON'],
