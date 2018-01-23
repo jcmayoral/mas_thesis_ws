@@ -29,7 +29,9 @@ import matplotlib.pyplot as plt
 class MyBagReader(smach.State):
     def __init__(self):
         mytypes = [AccelStamped, Twist, Odometry, Odometry, LaserScan, LaserScan, LaserScan, Image, Image]
-        self.path = '/home/jose/ROS/thesis_ws/my_ws/rosbag_test/cob3/static_runs_2911/static_runs/' #TODO
+        #self.path = '/home/jose/ROS/thesis_ws/my_ws/rosbag_test/cob3/static_runs_2911/static_runs/' #TODO
+        self.path = '/home/jose/ROS/thesis_ws/my_ws/rosbag_test/cob3/cob-3-test-2001/'
+
         self.mytopics = ["/accel", "/cmd_vel", "/odom", "/base/odometry_controller/odom",
             "/scan_front", "/scan_rear", "/scan_unified",
             "/arm_cam3d/rgb/image_raw","/cam3d/rgb/image_raw"]
@@ -48,31 +50,39 @@ class MyBagReader(smach.State):
     def execute(self, userdata):
         rospy.loginfo('Executing state Reader')
 
-        file_name = self.path + userdata.shared_string + str(userdata.foo_counter_in)+".bag"
-        self.bag = rosbag.Bag(file_name)
+        self.is_file_ok = False
 
-        start_time = self.bag.get_start_time()
-        end_time = self.bag.get_end_time()
-
-        duration_time = end_time - start_time
+        while not self.is_file_ok:
+            try:
+                file_name = self.path + userdata.shared_string + str(userdata.foo_counter_in)+".bag"
+                self.bag = rosbag.Bag(file_name)
+                self.is_file_ok = True
+            except:
+                userdata.foo_counter_out = userdata.foo_counter_in + 1
+                print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
 
         finish_pub = rospy.Publisher("finish_reading", String, queue_size=1)
 
-        r = rospy.Rate(100)
+        try:
+            start_time = self.bag.get_start_time()
+            end_time = self.bag.get_end_time()
+            duration_time = end_time - start_time
+            r = rospy.Rate(200) # Default 100
+            for topic, msg, t in self.bag.read_messages(topics=self.mytopics):
+                print ("ROSBag  Running ", t.to_sec() - start_time, " of " , duration_time, end="\r")
+                for p, topic_name in self.myPublishers:
+                    if topic_name == topic:
+                        #print "printing on ", topic_name
+                        p.publish(msg)
+                        r.sleep()
+                        break
+            print ("\n")
+            self.bag.close()
+        except:
+            print ("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
+            self.bag.close()
 
-        for topic, msg, t in self.bag.read_messages(topics=self.mytopics):
-            print ("ROSBag  Running ", t.to_sec() - start_time, " of " , duration_time, end="\r")
-            for p, topic_name in self.myPublishers:
-                if topic_name == topic:
-                    #print "printing on ", topic_name
-                    p.publish(msg)
-                    r.sleep()
-                    break
-        print ("\n")
-        self.bag.close()
-
-
-        if userdata.foo_counter_in < 35:  #n number of bag files // TODO default 35
+        if userdata.foo_counter_in < 110:  #n number of bag files // TODO default 35
             userdata.foo_counter_out = userdata.foo_counter_in + 1
             fb = String()
             fb.data = "NEXT_BAG"
@@ -111,10 +121,12 @@ class Setup(smach.State):
     def __init__(self):
         smach.State.__init__(self,
                              outcomes=['SETUP_DONE', 'FINISH'],
-                             input_keys=['counter_in'],
-                             output_keys=['counter_out'])
+                             input_keys=['counter_in','acc_results', 'cam_results', 'result_cum', 'results_'],
+                             output_keys=['counter_out','acc_results', 'cam_results', 'result_cum', 'results_'])
         #rospy.spin()
-        self.acc_client = Client("accelerometer_fusion", timeout=3, config_callback=self.callback)
+        self.acc_client = Client("accelerometer_process", timeout=3, config_callback=self.callback)
+        self.cam_client = Client("vision_utils_ros", timeout=3, config_callback=self.callback)
+
         rospy.sleep(0.2)
 
 
@@ -126,11 +138,15 @@ class Setup(smach.State):
     def execute(self, userdata):
         rospy.loginfo('Executing SETUP')
         self.acc_client.update_configuration({"window_size": userdata.counter_in})
+        self.acc_client.update_configuration({"reset": True})
+        self.cam_client.update_configuration({"mode": 1})
         rospy.sleep(0.5)
         if userdata.counter_in < 50: # Define max TODO
-            userdata.counter_out = userdata.counter_in + 3
+            userdata.counter_out = userdata.counter_in + 5
             return 'SETUP_DONE'
         else:
+            userdata.results_['accel'] = userdata.acc_results
+            userdata.results_['cam'] = userdata.cam_results
             return 'FINISH'
 
 class Plotter(smach.State):
@@ -140,14 +156,24 @@ class Plotter(smach.State):
                              input_keys=['data_in', 'data_in'])
     def execute(self, userdata):
         rospy.loginfo('Executing SETUP')
-        data = np.array(userdata.data_in)
-        plt.plot(data, label='accelerometer')
-        plt.title('Acceleromter Thresholding') # subplot 211 title
-        plt.savefig('accelerometer_threshold.png') # TODO
+        plt.figure()
+        data = np.array(userdata.data_in['accel'])
+        plt.plot(data, label='Accelerometer Threshold')
+        plt.legend()
+        plt.title('Accelerometer on Motion Thresholding') # subplot 211 title
+        plt.savefig('accelerometer_motion_threshold.png') # TODO
+        plt.figure()
+        data = np.array(userdata.data_in['accel'])
+        plt.plot(data, label='RGB Camera Result')
+        plt.title('Camera on Motion Thresholding') # subplot 211 title
+        plt.legend()
+        plt.savefig('camera_motion_threshold.png') # TODO
 
         f = open( 'file', 'w' )
-        for item in userdata.data_in:
-            f.write("'{0}'/n".format(item))
+        for key, value in userdata.data_in.iteritems():
+        #for item in userdata.data_in:
+            f.write("'{0}'/n".format(key))
+            f.write("'{0}'/n".format(value))
         f.close()
         rospy.sleep(0.5)
         return 'PLOT_DONE'
@@ -157,8 +183,8 @@ class Monitor(smach.State):
     def __init__(self, experiment_type):
         smach.State.__init__(self,
                              outcomes=['NEXT_MONITOR', 'END_MONITOR'],
-                              input_keys=['acc_cum', 'cam_cum'],
-                              output_keys=['acc_cum', 'cam_cum'])
+                              input_keys=['acc_cum', 'cam_cum', 'result_cum'],
+                              output_keys=['acc_cum', 'cam_cum', 'result_cum'])
         rospy.Subscriber("/finish_reading", String, self.fb_cb)
         self.current_counter = 0
         self.accel_thr = list()
@@ -174,7 +200,7 @@ class Monitor(smach.State):
                 rospy.Subscriber("/collisions_"+str(i), sensorFusionMsg, self.threshold_cb)
 
     def threshold_cb(self,msg):
-        if msg.sensor_id.data == "accel1":
+        if msg.sensor_id.data == "accelerometer_1":
             self.accel_thr.append(msg.data)
         if msg.sensor_id.data == "cam1":
             self.cam_thr.append(msg.data)
@@ -231,11 +257,14 @@ def main():
     sm = smach.StateMachine(outcomes=['END_SM'])
     sm.userdata.window_size = 2
     sm.userdata.bag_family = "static" #TODO
+    sm.userdata.results_ = dict()
+    sm.userdata.acc_results = list()
+    sm.userdata.cam_results = list()
 
 
     reading_sm = smach.StateMachine(outcomes=['END_READING_SM'])
     reading_sm.userdata.sm_counter = 1
-    reading_sm.userdata.bag_family = "static" #TODO
+    reading_sm.userdata.bag_family = "cob3-attempt-2001-" #TODO
 
     with reading_sm:
         smach.StateMachine.add('RESET_READING', RestartReader(),
@@ -249,8 +278,10 @@ def main():
                                           'foo_counter_out':'sm_counter'})
 
     monitoring_sm = smach.StateMachine(outcomes=['END_MONITORING_SM'])
-    monitoring_sm.userdata.acc_results = list()
-    monitoring_sm.userdata.cam_results = list()
+    monitoring_sm.userdata.results_ = sm.userdata.results_
+    monitoring_sm.userdata.acc_results = sm.userdata.acc_results
+    monitoring_sm.userdata.cam_results = sm.userdata.cam_results
+
     #experiment_type = "collisions_counter" #TODO
     experiment_type = "threshold_calculator" #TODO
 
@@ -259,15 +290,19 @@ def main():
                                 transitions={'invalid':'MONITOR', 'valid':'WAIT_FOR_READER', 'preempted':'WAIT_FOR_READER'})
         smach.StateMachine.add('MONITOR', Monitor(experiment_type),
                        transitions={'NEXT_MONITOR':'WAIT_FOR_READER', 'END_MONITOR':'END_MONITORING_SM'},
-                       remapping={'acc_cum':'acc_results',
-                                  'cam_cum':'cam_results'})
+                       remapping={'result_cum':'results_',
+                                  'acc_cum':'acc_results',
+                                  'cam_cum':'cam_results',})
 
     # Open the container
     with sm:
         smach.StateMachine.add('SETUP', Setup(),
                        transitions={'SETUP_DONE':'CON', 'FINISH': 'PLOT_RESULTS'},
                        remapping={'counter_in':'window_size',
-                                  'counter_out':'window_size'})
+                                  'counter_out':'window_size',
+                                  'result_cum':'results_',
+                                  'acc_cum':'acc_results',
+                                  'cam_cum':'cam_results'})
 
         #Concurrent
         sm_con = smach.Concurrence(outcomes=['END_CON'],
@@ -285,7 +320,8 @@ def main():
             smach.Concurrence.add('READ_SM', reading_sm)
             smach.Concurrence.add('MONITORING_SM', monitoring_sm)
 
-        sm.userdata.data_in = monitoring_sm.userdata.acc_results #TODO
+        #sm.userdata.data_in = monitoring_sm.userdata.acc_results #TODO
+        sm.userdata.data_in = monitoring_sm.userdata.results_ #TODO
 
         smach.StateMachine.add('CON', sm_con,
                        transitions={#'RESTART':'CON',
