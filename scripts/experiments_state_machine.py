@@ -82,7 +82,7 @@ class MyBagReader(smach.State):
             print ("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
             self.bag.close()
 
-        if userdata.foo_counter_in < 5:#110:  #n number of bag files // TODO default 35
+        if userdata.foo_counter_in < 10:#110:  #n number of bag files // TODO default 35
             userdata.foo_counter_out = userdata.foo_counter_in + 1
             fb = String()
             fb.data = "NEXT_BAG"
@@ -144,9 +144,9 @@ class Setup(smach.State):
         self.odom_client.update_configuration({"reset": True})
         self.cam_client.update_configuration({"mode": 1})
         rospy.sleep(0.5)
-        if userdata.counter_in < 15:#0: # Define max TODO
+        if userdata.counter_in < 25:#0: # Define max TODO
+            userdata.x_array.append(userdata.counter_in)
             userdata.counter_out = userdata.counter_in + 5
-            userdata.x_array.append(userdata.counter_in - 5)
             return 'SETUP_DONE'
         else:
             userdata.results_['accel'] = userdata.acc_results
