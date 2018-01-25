@@ -2,4 +2,4 @@
 from odom_monitoring_tools.OdomMonitoring import OdomMonitoring
 
 if __name__ == '__main__':
-    main = OdomMonitoring(4,1,2)
+    main = OdomMonitoring(400,1,100)
