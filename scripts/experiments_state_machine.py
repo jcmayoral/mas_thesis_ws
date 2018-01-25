@@ -28,13 +28,13 @@ import matplotlib.pyplot as plt
 # define state ReadBag
 class MyBagReader(smach.State):
     def __init__(self):
-        mytypes = [AccelStamped, Twist, Odometry, Odometry, LaserScan, LaserScan, LaserScan, Image, Image]
+        mytypes = [AccelStamped, Twist, Odometry, Odometry, LaserScan, LaserScan, LaserScan, Image, Image, Odometry]
         #self.path = '/home/jose/ROS/thesis_ws/my_ws/rosbag_test/cob3/static_runs_2911/static_runs/' #TODO
         self.path = '/home/jose/ROS/thesis_ws/my_ws/rosbag_test/cob3/cob-3-test-2001/'
 
         self.mytopics = ["/accel", "/cmd_vel", "/odom", "/base/odometry_controller/odom",
             "/scan_front", "/scan_rear", "/scan_unified",
-            "/arm_cam3d/rgb/image_raw","/cam3d/rgb/image_raw"]
+            "/arm_cam3d/rgb/image_raw","/cam3d/rgb/image_raw", "/base/odometry_controller/odometry"]
 
         self.myPublishers = list()
 
@@ -67,7 +67,7 @@ class MyBagReader(smach.State):
             start_time = self.bag.get_start_time()
             end_time = self.bag.get_end_time()
             duration_time = end_time - start_time
-            r = rospy.Rate(200) # Default 100
+            r = rospy.Rate(100) # Default 100
             for topic, msg, t in self.bag.read_messages(topics=self.mytopics):
                 print ("ROSBag  Running ", t.to_sec() - start_time, " of " , duration_time, end="\r")
                 for p, topic_name in self.myPublishers:
@@ -82,7 +82,7 @@ class MyBagReader(smach.State):
             print ("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
             self.bag.close()
 
-        if userdata.foo_counter_in < 110:  #n number of bag files // TODO default 35
+        if userdata.foo_counter_in < 5:#110:  #n number of bag files // TODO default 35
             userdata.foo_counter_out = userdata.foo_counter_in + 1
             fb = String()
             fb.data = "NEXT_BAG"
@@ -92,9 +92,9 @@ class MyBagReader(smach.State):
         else:
             fb = String()
             fb.data = "END_BAG"
+            userdata.foo_counter_out = 1
             finish_pub.publish(fb)
             rospy.sleep(2)
-            userdata.foo_counter_out = 1
             return 'END_READER'
 
 class RestartReader(smach.State):
@@ -121,11 +121,12 @@ class Setup(smach.State):
     def __init__(self):
         smach.State.__init__(self,
                              outcomes=['SETUP_DONE', 'FINISH'],
-                             input_keys=['counter_in','acc_results', 'cam_results', 'result_cum', 'results_'],
-                             output_keys=['counter_out','acc_results', 'cam_results', 'result_cum', 'results_'])
+                             input_keys=['counter_in','acc_results', 'cam_results', 'odom_results', 'result_cum', 'results_', 'x_array'],
+                             output_keys=['counter_out','acc_results', 'cam_results', 'odom_results', 'result_cum', 'results_', 'x_array'])
         #rospy.spin()
         self.acc_client = Client("accelerometer_process", timeout=3, config_callback=self.callback)
         self.cam_client = Client("vision_utils_ros", timeout=3, config_callback=self.callback)
+        self.odom_client = Client("odom_collisions", timeout=3, config_callback=self.callback)
 
         rospy.sleep(0.2)
 
@@ -139,35 +140,63 @@ class Setup(smach.State):
         rospy.loginfo('Executing SETUP')
         self.acc_client.update_configuration({"window_size": userdata.counter_in})
         self.acc_client.update_configuration({"reset": True})
+        self.odom_client.update_configuration({"window_size": userdata.counter_in})
+        self.odom_client.update_configuration({"reset": True})
         self.cam_client.update_configuration({"mode": 1})
         rospy.sleep(0.5)
-        if userdata.counter_in < 50: # Define max TODO
+        if userdata.counter_in < 15:#0: # Define max TODO
             userdata.counter_out = userdata.counter_in + 5
+            userdata.x_array.append(userdata.counter_in - 5)
             return 'SETUP_DONE'
         else:
             userdata.results_['accel'] = userdata.acc_results
             userdata.results_['cam'] = userdata.cam_results
+            userdata.results_['odom'] = userdata.odom_results
             return 'FINISH'
 
 class Plotter(smach.State):
     def __init__(self):
         smach.State.__init__(self,
                              outcomes=['PLOT_DONE'],
-                             input_keys=['data_in', 'data_in'])
+                             input_keys=['data_in', 'x_array'])
     def execute(self, userdata):
         rospy.loginfo('Executing SETUP')
+
+        #Accelerometer Plot
         plt.figure()
         data = np.array(userdata.data_in['accel'])
-        plt.plot(data, label='Accelerometer Threshold')
+        x_array = userdata.x_array
+        plt.plot(x_array,data[:,0], label='Accelerometer Threshold X')
+        plt.plot(x_array,data[:,1], label='Accelerometer Threshold Y')
+        plt.plot(x_array,data[:,2], label='Accelerometer Threshold Z')
+        plt.xlabel("Window Size")
+        plt.ylabel("Maximum Threshold Detected")
         plt.legend()
         plt.title('Accelerometer on Motion Thresholding') # subplot 211 title
         plt.savefig('accelerometer_motion_threshold.png') # TODO
+
+        #Camera Plot
         plt.figure()
-        data = np.array(userdata.data_in['accel'])
-        plt.plot(data, label='RGB Camera Result')
+        data = np.array(userdata.data_in['cam'])
+        plt.plot(data[:,0], label='RGB Camera Thresholds')
+        plt.xlabel("Run")
+        plt.ylabel("Maximum Threshold Detected")
         plt.title('Camera on Motion Thresholding') # subplot 211 title
         plt.legend()
         plt.savefig('camera_motion_threshold.png') # TODO
+
+        plt.figure()
+        data = np.array(userdata.data_in['odom'])
+        x_array = userdata.x_array
+        plt.plot(x_array,data[:,0], label='Odometry Threshold X')
+        plt.plot(x_array,data[:,1], label='Odometry Threshold Y')
+        plt.plot(x_array,data[:,2], label='Odometry Threshold Z')
+        plt.xlabel("Window Size")
+        plt.ylabel("Maximum Threshold Detected")
+        plt.legend()
+        plt.title('Odometry Speeds on Motion Thresholding') # subplot 211 title
+        plt.savefig('odometry_motion_threshold.png') # TODO
+
 
         f = open( 'file', 'w' )
         for key, value in userdata.data_in.iteritems():
@@ -175,6 +204,7 @@ class Plotter(smach.State):
             f.write("'{0}'/n".format(key))
             f.write("'{0}'/n".format(value))
         f.close()
+        #plt.show()
         rospy.sleep(0.5)
         return 'PLOT_DONE'
 
@@ -183,27 +213,32 @@ class Monitor(smach.State):
     def __init__(self, experiment_type):
         smach.State.__init__(self,
                              outcomes=['NEXT_MONITOR', 'END_MONITOR'],
-                              input_keys=['acc_cum', 'cam_cum', 'result_cum'],
-                              output_keys=['acc_cum', 'cam_cum', 'result_cum'])
+                              input_keys=['acc_cum', 'cam_cum', 'odom_cum', 'result_cum'],
+                              output_keys=['acc_cum', 'cam_cum', 'odom_cum', 'result_cum'])
         rospy.Subscriber("/finish_reading", String, self.fb_cb)
         self.current_counter = 0
         self.accel_thr = list()
         self.cam_thr = list()
+        self.odom_thr = list()
+
         self.acc_cum = list()
         self.cam_cum = list()
+        self.odom_cum = list()
 
         if experiment_type is "collisions_counter":
-            for i in range(5):
-                rospy.Subscriber("/collisions_"+str(i), sensorFusionMsg, self.counter_cb)
+            for i in range(10):
+                rospy.Subscriber("/collisions_"+str(i), sensorFusionMsg, self.counter_cb, queue_size=100)
         if experiment_type is "threshold_calculator":
-            for i in range(5):
-                rospy.Subscriber("/collisions_"+str(i), sensorFusionMsg, self.threshold_cb)
+            for i in range(10):
+                rospy.Subscriber("/collisions_"+str(i), sensorFusionMsg, self.threshold_cb, queue_size=100)
 
     def threshold_cb(self,msg):
-        if msg.sensor_id.data == "accelerometer_1":
+        if msg.sensor_id.data == "acc_1":
             self.accel_thr.append(msg.data)
-        if msg.sensor_id.data == "cam1":
+        if msg.sensor_id.data == "cam_0":
             self.cam_thr.append(msg.data)
+        if msg.sensor_id.data == "odom":
+            self.odom_thr.append(msg.data)
         #print (msg.data)
 
     def counter_cb(self,msg):
@@ -221,6 +256,7 @@ class Monitor(smach.State):
             #print ("current_counter" , self.current_counter)
             print ("accel_thr" , max(self.accel_thr) , " number of samples " , len(self.accel_thr))
             print ("cam_thr" , max(self.cam_thr), " number of samples " , len(self.cam_thr))
+            print ("odom_thr" , max(self.odom_thr), " number of samples " , len(self.odom_thr))
 
             self.stop_bag_request = True
 
@@ -239,8 +275,11 @@ class Monitor(smach.State):
         if self.stop_bag_request:
             userdata.acc_cum.append(max(self.accel_thr))
             userdata.cam_cum.append(max(self.cam_thr))
+            userdata.odom_cum.append(max(self.odom_thr))
+
             del self.accel_thr[:]
             del self.cam_thr[:]
+            del self.odom_thr[:]
             return 'END_MONITOR'
         else:
             #print ("NEXT_MONITOR")
@@ -255,11 +294,13 @@ def main():
 
     # Create a SMACH state machine
     sm = smach.StateMachine(outcomes=['END_SM'])
-    sm.userdata.window_size = 2
-    sm.userdata.bag_family = "static" #TODO
+    sm.userdata.window_size = 0
+    #sm.userdata.bag_family = "cob3-attempt-2001-" #TODO
+    sm.userdata.window_size_array = list()
     sm.userdata.results_ = dict()
     sm.userdata.acc_results = list()
     sm.userdata.cam_results = list()
+    sm.userdata.odom_results = list()
 
 
     reading_sm = smach.StateMachine(outcomes=['END_READING_SM'])
@@ -281,7 +322,9 @@ def main():
     monitoring_sm.userdata.results_ = sm.userdata.results_
     monitoring_sm.userdata.acc_results = sm.userdata.acc_results
     monitoring_sm.userdata.cam_results = sm.userdata.cam_results
+    monitoring_sm.userdata.odom_results = sm.userdata.odom_results
 
+    #montoring_sm.userdata.window_size_array = sm.window_size_array
     #experiment_type = "collisions_counter" #TODO
     experiment_type = "threshold_calculator" #TODO
 
@@ -292,7 +335,8 @@ def main():
                        transitions={'NEXT_MONITOR':'WAIT_FOR_READER', 'END_MONITOR':'END_MONITORING_SM'},
                        remapping={'result_cum':'results_',
                                   'acc_cum':'acc_results',
-                                  'cam_cum':'cam_results',})
+                                  'cam_cum':'cam_results',
+                                  'odom_cum': 'odom_results'})
 
     # Open the container
     with sm:
@@ -302,7 +346,9 @@ def main():
                                   'counter_out':'window_size',
                                   'result_cum':'results_',
                                   'acc_cum':'acc_results',
-                                  'cam_cum':'cam_results'})
+                                  'cam_cum':'cam_results',
+                                  'odom_cum':'odom_results',
+                                  'x_array': 'window_size_array'})
 
         #Concurrent
         sm_con = smach.Concurrence(outcomes=['END_CON'],
@@ -328,7 +374,8 @@ def main():
                                     'END_CON':'SETUP'})
         smach.StateMachine.add('PLOT_RESULTS', Plotter(),
                        transitions={'PLOT_DONE':'END_SM'},
-                       remapping={'data_in': 'data_in'})
+                       remapping={'data_in': 'data_in',
+                                  'x_array': 'window_size_array'})
 
     # Execute SMACH plan
     #rospy.sleep(10)
