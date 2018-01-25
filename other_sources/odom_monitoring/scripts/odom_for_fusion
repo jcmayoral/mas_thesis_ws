@@ -2,4 +2,4 @@
 from odom_monitoring_tools.FusionOdom import OdomFusion
 
 if __name__ == '__main__':
-    main = OdomFusion(10)
+    main = OdomFusion()

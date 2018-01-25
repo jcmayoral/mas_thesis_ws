@@ -11,7 +11,7 @@ from odom_monitoring.cfg import odomConfig
 class OdomFusion(CollisionFusionSensor):
     def __init__(self):
         CollisionFusionSensor.__init__(self,
-                              number_elements=6,
+                              number_elements=3,
                               window_size = 10,
                               frame = "odom_frame",
                               sensor_id = "odom",
@@ -19,7 +19,7 @@ class OdomFusion(CollisionFusionSensor):
                               node = "odom_collision",
                               sensor_type = Odometry,
                               topic_name = "/base/odometry_controller/odometry",
-                              sensor_number = 0,
+                              sensor_number = 2,
                               config_type = odomConfig)
 
     def update(self,msg):
