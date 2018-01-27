@@ -11,6 +11,7 @@ from sensor_msgs.msg import Image, LaserScan
 import random
 import sys
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
+from mdr_move_base_safe.msg import MoveBaseSafeAction, MoveBaseSafeGoal
 import tf
 
 class Setup(smach.State):
@@ -106,50 +107,62 @@ rospy.init_node("my_collision_bag_recorder")
 
 sm = smach.StateMachine(['succeeded','aborted','preempted','END_SM'])
 sm.userdata.sm_counter = 0
-sm.userdata.bag_family = "testing_bags_"
+sm.userdata.bag_family = "collision_test_bags_"
 sm.userdata.restart_requested = True
 
 with sm:
-    def goal_cb(userdata, goal):
+    def collision_goal_cb(userdata, goal):
 
         tf_listener = tf.TransformListener()
         pose = PoseStamped()
         pose.header.frame_id = '/base_link'
-        pose.pose.position.x = 1.0
+        pose.pose.position.x = 2.0
         pose.pose.orientation.w = 1
-
-        try:
-            if True:#if tf_listener.frameExists("/base_link") and tf_listener.frameExists("/map"):
-                #t = tf_listener.getLatestCommonTime("/base_link","/map")
-                tf_listener.waitForTransform('/map','/base_link', rospy.Time.now(), rospy.Duration(5))
-                #tf_listener.lookupTransform('/map',
-                #                       pose.header.frame_id, #source frame
-                #                       rospy.Duration(1)) #t #wait for 1 second
-                print("Working")
-                (position, quaternion) = tf_listener.transformPose('map', pose)
-                pose.pose.position = position
-                pose.pose.orientation = quaternion
-
-        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-            rospy.logwarn("Transform not found")
-
 
         goal = MoveBaseGoal()
         goal.target_pose = pose
         return goal
+    
+    def goal_cb(userdata, goal):
+
+        goal = MoveBaseSafeGoal()
+        goal.arm_safe_position = 'folded'
+        goal.source_location = 'START'
+        goal.destination_location = 'start_collision_position'
+        return goal
 
     def result_cb(userdata, status, result):
+        print result
+        if status == GoalStatus.ABORTED or status == GoalStatus.PREEMPTED:
+            return 'aborted'
+
+        if status == GoalStatus.SUCCEEDED:
+            return 'succeeded'
+
+
+    def collision_result_cb(userdata, status, result):
         print type(status)
         print result
-        if status == GoalStatus.SUCCEEDED or status == GoalStatus.PREEMPTED:
+        if status == GoalStatus.SUCCEEDED or status == GoalStatus.ABORTED:
             return 'succeeded'
 
     smach.StateMachine.add('SETUP', Setup(),
-                       transitions={'SETUP_DONE':'CONFIG_WRITER', 'FINISH_REQUEST': 'CONFIG_WRITER'},
+                       transitions={'SETUP_DONE':'GO_START', 'FINISH_REQUEST': 'CONFIG_WRITER'},
                        remapping={'counter_in':'sm_counter',
                                   'counter_out':'sm_counter',
                                   'restart_requested_out':'restart_requested'})
 
+    #GO TO START
+    smach.StateMachine.add('GO_START',
+                      SimpleActionState('move_base_safe_server',
+                                        MoveBaseSafeAction,
+                                        goal_cb=goal_cb,
+                                        result_cb=result_cb,
+                                        server_wait_timeout=rospy.Duration(200.0),
+                                        exec_timeout = rospy.Duration(150.0),
+                                        input_keys=['sm_counter']),
+                      transitions={'succeeded':'CONFIG_WRITER', 'aborted':'GO_START'})
+    
     smach.StateMachine.add('CONFIG_WRITER', MyBagRecorder(),
                    transitions={'RECORD_STARTED':'TRIGGER_MOVE', 'END_RECORD': 'END_SM'},
                    remapping={'counter_in':'sm_counter',
@@ -160,10 +173,10 @@ with sm:
     smach.StateMachine.add('TRIGGER_MOVE',
                       SimpleActionState('move_base',
                                         MoveBaseAction,
-                                        goal_cb=goal_cb,
-                                        result_cb=result_cb,
-                                        server_wait_timeout=rospy.Duration(200.0),
-                                        exec_timeout = rospy.Duration(150.0),
+                                        goal_cb=collision_goal_cb,
+                                        result_cb=collision_result_cb,
+                                        server_wait_timeout=rospy.Duration(30.0),
+                                        exec_timeout = rospy.Duration(30.0),
                                         input_keys=['goal_location', 'last_location'],
                                         output_keys=['last_location']),
                       transitions={'succeeded':'SETUP', 'aborted':'SETUP'})
