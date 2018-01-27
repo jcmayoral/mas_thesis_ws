@@ -24,7 +24,7 @@ class Setup(smach.State):
     def execute(self, userdata):
         rospy.loginfo('Executing SETUP')
         rospy.sleep(0.5)
-        if userdata.counter_in < 20:
+        if userdata.counter_in < 50:
             userdata.counter_out = userdata.counter_in +1
             userdata.restart_requested_out = True
             return 'SETUP_DONE'
@@ -106,7 +106,7 @@ class MyBagRecorder(smach.State):
 rospy.init_node("my_collision_bag_recorder")
 
 sm = smach.StateMachine(['succeeded','aborted','preempted','END_SM'])
-sm.userdata.sm_counter = 0
+sm.userdata.sm_counter = 39
 sm.userdata.bag_family = "collision_test_bags_"
 sm.userdata.restart_requested = True
 
