@@ -24,7 +24,7 @@ class Setup(smach.State):
     def execute(self, userdata):
         rospy.loginfo('Executing SETUP')
         rospy.sleep(0.5)
-        if userdata.counter_in < 3:
+        if userdata.counter_in < 20:
             userdata.counter_out = userdata.counter_in +1
             userdata.restart_requested_out = True
             return 'SETUP_DONE'
@@ -37,16 +37,16 @@ class MyBagRecorder(smach.State):
         self.busy = False
         self.is_finished = False
         self.is_bag_started = False
-        rospy.Subscriber("/accel", AccelStamped, self.mainCB, "/accel", queue_size=100)
-        rospy.Subscriber("/cmd_vel", Twist, self.mainCB, "/cmd_vel", queue_size=100)
-        rospy.Subscriber("/base/twist_mux/command_navigation", Twist, self.mainCB, "/base/twist_mux/command_navigation", queue_size=100)
-        rospy.Subscriber("/odom", Odometry, self.mainCB, "/odom", queue_size=100)
-        rospy.Subscriber("/base/odometry_controller/odometry", Odometry, self.mainCB, "/base/odometry_controller/odometry", queue_size=100)
-        rospy.Subscriber("/scan_front", LaserScan, self.mainCB, "/scan_front", queue_size=100)
-        rospy.Subscriber("/scan_rear", LaserScan, self.mainCB, "/scan_rear", queue_size=100)
-        rospy.Subscriber("/scan_unified", LaserScan, self.mainCB, "/scan_unified", queue_size=100)
-        rospy.Subscriber("/arm_cam3d/rgb/image_raw", Image, self.mainCB, "/arm_cam3d/rgb/image_raw", queue_size=100)
-        rospy.Subscriber("/cam3d/rgb/image_raw", Image, self.mainCB, "/cam3d/rgb/image_raw", queue_size=100)
+        rospy.Subscriber("/accel", AccelStamped, self.mainCB, "/accel", queue_size=300)
+        rospy.Subscriber("/cmd_vel", Twist, self.mainCB, "/cmd_vel", queue_size=300)
+        rospy.Subscriber("/base/twist_mux/command_navigation", Twist, self.mainCB, "/base/twist_mux/command_navigation", queue_size=300)
+        rospy.Subscriber("/odom", Odometry, self.mainCB, "/odom", queue_size=300)
+        rospy.Subscriber("/base/odometry_controller/odometry", Odometry, self.mainCB, "/base/odometry_controller/odometry", queue_size=300)
+        rospy.Subscriber("/scan_front", LaserScan, self.mainCB, "/scan_front", queue_size=300)
+        rospy.Subscriber("/scan_rear", LaserScan, self.mainCB, "/scan_rear", queue_size=300)
+        rospy.Subscriber("/scan_unified", LaserScan, self.mainCB, "/scan_unified", queue_size=300)
+        rospy.Subscriber("/arm_cam3d/rgb/image_raw", Image, self.mainCB, "/arm_cam3d/rgb/image_raw", queue_size=300)
+        rospy.Subscriber("/cam3d/rgb/image_raw", Image, self.mainCB, "/cam3d/rgb/image_raw", queue_size=300)
         self.startBag()
         smach.State.__init__(self,
                              outcomes=['RECORD_STARTED','END_RECORD'],
