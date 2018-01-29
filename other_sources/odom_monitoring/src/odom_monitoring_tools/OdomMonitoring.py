@@ -17,20 +17,18 @@ class OdomMonitoring(RealTimePlotter,ChangeDetection):
         RealTimePlotter.__init__(self,max_samples,pace,True)
         ChangeDetection.__init__(self,3)
         rospy.init_node("odom_monitoring_cusum", anonymous=True)
-        rospy.Subscriber("/base/odometry_controller/odometry", Odometry, self.odomCB)
+        rospy.Subscriber("/base/odometry_controller/odometry", Odometry, self.odomCB, queue_size=1000)
         plt.show()
         rospy.spin()
         plt.close("all")
 
     def odomCB(self, msg):
         data = [msg.twist.twist.linear.x,msg.twist.twist.linear.y,msg.twist.twist.angular.z]
-        while (self.i< self.window_size):
-            self.addData(data)
-            self.i = self.i+1
-            if len(self.samples) is self.max_samples:
-                self.samples.pop(0)
-            return
-        self.i=0
+        self.addData(data)
+
+        if ( len(self.samples) > self.window_size):
+            self.samples.pop(0)
+
         self.changeDetection(len(self.samples))
         cur = np.array(self.cum_sum)
         cur = np.nan_to_num(cur)

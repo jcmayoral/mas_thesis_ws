@@ -2,4 +2,4 @@
 from odom_monitoring_tools.Plotter import Plotter
 
 if __name__ == '__main__':
-    main = Plotter(30,3)
+    main = Plotter(3000,3)
