@@ -30,13 +30,15 @@ class MyBagReader(smach.State):
     def __init__(self):
         mytypes = [AccelStamped, Twist, Odometry, Odometry, LaserScan, LaserScan, LaserScan, Image, Image, Odometry]
         #self.path = '/home/jose/ROS/thesis_ws/my_ws/rosbag_test/cob3/static_runs_2911/static_runs/' #TODO
-        self.path = '/home/jose/ROS/thesis_ws/my_ws/rosbag_test/cob3/cob-3-test-2001/'
+        self.path = '/home/jose/ROS/thesis_ws/my_ws/rosbag_test/cob3/cob3-test-2301/'
 
         self.mytopics = ["/accel", "/cmd_vel", "/odom", "/base/odometry_controller/odom",
             "/scan_front", "/scan_rear", "/scan_unified",
             "/arm_cam3d/rgb/image_raw","/cam3d/rgb/image_raw", "/base/odometry_controller/odometry"]
 
         self.myPublishers = list()
+
+        self.finish_pub = rospy.Publisher("finish_reading", String, queue_size=1)
 
         for topic_name, msg_type in zip(self.mytopics,mytypes):
             publisher = rospy.Publisher(topic_name, msg_type, queue_size=1)
@@ -51,6 +53,7 @@ class MyBagReader(smach.State):
         rospy.loginfo('Executing state Reader')
 
         self.is_file_ok = False
+        max_bag_file = 110
 
         while not self.is_file_ok:
             try:
@@ -59,15 +62,22 @@ class MyBagReader(smach.State):
                 self.is_file_ok = True
             except:
                 userdata.foo_counter_out = userdata.foo_counter_in + 1
-                print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
 
-        finish_pub = rospy.Publisher("finish_reading", String, queue_size=1)
+                if userdata.foo_counter_in > max_bag_file:
+                    fb = String()
+                    fb.data = "END_BAG"
+                    userdata.foo_counter_out = 1
+                    self.finish_pub.publish(fb)
+                    rospy.sleep(2)
+                    return 'END_READER'
+                #print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+
 
         try:
             start_time = self.bag.get_start_time()
             end_time = self.bag.get_end_time()
             duration_time = end_time - start_time
-            r = rospy.Rate(100) # Default 100
+            r = rospy.Rate(200) # Default 100
             for topic, msg, t in self.bag.read_messages(topics=self.mytopics):
                 print ("ROSBag  Running ", t.to_sec() - start_time, " of " , duration_time, end="\r")
                 for p, topic_name in self.myPublishers:
@@ -82,18 +92,18 @@ class MyBagReader(smach.State):
             print ("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
             self.bag.close()
 
-        if userdata.foo_counter_in < 10:#110:  #n number of bag files // TODO default 35
+        if userdata.foo_counter_in < max_bag_file:  #n number of bag files // TODO default 35
             userdata.foo_counter_out = userdata.foo_counter_in + 1
             fb = String()
             fb.data = "NEXT_BAG"
-            finish_pub.publish(fb)
+            self.finish_pub.publish(fb)
             rospy.sleep(2)
             return 'RESTART_READER'
         else:
             fb = String()
             fb.data = "END_BAG"
             userdata.foo_counter_out = 1
-            finish_pub.publish(fb)
+            self.finish_pub.publish(fb)
             rospy.sleep(2)
             return 'END_READER'
 
@@ -144,7 +154,7 @@ class Setup(smach.State):
         self.odom_client.update_configuration({"reset": True})
         self.cam_client.update_configuration({"mode": 1})
         rospy.sleep(0.5)
-        if userdata.counter_in < 25:#0: # Define max TODO
+        if userdata.counter_in < 100: # Define max TODO
             userdata.x_array.append(userdata.counter_in)
             userdata.counter_out = userdata.counter_in + 5
             return 'SETUP_DONE'
@@ -305,7 +315,7 @@ def main():
 
     reading_sm = smach.StateMachine(outcomes=['END_READING_SM'])
     reading_sm.userdata.sm_counter = 1
-    reading_sm.userdata.bag_family = "cob3-attempt-2001-" #TODO
+    reading_sm.userdata.bag_family = "cob3-attempt-2301-" #TODO
 
     with reading_sm:
         smach.StateMachine.add('RESET_READING', RestartReader(),
