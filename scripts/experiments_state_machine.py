@@ -77,7 +77,7 @@ class MyBagReader(smach.State):
             start_time = self.bag.get_start_time()
             end_time = self.bag.get_end_time()
             duration_time = end_time - start_time
-            r = rospy.Rate(200) # Default 100
+            r = rospy.Rate(100) # Default 100
             for topic, msg, t in self.bag.read_messages(topics=self.mytopics):
                 print ("ROSBag  Running ", t.to_sec() - start_time, " of " , duration_time, end="\r")
                 for p, topic_name in self.myPublishers:
@@ -152,9 +152,14 @@ class Setup(smach.State):
         self.acc_client.update_configuration({"reset": True})
         self.odom_client.update_configuration({"window_size": userdata.counter_in})
         self.odom_client.update_configuration({"reset": True})
-        self.cam_client.update_configuration({"mode": 1})
+
+        #SURF Version
+        self.cam_client.update_configuration({"matching_threshold":  userdata.counter_in * 0.01})
+        self.cam_client.update_configuration({"mode": 0})
+        self.cam_client.update_configuration({"reset": True})
+
         rospy.sleep(0.5)
-        if userdata.counter_in < 100: # Define max TODO
+        if userdata.counter_in < 75: # Window SIZe Define max TODO
             userdata.x_array.append(userdata.counter_in)
             userdata.counter_out = userdata.counter_in + 5
             return 'SETUP_DONE'
@@ -188,8 +193,8 @@ class Plotter(smach.State):
         #Camera Plot
         plt.figure()
         data = np.array(userdata.data_in['cam'])
-        plt.plot(data[:,0], label='RGB Camera Thresholds')
-        plt.xlabel("Run")
+        plt.plot(np.asarray(x_array) * 0.01, data[:,0], label='RGB Camera Thresholds')
+        plt.xlabel("Matching Threshold Variation")
         plt.ylabel("Maximum Threshold Detected")
         plt.title('Camera on Motion Thresholding') # subplot 211 title
         plt.legend()
@@ -264,9 +269,9 @@ class Monitor(smach.State):
             self.current_counter = 0
         else:#FINISH
             #print ("current_counter" , self.current_counter)
-            print ("accel_thr" , max(self.accel_thr) , " number of samples " , len(self.accel_thr))
-            print ("cam_thr" , max(self.cam_thr), " number of samples " , len(self.cam_thr))
-            print ("odom_thr" , max(self.odom_thr), " number of samples " , len(self.odom_thr))
+            print ("accel_thr" , np.nanmax(self.accel_thr, axis=0) , " number of samples " , len(self.accel_thr))
+            print ("cam_thr" , np.nanmax(self.cam_thr, axis=0), " number of samples " , len(self.cam_thr))
+            print ("odom_thr" , np.nanmax(self.odom_thr, axis=0), " number of samples " , len(self.odom_thr))
 
             self.stop_bag_request = True
 
@@ -283,9 +288,9 @@ class Monitor(smach.State):
         self.next_bag_request = False
 
         if self.stop_bag_request:
-            userdata.acc_cum.append(max(self.accel_thr))
-            userdata.cam_cum.append(max(self.cam_thr))
-            userdata.odom_cum.append(max(self.odom_thr))
+            userdata.acc_cum.append(np.nanmax(self.accel_thr, axis=0))
+            userdata.cam_cum.append(np.nanmax(self.cam_thr, axis=0))
+            userdata.odom_cum.append(np.nanmax(self.odom_thr, axis=0))
 
             del self.accel_thr[:]
             del self.cam_thr[:]
@@ -304,7 +309,7 @@ def main():
 
     # Create a SMACH state machine
     sm = smach.StateMachine(outcomes=['END_SM'])
-    sm.userdata.window_size = 0
+    sm.userdata.window_size = 2
     #sm.userdata.bag_family = "cob3-attempt-2001-" #TODO
     sm.userdata.window_size_array = list()
     sm.userdata.results_ = dict()
