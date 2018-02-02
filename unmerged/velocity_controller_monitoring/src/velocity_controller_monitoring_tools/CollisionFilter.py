@@ -2,7 +2,7 @@ import rospy
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from dynamic_reconfigure.server import Server
-from fusion_msgs.msg import sensorFusionMsg
+from fusion_msgs.msg import controllerFusionMsg
 import numpy as np
 from FaultDetection import ChangeDetection
 from velocity_controller_monitoring.cfg import filterConfig
@@ -15,7 +15,7 @@ class CollisionFilter(ChangeDetection):
         self.step_ = []
         self.step_.append(0)
         self.threshold = threshold
-        self.sensor_id = 'master'
+        self.controller_id = 'velocity_controller'
         self.i = 0
         self.msg = 0
         self.current_data = Twist()
@@ -25,7 +25,7 @@ class CollisionFilter(ChangeDetection):
         rospy.init_node("controller_cusum", anonymous=True)
         self.openLoop_ = Twist()
         self.closeLoop_ = Twist()
-        self.pub = rospy.Publisher('filter', sensorFusionMsg, queue_size=10)
+        self.pub = rospy.Publisher('filter', controllerFusionMsg, queue_size=10)
         self.dyn_reconfigure_srv = Server(filterConfig, self.dynamic_reconfigureCB)
         rospy.Subscriber("/base/twist_mux/command_navigation", Twist, self.openLoopCB)
         rospy.Subscriber("/base/odometry_controller/odometry", Odometry, self.closeLoopCB)
@@ -62,17 +62,16 @@ class CollisionFilter(ChangeDetection):
         self.closeLoop_ = msg.twist.twist
 
     def publishMsg(self,data):
-        output_msg = sensorFusionMsg()
+        output_msg = controllerFusionMsg()
         #Filling Message
         output_msg.header.frame_id = self.frame
         output_msg.window_size = self.window_size
         #print ("Accelerations " , x,y,z)
+        output_msg.controller_id.data = self.controller_id
 
         if any(t > self.threshold for t in data):
-            output_msg.msg = sensorFusionMsg.ERROR
+            output_msg.mode = controllerFusionMsg.IGNORE
 
         output_msg.header.stamp = rospy.Time.now()
-        output_msg.sensor_id.data = self.sensor_id
-        output_msg.data = data
-        output_msg.weight = self.weight
+        print ("here")
         self.pub.publish(output_msg)
