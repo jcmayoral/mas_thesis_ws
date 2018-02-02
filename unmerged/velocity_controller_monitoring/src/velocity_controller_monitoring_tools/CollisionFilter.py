@@ -1,15 +1,11 @@
 import rospy
-from MyStatics.RealTimePlotter import RealTimePlotter
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from dynamic_reconfigure.server import Server
-from accelerometer_ros.cfg import accelerometerGaussConfig
 from fusion_msgs.msg import sensorFusionMsg
 import numpy as np
-import matplotlib
-matplotlib.use('TkAgg')
 from FaultDetection import ChangeDetection
-import matplotlib.pyplot as plt
+from velocity_controller_monitoring.cfg import filterConfig
 
 
 class CollisionFilter(ChangeDetection):
@@ -20,7 +16,6 @@ class CollisionFilter(ChangeDetection):
         self.step_.append(0)
         self.threshold = threshold
         self.sensor_id = 'master'
-        self.weight = 1
         self.i = 0
         self.msg = 0
         self.current_data = Twist()
@@ -31,9 +26,19 @@ class CollisionFilter(ChangeDetection):
         self.openLoop_ = Twist()
         self.closeLoop_ = Twist()
         self.pub = rospy.Publisher('filter', sensorFusionMsg, queue_size=10)
+        self.dyn_reconfigure_srv = Server(filterConfig, self.dynamic_reconfigureCB)
         rospy.Subscriber("/base/twist_mux/command_navigation", Twist, self.openLoopCB)
         rospy.Subscriber("/base/odometry_controller/odometry", Odometry, self.closeLoopCB)
         rospy.spin()
+
+    def dynamic_reconfigureCB(self,config, level):
+        self.threshold = config["threshold"]
+        self.window_size = config["window_size"]
+
+        if config["reset"]:
+            self.clear_values()
+            config["reset"] = False
+        return config
 
     def updateData(self,msg):
         self.addData([self.current_data.linear.x, self.current_data.linear.y, self.current_data.angular.z])
