@@ -43,9 +43,14 @@
   <build_depend>geometry_msgs</build_depend>
   <build_depend>nav_msgs</build_depend>
   <build_depend>rospy</build_depend>
+  <build_depend>dynamic_reconfigure</build_depend>
+  <build_depend>fusion_msgs</build_depend>
+
   <run_depend>geometry_msgs</run_depend>
   <run_depend>nav_msgs</run_depend>
   <run_depend>rospy</run_depend>
+  <run_depend>fusion_msgs</run_depend>
+  <run_depend>dynamic_reconfigure</run_depend>
 
   <!--run_depend>Adafruit_ADXL345</run_depend-->
   <!-- The export tag contains other, unspecified, tags -->
