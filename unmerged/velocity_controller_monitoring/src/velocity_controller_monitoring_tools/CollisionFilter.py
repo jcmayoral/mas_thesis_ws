@@ -77,5 +77,5 @@ class CollisionFilter(ChangeDetection):
         output_msg.header.stamp = rospy.Time.now()
         print ("here")
 
-        if not is_disable:
+        if not self.is_disable:
             self.pub.publish(output_msg)
