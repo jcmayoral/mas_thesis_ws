@@ -73,5 +73,5 @@ class FusionLaser(ChangeDetection):
         msg.data = cur
         msg.weight = self.weight
 
-        if not is_disable:
+        if not self.is_disable:
             self.pub.publish(msg)

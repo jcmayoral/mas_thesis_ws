@@ -99,5 +99,5 @@ class FusionMicrophone(ChangeDetection):
         msg.sensor_id.data = self.sensor_id
         msg.data = cur
         msg.weight = self.weight
-        if not is_disable:
+        if not self.is_disable:
             self.pub.publish(msg)
