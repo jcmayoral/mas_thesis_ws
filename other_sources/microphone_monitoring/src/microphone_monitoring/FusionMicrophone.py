@@ -52,11 +52,16 @@ class FusionMicrophone(ChangeDetection):
 
         rospy.spin()
 
+    def reset_publisher(self):
+        self.pub = rospy.Publisher('collisions_'+ str(self.sensor_number), sensorFusionMsg, queue_size=10)
+
     def dynamic_reconfigureCB(self,config, level):
         self.threshold = config["threshold"]
         self.window_size = config["window_size"]
         self.weight = config["weight"]
         self.is_disable = config["is_disable"]
+        self.sensor_number = config["detector_id"]
+        self.reset_publisher()
 
         if config["reset"]:
             self.clear_values()
