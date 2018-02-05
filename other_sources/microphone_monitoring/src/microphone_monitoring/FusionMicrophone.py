@@ -23,6 +23,8 @@ class FusionMicrophone(ChangeDetection):
         self.threshold = threshold
         self.frames_number = frames_number
         self.weight = 1.0
+        self.is_disable = False
+
         rospy.init_node("microphone_fusion", anonymous=False)
         ChangeDetection.__init__(self,1)
 
@@ -54,6 +56,11 @@ class FusionMicrophone(ChangeDetection):
         self.threshold = config["threshold"]
         self.window_size = config["window_size"]
         self.weight = config["weight"]
+        self.is_disable = config["is_disable"]
+
+        if config["reset"]:
+            self.clear_values()
+            config["reset"] = False
         return config
 
 
@@ -92,4 +99,5 @@ class FusionMicrophone(ChangeDetection):
         msg.sensor_id.data = self.sensor_id
         msg.data = cur
         msg.weight = self.weight
-        self.pub.publish(msg)
+        if not is_disable:
+            self.pub.publish(msg)

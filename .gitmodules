@@ -17,12 +17,3 @@
 [submodule "vision_utils_ros"]
 	path = vision_utils_ros
 	url = git@github.com:jcmayoral/vision_utils_ros.git
-[submodule "odometry/mono-vo"]
-	path = odometry/mono-vo
-	url = git@github.com:jcmayoral/mono-vo.git
-[submodule "odometry/invio"]
-	path = odometry/invio
-	url = https://github.com/Trexter/invio.git
-[submodule "move_base_flex"]
-	path = move_base_flex
-	url = https://github.com/magazino/move_base_flex.git

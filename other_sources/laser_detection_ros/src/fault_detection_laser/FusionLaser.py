@@ -18,6 +18,8 @@ class FusionLaser(ChangeDetection):
         self.frame = frame
         self.threshold = threshold
         self.weight = 1.0
+        self.is_disable = False
+
         ChangeDetection.__init__(self,721)
         rospy.init_node("laser_fusion", anonymous=False)
         rospy.Subscriber("/scan_unified", LaserScan, self.laserCB)
@@ -31,6 +33,11 @@ class FusionLaser(ChangeDetection):
         self.threshold = config["threshold"]
         self.window_size = config["window_size"]
         self.weight = config["weight"]
+        self.is_disable = config["is_disable"]
+
+        if config["reset"]:
+            self.clear_values()
+            config["reset"] = False
         return config
 
     def laserCB(self, msg):
@@ -66,4 +73,5 @@ class FusionLaser(ChangeDetection):
         msg.data = cur
         msg.weight = self.weight
 
-        self.pub.publish(msg)
+        if not is_disable:
+            self.pub.publish(msg)

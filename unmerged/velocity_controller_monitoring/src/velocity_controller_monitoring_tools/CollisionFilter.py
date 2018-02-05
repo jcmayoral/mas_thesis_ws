@@ -21,6 +21,7 @@ class CollisionFilter(ChangeDetection):
         self.current_data = Twist()
         self.frame = 'test'
         self.window_size = cusum_window_size
+        self.is_disable = False
         ChangeDetection.__init__(self,3)
         rospy.init_node("controller_cusum", anonymous=True)
         self.openLoop_ = Twist()
@@ -34,6 +35,7 @@ class CollisionFilter(ChangeDetection):
     def dynamic_reconfigureCB(self,config, level):
         self.threshold = config["threshold"]
         self.window_size = config["window_size"]
+        self.is_disable = config["is_disable"]
 
         if config["reset"]:
             self.clear_values()
@@ -74,4 +76,6 @@ class CollisionFilter(ChangeDetection):
 
         output_msg.header.stamp = rospy.Time.now()
         print ("here")
-        self.pub.publish(output_msg)
+
+        if not is_disable:
+            self.pub.publish(output_msg)
