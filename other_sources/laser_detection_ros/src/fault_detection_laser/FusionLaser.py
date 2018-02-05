@@ -47,12 +47,11 @@ class FusionLaser(ChangeDetection):
 
     def laserCB(self, msg):
 
-        while (self.i< self.window_size):
-            self.addData([i/msg.range_max for i in msg.ranges])
-            self.i = self.i+1
-            if len(self.samples) is self.window_size:
-                self.samples.pop(0)
-            return
+        self.addData([i/msg.range_max for i in msg.ranges])
+
+        if ( len(self.samples) > self.window_size):
+            self.samples.pop(0)
+
 
         msg = sensorFusionMsg()
 
