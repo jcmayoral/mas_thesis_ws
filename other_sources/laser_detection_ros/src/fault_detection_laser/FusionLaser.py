@@ -29,9 +29,8 @@ class FusionLaser(ChangeDetection):
         self.dyn_reconfigure_srv = Server(laserConfig, self.dynamic_reconfigureCB)
         rospy.spin()
 
-    def reset_subscriber(self):
-        self.subscriber_.shutdown()
-        self.subscriber_ = rospy.Subscriber('collisions_' + str(self.sensor_number), sensor_type, self.sensorCB)
+    def reset_publisher(self):
+        self.pub = rospy.Publisher('collisions_'+ str(self.sensor_number), sensorFusionMsg, queue_size=10)
 
     def dynamic_reconfigureCB(self,config, level):
         self.threshold = config["threshold"]
@@ -39,7 +38,7 @@ class FusionLaser(ChangeDetection):
         self.weight = config["weight"]
         self.is_disable = config["is_disable"]
         self.sensor_number = config["detector_id"]
-        self.reset_subscriber()
+        self.reset_publisher()
 
         if config["reset"]:
             self.clear_values()
