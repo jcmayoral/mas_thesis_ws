@@ -13,7 +13,7 @@ from microphone_monitoring.cfg import microphoneConfig
 
 
 class FusionMicrophone(ChangeDetection):
-    def __init__(self, cusum_window_size = 10, frame="base_link", sensor_id="microphone1", threshold = 1000, frames_number=1024):
+    def __init__(self, cusum_window_size = 10, frame="base_link", sensor_id="microphone1", threshold = 1000, frames_number=4096):
         self.data_ = []
         self.data_.append([0,0,0])
         self.i = 0
@@ -35,7 +35,7 @@ class FusionMicrophone(ChangeDetection):
         self.stream = audio.open(format=pyaudio.paInt16,
                             channels=1,
                             input_device_index = 0,
-                            rate=48000, input=True,
+                            rate=44100, input=True,
                             frames_per_buffer=1024)
         self.stream.start_stream()
         r = rospy.Rate(10)
@@ -65,7 +65,13 @@ class FusionMicrophone(ChangeDetection):
 
 
     def run(self):
-        data = self.stream.read(self.frames_number)
+        try:
+            data = self.stream.read(self.frames_number)
+        except IOError as ex:
+            if ex[1] != pyaudio.paInputOverflowed:
+                raise
+            data = np.ones(1024)
+            print ("nop")
         amplitude = np.fromstring(data, np.int16)
 
         if self.i< self.window_size:
@@ -99,5 +105,5 @@ class FusionMicrophone(ChangeDetection):
         msg.sensor_id.data = self.sensor_id
         msg.data = cur
         msg.weight = self.weight
-        if not is_disable:
+        if not self.is_disable:
             self.pub.publish(msg)
