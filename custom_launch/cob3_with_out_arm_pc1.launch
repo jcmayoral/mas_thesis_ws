@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <!-- Navigation Goal Publication -->
+  <include file="$(find mcr_default_env_config)/upload_param.launch">
+    <arg name="robot_env" value="brsu-c069" />
+    <arg name="domestic_domain" value="true" />
+  </include>
+
+  <!-- Base -->
+  <include file="$(find cob_bringup)/robots/base_solo.launch"/>
+
+  <!-- LiDar sensors-->
+  <include file="$(find cob_bringup)/drivers/sick_s300.launch">
+    <arg name="robot" value="cob3-1"/>
+    <arg name="name" value="base_laser_rear"/>
+  </include>
+
+  <include file="$(find cob_bringup)/drivers/sick_s300.launch">
+    <arg name="robot" value="cob3-1"/>
+    <arg name="name" value="base_laser_front"/>
+  </include>
+
+  <include file="$(find cob_bringup)/drivers/sick_s300.launch">
+    <arg name="robot" value="cob3-1"/>
+    <arg name="name" value="base_laser_top"/>
+  </include>
+
+  <include file="$(find cob_bringup)/drivers/scan_unifier.launch">
+    <arg name="robot" value="cob3-1"/>
+  </include>
+
+</launch>
