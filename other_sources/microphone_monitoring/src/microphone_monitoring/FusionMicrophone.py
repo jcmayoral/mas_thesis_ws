@@ -32,10 +32,12 @@ class FusionMicrophone(ChangeDetection):
         for i in range(audio.get_device_count()):
              dev = audio.get_device_info_by_index(i)
              print(i,dev)
+        dev = audio.get_device_info_by_index(0)
+        print dev["defaultSampleRate"]
         self.stream = audio.open(format=pyaudio.paInt16,
                             channels=1,
                             input_device_index = 0,
-                            rate=48000, input=True,
+                            rate=(int)(dev["defaultSampleRate"]), input=True,
                             frames_per_buffer=1024)
         self.stream.start_stream()
         r = rospy.Rate(10)

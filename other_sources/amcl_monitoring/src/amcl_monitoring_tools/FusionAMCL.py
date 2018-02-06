@@ -36,12 +36,11 @@ class FusionAMCL(ChangeDetection):
 
     def amclCB(self, msg):
         data = [msg.pose.covariance[0],msg.pose.covariance[1], msg.pose.covariance[35]]
-        while (self.i< self.window_size):
-            self.addData(data)
-            self.i = self.i+1
-            if len(self.samples) is self.window_size:
-                self.samples.pop(0)
-            return
+
+        self.addData(data)
+
+        if ( len(self.samples) > self.window_size):
+            self.samples.pop(0)
 
         msg = sensorFusionMsg()
 
@@ -57,7 +56,7 @@ class FusionAMCL(ChangeDetection):
 
         #Detecting Collisions
         if any(t > self.threshold for t in cur):
-            msg.msg = sensorFusionMsg.ERROR
+            ,msg.msg = sensorFusionMsg.ERROR
 
         msg.sensor_id.data = self.sensor_id
         msg.data = cur
