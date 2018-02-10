@@ -74,7 +74,14 @@ class FusionMicrophone(ChangeDetection):
 
 
     def run(self):
-        data = self.stream.read(self.CHUNK)
+        try:
+            data = self.stream.read(self.CHUNK)
+        except IOError as ex:
+            if ex[1] != pyaudio.paInputOverflowed:
+                raise
+            print ("ERROR")
+            return
+
         amplitude = np.fromstring(data, np.int16)
 
         if self.i< self.window_size:
