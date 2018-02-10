@@ -22,6 +22,7 @@ class CollisionFilter(ChangeDetection):
         self.frame = 'test'
         self.window_size = cusum_window_size
         self.is_disable = False
+        self.callBackFunction = self.updateChangeDetectionData
         ChangeDetection.__init__(self,3)
         rospy.init_node("controller_cusum", anonymous=True)
         self.openLoop_ = Twist()
@@ -40,9 +41,24 @@ class CollisionFilter(ChangeDetection):
         if config["reset"]:
             self.clear_values()
             config["reset"] = False
+
+        if config["mode"]:
+            self.callBackFunction = self.updateThreshold
+        else:
+            self.callBackFunction = self.updateChangeDetectionData
+
         return config
 
-    def updateData(self,msg):
+
+    def updateThreshold(self,msg):
+        print ("Normal Threshold CB")
+        data = [self.current_data.linear.x,
+                self.current_data.linear.y,
+                self.current_data.angular.z]
+        self.publishMsg(data)
+
+    def updateChangeDetectionData(self,msg):
+        print ("Change Detection")
         self.addData([self.current_data.linear.x, self.current_data.linear.y, self.current_data.angular.z])
 
         if ( len(self.samples) > self.window_size):
@@ -57,7 +73,7 @@ class CollisionFilter(ChangeDetection):
         self.current_data.linear.y = self.openLoop_.linear.y - self.closeLoop_.linear.y
         self.current_data.angular.z = self.openLoop_.angular.z - self.closeLoop_.angular.z
 
-        self.updateData(msg)
+        self.callBackFunction(msg)
         self.openLoop_ = msg
 
     def closeLoopCB(self, msg):
@@ -75,7 +91,6 @@ class CollisionFilter(ChangeDetection):
             output_msg.mode = controllerFusionMsg.IGNORE
 
         output_msg.header.stamp = rospy.Time.now()
-        print ("here")
 
         if not self.is_disable:
             self.pub.publish(output_msg)
