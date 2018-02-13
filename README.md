@@ -10,29 +10,30 @@ This is a private repository which contains repositories that might be used for 
 BMC is a third part function collection which contain several standard fucntion for pattern detection. We are interested in the detect_cusum function however we suggest to install the complete library to proceed with the proposed research.
 
 cd BMC
-sudo python3 setup.py install 
+sudo python setup.py install
 
 **Note** A testing function is provided in MyRaspBerryPi package.
 
-## MyRaspBerryPi 
+## MyRaspBerryPi
 
-cd sensing/accelerometer<br />
 
 if (RaspBerryPi is used): <br />
-   cd Adafruit_Python_ADXL345 <br />
-   sudo python3 setup.py install <br />
-   cd ..<br />
+   cd sensors/accelerometer/Adafruit_Python_ADXL345 <br />
+   sudo python setup.py install <br />
 
-cd Fault_Tolerant_Accelerometer <br />
-sudo python3 setup.py install <br />
+cd Fault_Detection/FaultDetection <br />
+sudo python setup.py install <br />
+
+cd statics/MyStatics <br />
+sudo python setup.py install <br />
 
 ### Testing
-cd Fault_Tolerant_Accelerometer <br />
-cd testing
 
-* Print in screen accelerometer readings :   python3 plotOnScreen.py
-* Test BMC-version CUSUM :   python3 plotBMCDetectCUSUM.py
-* Sample Stochastic Detection algorithm :   python3 plotMathAccelerometeri.py
+FaultDetection library provides some tests available in testing folder.
+
+* Print in screen accelerometer readings :   python plotOnScreen.py
+* Test BMC-version CUSUM :   python plotBMCDetectCUSUM.py
+* Sample Stochastic Detection algorithm :   python plotMathAccelerometeri.py
 
 ## VisionUtils
 
@@ -45,13 +46,12 @@ make<br />
 sudo make install<br />
 
 ### Testing
-type qt_vision in any terminal
+type collision_detection in any terminal
 
-## Navigation
+## Collisions_stuff
 
-We suggest an extension of the original move_base package to handle collisions. In case you intend to use it:
+We suggest an extension of the original move_base package to handle collisions being heavily based on the original navigation stack.
 
-cd navigation<br />
-git checkout collisions<br />
+## vision_utls_ros
 
-
+The master branch is designed for OpenCV 2.4.8 available by default in the indigo distribution of ROS. If kinetic version is required, checkout the kinetic_devel branch.
