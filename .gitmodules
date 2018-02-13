@@ -17,3 +17,6 @@
 [submodule "vision_utils_ros"]
 	path = vision_utils_ros
 	url = git@github.com:jcmayoral/vision_utils_ros.git
+[submodule "collisions_stuff"]
+	path = collisions_stuff
+	url = git@github.com:jcmayoral/collisions_stuff.git
