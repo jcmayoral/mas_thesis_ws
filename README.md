@@ -14,8 +14,7 @@ sudo python setup.py install
 
 **Note** A testing function is provided in MyRaspBerryPi package.
 
-## MyRaspBerryPi
-
+## MyRaspberryPi
 
 if (RaspBerryPi is used): <br />
    cd sensors/accelerometer/Adafruit_Python_ADXL345 <br />
@@ -52,6 +51,6 @@ type collision_detection in any terminal
 
 We suggest an extension of the original move_base package to handle collisions being heavily based on the original navigation stack.
 
-## vision_utls_ros
+## vision_utils_ros
 
 The master branch is designed for OpenCV 2.4.8 available by default in the indigo distribution of ROS. If kinetic version is required, checkout the kinetic_devel branch.
