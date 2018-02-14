@@ -7,6 +7,7 @@ import actionlib
 from actionlib_msgs.msg import GoalStatus
 from geometry_msgs.msg import AccelStamped, Twist, PoseStamped
 from nav_msgs.msg import Odometry
+from std_msgs.msg import Header
 from sensor_msgs.msg import Image, LaserScan, Imu
 import random
 import sys
@@ -40,6 +41,7 @@ class MyBagRecorder(smach.State):
         #TODO  yaml file to load topics
         rospy.Subscriber("/accel", AccelStamped, self.mainCB, "/accel", queue_size=300)
         rospy.Subscriber("/imu/data", Imu, self.mainCB, "/imu/data", queue_size=300)
+        rospy.Subscriber("/collision_label", Header, self.mainCB, "/collision_label", queue_size=300)
 
         rospy.Subscriber("/cmd_vel", Twist, self.mainCB, "/cmd_vel", queue_size=300)
         rospy.Subscriber("/base/twist_mux/command_navigation", Twist, self.mainCB, "/base/twist_mux/command_navigation", queue_size=300)
@@ -118,8 +120,8 @@ class MyBagRecorder(smach.State):
 rospy.init_node("my_collision_bag_recorder")
 
 sm = smach.StateMachine(['succeeded','aborted','preempted','END_SM'])
-sm.userdata.sm_counter = 1
-sm.userdata.bag_family = "simulation_bags"
+sm.userdata.sm_counter = 0
+sm.userdata.bag_family = "collision_bags_bags"
 sm.userdata.restart_requested = True # This flag restart the cycle
 sm.userdata.stop_requested = False # This flag stops the recorder
 sm.userdata.finish_requested = False # This flag finishes sm
@@ -130,7 +132,7 @@ with sm:
         tf_listener = tf.TransformListener()
         pose = PoseStamped()
         pose.header.frame_id = '/base_link'
-        pose.pose.position.x = 1.0 # Default 2.0
+        pose.pose.position.x = 2.0 # Default 2.0
         pose.pose.orientation.w = 1
 
         goal = MoveBaseGoal()
@@ -142,7 +144,7 @@ with sm:
         goal = MoveBaseSafeGoal()
         goal.arm_safe_position = 'folded'
         goal.source_location = 'START'
-        goal.destination_location = 'exit'# DEFAULT'start_collision_position'
+        goal.destination_location = 'start_collision_position'# DEFAULT'start_collision_position'
         return goal
 
     def result_cb(userdata, status, result):
@@ -157,9 +159,11 @@ with sm:
     def collision_result_cb(userdata, status, result):
         print type(status)
         print result
-        if status == GoalStatus.SUCCEEDED or status == GoalStatus.ABORTED:
-            userdata.stop_requested_out = True
-            return 'succeeded'
+        #if status == GoalStatus.SUCCEEDED or status == GoalStatus.ABORTED:
+        print ("Waiting 3 seconds")
+        rospy.sleep(3)
+        userdata.stop_requested_out = True
+        return 'succeeded'
 
 
 
