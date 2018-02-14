@@ -7,7 +7,7 @@ import actionlib
 from actionlib_msgs.msg import GoalStatus
 from geometry_msgs.msg import AccelStamped, Twist, PoseStamped
 from nav_msgs.msg import Odometry
-from sensor_msgs.msg import Image, LaserScan
+from sensor_msgs.msg import Image, LaserScan, Imu
 import random
 import sys
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
@@ -39,6 +39,8 @@ class MyBagRecorder(smach.State):
         self.is_bag_started = False
         #TODO  yaml file to load topics
         rospy.Subscriber("/accel", AccelStamped, self.mainCB, "/accel", queue_size=300)
+        rospy.Subscriber("/imu/data", Imu, self.mainCB, "/imu/data", queue_size=300)
+
         rospy.Subscriber("/cmd_vel", Twist, self.mainCB, "/cmd_vel", queue_size=300)
         rospy.Subscriber("/base/twist_mux/command_navigation", Twist, self.mainCB, "/base/twist_mux/command_navigation", queue_size=300)
         rospy.Subscriber("/odom", Odometry, self.mainCB, "/odom", queue_size=300)
