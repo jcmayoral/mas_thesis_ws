@@ -19,7 +19,7 @@ from geometry_msgs.msg import AccelStamped, Twist
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Image, LaserScan, Imu
 from std_msgs.msg import Empty, String, Header
-from fusion_msgs.msg import sensorFusionMsg
+from fusion_msgs.msg import sensorFusionMsg, controllerFusionMsg
 from dynamic_reconfigure.client import Client
 import numpy as np
 import matplotlib.pyplot as plt
@@ -152,12 +152,13 @@ class Monitor(smach.State):
                               output_keys=['acc_cum', 'cam_cum', 'odom_cum', 'imu_cum', 'result_cum'])
         rospy.Subscriber("/finish_reading", String, self.fb_cb)
         rospy.Subscriber("/collision_label", Header, self.header_cb)
+        #rospy.Subscriber("/filter", controllerFusionMsg, self.filter_cb)
 
         self.current_counter = 0
-        self.accel_thr = list()
-        self.cam_thr = list()
-        self.odom_thr = list()
-        self.imu_thr = list()
+        self.accel_count = 0
+        self.cam_count = 0
+        self.odom_count = 0
+        self.imu_count = 0
 
         self.acc_cum = list()
         self.cam_cum = list()
@@ -167,20 +168,25 @@ class Monitor(smach.State):
         for i in range(10):
             rospy.Subscriber("/collisions_"+str(i), sensorFusionMsg, self.counter_cb, queue_size=100)
 
-    def threshold_cb(self,msg):
-        if msg.sensor_id.data == "acc_1":
-            self.accel_thr.append(msg.data)
-        if msg.sensor_id.data == "cam_0":
-            self.cam_thr.append(msg.data)
-        if msg.sensor_id.data == "odom":
-            self.odom_thr.append(msg.data)
-        if msg.sensor_id.data == "imu_1":
-            self.imu_thr.append(msg.data)
+    def filter_cb(self,msg):
+        if msg.mode:
+            rospy.loginfo("Filtering")
+
 
     def counter_cb(self,msg):
+
         if msg.msg == 2:
-            print (end="\n")
-            rospy.logwarn("collision_detected")
+            rospy.logwarn("collision_detected by %s" , msg.sensor_id)
+
+            if msg.sensor_id.data == "acc_1":
+                self.accel_count = self.accel_count + 1
+            if msg.sensor_id.data == "cam_0":
+                self.cam_count = self.accel_count + 1
+            if msg.sensor_id.data == "odom":
+                self.odom_count = self.odom_count + 1
+            if msg.sensor_id.data == "imu_1":
+                self.imu_count = self.odom_count + 1
+
             self.current_counter = self.current_counter + 1
 
     def fb_cb(self,msg):
@@ -192,10 +198,10 @@ class Monitor(smach.State):
             self.current_counter = 0
         else:#FINISH
             print ("current_counter" , self.current_counter)
-            print ("accel_thr" , np.nanmax(self.accel_thr, axis=0) , " number of samples " , len(self.accel_thr))
-            print ("cam_thr" , np.nanmax(self.cam_thr, axis=0), " number of samples " , len(self.cam_thr))
-            print ("odom_thr" , np.nanmax(self.odom_thr, axis=0), " number of samples " , len(self.odom_thr))
-            print ("imu_thr" , np.nanmax(self.imu_thr, axis=0), " number of samples " , len(self.imu_thr))
+            print ("accel_count" , self.accel_count , " collisions detected " , self.current_counter)
+            print ("cam_count" , self.cam_count , " collisions detected " , self.cam_count)
+            print ("odom_count" , self.odom_count , " collisions detected " , self.odom_count)
+            print ("odom_count" , self.imu_count , " collisions detected " , self.imu_count)
 
             self.stop_bag_request = True
 
