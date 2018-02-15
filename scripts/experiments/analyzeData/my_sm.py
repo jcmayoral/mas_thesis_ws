@@ -15,7 +15,7 @@ def monitor_cb(ud, msg):
     return None
 
 # Create a SMACH state machine
-def start_sm(path, common_string, monitor_state, setup_state, plot_state):
+def start_sm(path, common_string, monitor_state, setup_state, plot_state, time_limit = float("inf")):
   sm = smach.StateMachine(outcomes=['END_SM'])
   sm.userdata.window_size = 2
   #sm.userdata.bag_family = "cob3-attempt-2001-" #TODO
@@ -35,7 +35,7 @@ def start_sm(path, common_string, monitor_state, setup_state, plot_state):
       smach.StateMachine.add('RESET_READING', RestartReader(),
                      transitions={'NEXT_BAG':'READING'},
                      remapping={'bar_counter_in':'sm_counter'})
-      smach.StateMachine.add('READING', MyBagReader(),
+      smach.StateMachine.add('READING', MyBagReader(limit = time_limit),
                              transitions={'RESTART_READER':'RESET_READING',
                                           'END_READER':'END_READING_SM'},
                              remapping={'foo_counter_in':'sm_counter',

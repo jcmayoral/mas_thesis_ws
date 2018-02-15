@@ -10,7 +10,7 @@ from std_msgs.msg import Empty, String, Header
 
 # define state ReadBag
 class MyBagReader(smach.State):
-    def __init__(self):
+    def __init__(self,  limit=float("inf")):
         mytypes = [AccelStamped, Twist, Odometry, Odometry, LaserScan, LaserScan, LaserScan, Image, Image, Odometry, Header, Imu]
         #self.path = '/home/jose/ROS/thesis_ws/my_ws/rosbag_test/cob3/static_runs_2911/static_runs/' #TODO
         #self.path = '/home/jose/ROS/thesis_ws/my_ws/rosbag_test/cob3/cob3-test-2301/'
@@ -20,6 +20,7 @@ class MyBagReader(smach.State):
             "/arm_cam3d/rgb/image_raw","/cam3d/rgb/image_raw", "/base/odometry_controller/odometry", "/collision_label", "/imu/data"]
 
         self.myPublishers = list()
+        self.limit = limit
         self.finish_pub = rospy.Publisher("finish_reading", String, queue_size=1)
         rospy.sleep(2)
 
@@ -61,8 +62,11 @@ class MyBagReader(smach.State):
             start_time = self.bag.get_start_time()
             end_time = self.bag.get_end_time()
             duration_time = end_time - start_time
-            r = rospy.Rate(150) # Default 100
+            r = rospy.Rate(300) # Default 100
             for topic, msg, t in self.bag.read_messages(topics=self.mytopics):
+                if t.to_sec() - start_time > self.limit:
+                    ROS_INFO("Quitting")
+                    break
                 print ("ROSBag  Running ", t.to_sec() - start_time, " of " , duration_time, end="\r")
                 for p, topic_name in self.myPublishers:
                     if topic_name == topic:

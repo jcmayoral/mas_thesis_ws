@@ -234,9 +234,10 @@ class Monitor(smach.State):
             return 'END_MONITOR'
         else:
             #print ("NEXT_MONITOR")
+            self.start_time = rospy.rostime.get_rostime().to_sec()
             return 'NEXT_MONITOR'
 
 
 if __name__ == '__main__':
     rospy.init_node('smach_example_state_machine')
-    start_sm("/home/jose/data/", "collision_bags_bags", Monitor, Setup, Plotter)
+    start_sm("/home/jose/data/", "collision_bags_bags", Monitor, Setup, Plotter, time_limit = 15)
