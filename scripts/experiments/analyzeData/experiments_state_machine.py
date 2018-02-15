@@ -225,7 +225,7 @@ class Plotter(smach.State):
 
 # define state Monitor
 class Monitor(smach.State):
-    def __init__(self, experiment_type):
+    def __init__(self):
         smach.State.__init__(self,
                              outcomes=['NEXT_MONITOR', 'END_MONITOR'],
                               input_keys=['acc_cum', 'cam_cum', 'odom_cum', 'result_cum'],
@@ -240,12 +240,8 @@ class Monitor(smach.State):
         self.cam_cum = list()
         self.odom_cum = list()
 
-        if experiment_type is "collisions_counter":
-            for i in range(10):
-                rospy.Subscriber("/collisions_"+str(i), sensorFusionMsg, self.counter_cb, queue_size=100)
-        if experiment_type is "threshold_calculator":
-            for i in range(10):
-                rospy.Subscriber("/collisions_"+str(i), sensorFusionMsg, self.threshold_cb, queue_size=100)
+        for i in range(10):
+            rospy.Subscriber("/collisions_"+str(i), sensorFusionMsg, self.threshold_cb, queue_size=100)
 
     def threshold_cb(self,msg):
         if msg.sensor_id.data == "acc_1":
@@ -255,10 +251,6 @@ class Monitor(smach.State):
         if msg.sensor_id.data == "odom":
             self.odom_thr.append(msg.data)
         #print (msg.data)
-
-    def counter_cb(self,msg):
-        if msg.msg == 2:
-            self.current_counter = self.current_counter + 1
 
     def fb_cb(self,msg):
         #print ("CB", msg)
@@ -340,13 +332,11 @@ def main():
     monitoring_sm.userdata.odom_results = sm.userdata.odom_results
 
     #montoring_sm.userdata.window_size_array = sm.window_size_array
-    #experiment_type = "collisions_counter" #TODO
-    experiment_type = "threshold_calculator" #TODO
 
     with monitoring_sm:
         smach.StateMachine.add('WAIT_FOR_READER', smach_ros.MonitorState("/sm_reset", Empty, monitor_cb),
                                 transitions={'invalid':'MONITOR', 'valid':'WAIT_FOR_READER', 'preempted':'WAIT_FOR_READER'})
-        smach.StateMachine.add('MONITOR', Monitor(experiment_type),
+        smach.StateMachine.add('MONITOR', Monitor(),
                        transitions={'NEXT_MONITOR':'WAIT_FOR_READER', 'END_MONITOR':'END_MONITORING_SM'},
                        remapping={'result_cum':'results_',
                                   'acc_cum':'acc_results',
