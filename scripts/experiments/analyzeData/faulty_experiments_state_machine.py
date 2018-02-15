@@ -174,16 +174,16 @@ class Monitor(smach.State):
     def counter_cb(self,msg):
 
         if msg.msg == 2:
-            rospy.logwarn("collision_detected by %s" , msg.sensor_id)
+            rospy.logwarn("collision_detected by %s with data %s" , msg.sensor_id , msg.data)
 
             if msg.sensor_id.data == "acc_1":
                 self.accel_count = self.accel_count + 1
             if msg.sensor_id.data == "cam_0":
-                self.cam_count = self.accel_count + 1
+                self.cam_count = self.cam_count + 1
             if msg.sensor_id.data == "odom":
                 self.odom_count = self.odom_count + 1
             if msg.sensor_id.data == "imu_1":
-                self.imu_count = self.odom_count + 1
+                self.imu_count = self.imu_count + 1
 
             self.current_counter = self.current_counter + 1
 
@@ -222,10 +222,10 @@ class Monitor(smach.State):
         self.next_bag_request = False
 
         if self.stop_bag_request:
-            userdata.acc_cum.append(np.nanmax(self.accel_thr, axis=0))
-            userdata.cam_cum.append(np.nanmax(self.cam_thr, axis=0))
-            userdata.odom_cum.append(np.nanmax(self.odom_thr, axis=0))
-            userdata.imu_cum.append(np.nanmax(self.imu_thr, axis=0))
+            userdata.acc_cum.append(self.accel_count)
+            userdata.cam_cum.append(self.cam_count)
+            userdata.odom_cum.append(self.odom_count)
+            userdata.imu_cum.append(self.imu_count)
 
             del self.accel_thr[:]
             del self.cam_thr[:]
