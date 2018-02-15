@@ -32,8 +32,8 @@ class Setup(smach.State):
     def __init__(self):
         smach.State.__init__(self,
                              outcomes=['SETUP_DONE', 'FINISH'],
-                             input_keys=['counter_in','acc_results', 'cam_results', 'odom_results', 'imu_results', 'result_cum', 'results_', 'x_array'],
-                             output_keys=['counter_out','acc_results', 'cam_results', 'odom_results', 'imu_results', 'result_cum', 'results_', 'x_array'])
+                             input_keys=['counter_in','acc_results', 'cam_results', 'odom_results', 'imu_results', 'lidar_results', 'result_cum', 'results_', 'x_array'],
+                             output_keys=['counter_out','acc_results', 'cam_results', 'odom_results', 'imu_results', 'lidar_results', 'result_cum', 'results_', 'x_array'])
         #rospy.spin()
         self.acc_client = Client("accelerometer_process", timeout=3, config_callback=self.callback)
         self.cam_client = Client("vision_utils_ros", timeout=3, config_callback=self.callback)
@@ -184,7 +184,8 @@ class Monitor(smach.State):
     def counter_cb(self,msg):
 
         if msg.msg == 2:
-            rospy.logwarn("collision_detected by %s with data %s" , msg.sensor_id , msg.data)
+            #rospy.logwarn("collision_detected by %s with data %s" , msg.sensor_id , msg.data)
+            rospy.logwarn("collision_detected by %s " , msg.sensor_id)
 
             if msg.sensor_id.data == "accelerometer_1":
                 self.accel_count = self.accel_count + 1
@@ -240,7 +241,7 @@ class Monitor(smach.State):
             userdata.cam_cum.append(self.cam_count)
             userdata.odom_cum.append(self.odom_count)
             userdata.imu_cum.append(self.imu_count)
-            userdata.imu_cum.append(self.lidar_count)
+            userdata.lidar_cum.append(self.lidar_count)
 
 
             return 'END_MONITOR'
