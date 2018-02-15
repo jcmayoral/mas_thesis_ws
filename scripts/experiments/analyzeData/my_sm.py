@@ -24,7 +24,7 @@ def start_sm(path, common_string, monitor_state, setup_state, plot_state, time_l
   sm.userdata.acc_results = list()
   sm.userdata.cam_results = list()
   sm.userdata.odom_results = list()
-
+  sm.userdata.imu_results = list()
 
   reading_sm = smach.StateMachine(outcomes=['END_READING_SM'])
   reading_sm.userdata.sm_counter = 1
@@ -47,6 +47,8 @@ def start_sm(path, common_string, monitor_state, setup_state, plot_state, time_l
   monitoring_sm.userdata.acc_results = sm.userdata.acc_results
   monitoring_sm.userdata.cam_results = sm.userdata.cam_results
   monitoring_sm.userdata.odom_results = sm.userdata.odom_results
+  monitoring_sm.userdata.imu_results = sm.userdata.imu_results
+
 
   #montoring_sm.userdata.window_size_array = sm.window_size_array
 

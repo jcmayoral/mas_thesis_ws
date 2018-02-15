@@ -183,6 +183,7 @@ class Monitor(smach.State):
             if msg.sensor_id.data == "odom":
                 self.odom_count = self.odom_count + 1
             if msg.sensor_id.data == "imu_1":
+                print ("imu")
                 self.imu_count = self.imu_count + 1
 
             self.current_counter = self.current_counter + 1
@@ -199,7 +200,7 @@ class Monitor(smach.State):
             print ("accel_count" , self.accel_count , " collisions detected " , self.current_counter)
             print ("cam_count" , self.cam_count , " collisions detected " , self.current_counter)
             print ("odom_count" , self.odom_count , " collisions detected " , self.current_counter)
-            print ("odom_count" , self.imu_count , " collisions detected " , self.current_counter)
+            print ("imu_count" , self.imu_count , " collisions detected " , self.current_counter)
 
             self.stop_bag_request = True
 
@@ -227,10 +228,6 @@ class Monitor(smach.State):
             userdata.odom_cum.append(self.odom_count)
             userdata.imu_cum.append(self.imu_count)
 
-            del self.accel_thr[:]
-            del self.cam_thr[:]
-            del self.odom_thr[:]
-            del self.imu_thr[:]
             return 'END_MONITOR'
         else:
             #print ("NEXT_MONITOR")
