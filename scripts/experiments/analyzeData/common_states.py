@@ -61,7 +61,7 @@ class MyBagReader(smach.State):
             start_time = self.bag.get_start_time()
             end_time = self.bag.get_end_time()
             duration_time = end_time - start_time
-            r = rospy.Rate(100) # Default 100
+            r = rospy.Rate(150) # Default 100
             for topic, msg, t in self.bag.read_messages(topics=self.mytopics):
                 print ("ROSBag  Running ", t.to_sec() - start_time, " of " , duration_time, end="\r")
                 for p, topic_name in self.myPublishers:

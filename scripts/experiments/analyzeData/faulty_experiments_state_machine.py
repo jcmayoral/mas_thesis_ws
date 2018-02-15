@@ -14,6 +14,7 @@ from __future__ import print_function
 import rospy
 import smach
 import smach_ros
+import time
 import math
 from geometry_msgs.msg import AccelStamped, Twist
 from nav_msgs.msg import Odometry
@@ -82,7 +83,8 @@ class Plotter(smach.State):
                              input_keys=['data_in', 'x_array'])
     def execute(self, userdata):
         rospy.loginfo('Executing SETUP')
-
+        pass
+        """
         #Accelerometer Plot
         plt.figure()
         data = np.array(userdata.data_in['accel'])
@@ -141,6 +143,7 @@ class Plotter(smach.State):
         f.close()
         #plt.show()
         rospy.sleep(0.5)
+        """
         return 'PLOT_DONE'
 
 # define state Monitor
@@ -152,7 +155,6 @@ class Monitor(smach.State):
                               output_keys=['acc_cum', 'cam_cum', 'odom_cum', 'imu_cum', 'result_cum'])
         rospy.Subscriber("/finish_reading", String, self.fb_cb)
         rospy.Subscriber("/collision_label", Header, self.header_cb)
-        #rospy.Subscriber("/filter", controllerFusionMsg, self.filter_cb)
 
         self.current_counter = 0
         self.accel_count = 0
@@ -164,14 +166,10 @@ class Monitor(smach.State):
         self.cam_cum = list()
         self.odom_cum = list()
         self.imu_cum = list()
+        self.start_time = rospy.rostime.get_rostime().to_sec()
 
         for i in range(10):
             rospy.Subscriber("/collisions_"+str(i), sensorFusionMsg, self.counter_cb, queue_size=100)
-
-    def filter_cb(self,msg):
-        if msg.mode:
-            rospy.loginfo("Filtering")
-
 
     def counter_cb(self,msg):
 
@@ -199,15 +197,17 @@ class Monitor(smach.State):
         else:#FINISH
             print ("current_counter" , self.current_counter)
             print ("accel_count" , self.accel_count , " collisions detected " , self.current_counter)
-            print ("cam_count" , self.cam_count , " collisions detected " , self.cam_count)
-            print ("odom_count" , self.odom_count , " collisions detected " , self.odom_count)
-            print ("odom_count" , self.imu_count , " collisions detected " , self.imu_count)
+            print ("cam_count" , self.cam_count , " collisions detected " , self.current_counter)
+            print ("odom_count" , self.odom_count , " collisions detected " , self.current_counter)
+            print ("odom_count" , self.imu_count , " collisions detected " , self.current_counter)
 
             self.stop_bag_request = True
 
     def header_cb(self,msg):
+        curr_time = rospy.rostime.get_rostime().to_sec()
         print (end="\n")
-        rospy.logerr("GROUND TRUTH: %s", msg.stamp.secs)
+        if (15 > curr_time - self.start_time > 5): #TO AVOID INITIAL FALSE
+            rospy.logerr("GROUND TRUTH: %s", msg.stamp.secs)
 
     def execute(self, userdata):
 
