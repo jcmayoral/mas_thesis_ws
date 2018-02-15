@@ -90,6 +90,7 @@ class CollisionFilter(ChangeDetection):
         output_msg.controller_id.data = self.controller_id
 
         if any(t > self.threshold for t in data):
+            rospy.logwarn("IGNORE")
             output_msg.mode = controllerFusionMsg.IGNORE
 
         output_msg.header.stamp = rospy.Time.now()
