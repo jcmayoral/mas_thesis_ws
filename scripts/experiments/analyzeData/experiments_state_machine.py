@@ -30,12 +30,13 @@ class Setup(smach.State):
     def __init__(self):
         smach.State.__init__(self,
                              outcomes=['SETUP_DONE', 'FINISH'],
-                             input_keys=['counter_in','acc_results', 'cam_results', 'odom_results', 'result_cum', 'results_', 'x_array'],
-                             output_keys=['counter_out','acc_results', 'cam_results', 'odom_results', 'result_cum', 'results_', 'x_array'])
+                             input_keys=['counter_in','acc_results', 'cam_results', 'odom_results', 'lidar_results', 'result_cum', 'results_', 'x_array'],
+                             output_keys=['counter_out','acc_results', 'cam_results', 'odom_results', 'lidar_results', 'result_cum', 'results_', 'x_array'])
         #rospy.spin()
         self.acc_client = Client("accelerometer_process", timeout=3, config_callback=self.callback)
         self.cam_client = Client("vision_utils_ros", timeout=3, config_callback=self.callback)
         self.odom_client = Client("odom_collisions", timeout=3, config_callback=self.callback)
+        self.lidar_client = Client("laser_collisions", timeout=3, config_callback=self.callback)
 
         rospy.sleep(0.2)
 
@@ -51,6 +52,9 @@ class Setup(smach.State):
         self.acc_client.update_configuration({"reset": True})
         self.odom_client.update_configuration({"window_size": userdata.counter_in})
         self.odom_client.update_configuration({"reset": True})
+        self.lidar_client.update_configuration({"window_size": userdata.counter_in})
+        self.lidar_client.update_configuration({"reset": True})
+
 
         #SURF Version
         self.cam_client.update_configuration({"matching_threshold":  userdata.counter_in * 0.01})
@@ -58,7 +62,7 @@ class Setup(smach.State):
         self.cam_client.update_configuration({"reset": True})
 
         rospy.sleep(0.5)
-        if userdata.counter_in < 75: # Window SIZe Define max TODO
+        if userdata.counter_in < 3: # Window SIZe Define max TODO
             userdata.x_array.append(userdata.counter_in)
             userdata.counter_out = userdata.counter_in + 5
             return 'SETUP_DONE'
@@ -66,6 +70,7 @@ class Setup(smach.State):
             userdata.results_['accel'] = userdata.acc_results
             userdata.results_['cam'] = userdata.cam_results
             userdata.results_['odom'] = userdata.odom_results
+            userdata.results_['lidar'] = userdata.lidar_results
             return 'FINISH'
 
 class Plotter(smach.State):
@@ -112,6 +117,16 @@ class Plotter(smach.State):
         plt.savefig('odometry_motion_threshold.png') # TODO
 
 
+        plt.figure() #TODO
+        data = np.array(userdata.data_in['lidar'])
+        x_array = userdata.x_array
+        plt.plot(x_array,data, label='Lidar Threshold X')
+        plt.xlabel("Window Size")
+        plt.ylabel("Maximum Threshold Detected")
+        plt.legend()
+        plt.title('Lidar on Motion Thresholding') # subplot 211 title
+        plt.savefig('lidar_motion_threshold.png') # TODO
+
         f = open( 'file', 'w' )
         for key, value in userdata.data_in.iteritems():
         #for item in userdata.data_in:
@@ -127,28 +142,32 @@ class Monitor(smach.State):
     def __init__(self):
         smach.State.__init__(self,
                              outcomes=['NEXT_MONITOR', 'END_MONITOR'],
-                              input_keys=['acc_cum', 'cam_cum', 'odom_cum', 'result_cum'],
-                              output_keys=['acc_cum', 'cam_cum', 'odom_cum', 'result_cum'])
+                              input_keys=['acc_cum', 'cam_cum', 'odom_cum', 'lidar_cum', 'result_cum'],
+                              output_keys=['acc_cum', 'cam_cum', 'odom_cum', 'lidar_cum', 'result_cum'])
         rospy.Subscriber("/finish_reading", String, self.fb_cb)
         self.current_counter = 0
         self.accel_thr = list()
         self.cam_thr = list()
         self.odom_thr = list()
+        self.lidar_thr = list()
 
         self.acc_cum = list()
         self.cam_cum = list()
         self.odom_cum = list()
+        self.lidar_cum = list()
 
         for i in range(10):
             rospy.Subscriber("/collisions_"+str(i), sensorFusionMsg, self.threshold_cb, queue_size=100)
 
     def threshold_cb(self,msg):
-        if msg.sensor_id.data == "acc_1":
+        if msg.sensor_id.data == "accelerometer_1":
             self.accel_thr.append(msg.data)
-        if msg.sensor_id.data == "cam_0":
+        if msg.sensor_id.data == "cam1":
             self.cam_thr.append(msg.data)
-        if msg.sensor_id.data == "odom":
+        if msg.sensor_id.data == "odom_1":
             self.odom_thr.append(msg.data)
+        if msg.sensor_id.data == "lidar_1":
+            self.lidar_thr.append(msg.data)
         #print (msg.data)
 
     def fb_cb(self,msg):
@@ -163,6 +182,7 @@ class Monitor(smach.State):
             print ("accel_thr" , np.nanmax(self.accel_thr, axis=0) , " number of samples " , len(self.accel_thr))
             print ("cam_thr" , np.nanmax(self.cam_thr, axis=0), " number of samples " , len(self.cam_thr))
             print ("odom_thr" , np.nanmax(self.odom_thr, axis=0), " number of samples " , len(self.odom_thr))
+            print ("lidar_thr" , np.nanmax(self.lidar_thr, axis=0), " number of samples " , len(self.lidar_thr))
 
             self.stop_bag_request = True
 
@@ -182,10 +202,14 @@ class Monitor(smach.State):
             userdata.acc_cum.append(np.nanmax(self.accel_thr, axis=0))
             userdata.cam_cum.append(np.nanmax(self.cam_thr, axis=0))
             userdata.odom_cum.append(np.nanmax(self.odom_thr, axis=0))
+            userdata.lidar_cum.append(np.nanmax(self.lidar_thr, axis=0))
+
 
             del self.accel_thr[:]
             del self.cam_thr[:]
             del self.odom_thr[:]
+            del self.lidar_thr[:]
+
             return 'END_MONITOR'
         else:
             #print ("NEXT_MONITOR")

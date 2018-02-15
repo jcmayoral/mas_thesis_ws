@@ -10,11 +10,11 @@ from std_msgs.msg import Empty, String, Header
 
 # define state ReadBag
 class MyBagReader(smach.State):
-    def __init__(self,  limit=float("inf")):
+    def __init__(self,  limit=float("inf"), max_bag_file = 100):
         mytypes = [AccelStamped, Twist, Odometry, Odometry, LaserScan, LaserScan, LaserScan, Image, Image, Odometry, Header, Imu]
         #self.path = '/home/jose/ROS/thesis_ws/my_ws/rosbag_test/cob3/static_runs_2911/static_runs/' #TODO
         #self.path = '/home/jose/ROS/thesis_ws/my_ws/rosbag_test/cob3/cob3-test-2301/'
-
+        self.max_bag_file = max_bag_file
         self.mytopics = ["/accel", "/cmd_vel", "/odom", "/base/odometry_controller/odom",
             "/scan_front", "/scan_rear", "/scan_unified",
             "/arm_cam3d/rgb/image_raw","/cam3d/rgb/image_raw", "/base/odometry_controller/odometry", "/collision_label", "/imu/data"]
@@ -37,7 +37,7 @@ class MyBagReader(smach.State):
         rospy.loginfo('Executing state Reader')
 
         self.is_file_ok = False
-        max_bag_file = 50
+        max_bag_file = self.max_bag_file
         while not self.is_file_ok:
             try:
                 file_name = userdata.path + userdata.shared_string + str(userdata.foo_counter_in)+".bag"

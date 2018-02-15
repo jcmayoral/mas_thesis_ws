@@ -10,12 +10,13 @@ from std_msgs.msg import Empty, String
 from fusion_msgs.msg import sensorFusionMsg
 from dynamic_reconfigure.client import Client
 from common_states import MyBagReader, RestartReader
+import matplotlib.pyplot as plt
 
 def monitor_cb(ud, msg):
     return None
 
 # Create a SMACH state machine
-def start_sm(path, common_string, monitor_state, setup_state, plot_state, time_limit = float("inf")):
+def start_sm(path, common_string, monitor_state, setup_state, plot_state, time_limit = float("inf"), max_bag_file = 110):
   sm = smach.StateMachine(outcomes=['END_SM'])
   sm.userdata.window_size = 2
   #sm.userdata.bag_family = "cob3-attempt-2001-" #TODO
@@ -25,6 +26,8 @@ def start_sm(path, common_string, monitor_state, setup_state, plot_state, time_l
   sm.userdata.cam_results = list()
   sm.userdata.odom_results = list()
   sm.userdata.imu_results = list()
+  sm.userdata.lidar_results = list()
+
 
   reading_sm = smach.StateMachine(outcomes=['END_READING_SM'])
   reading_sm.userdata.sm_counter = 1
@@ -35,7 +38,7 @@ def start_sm(path, common_string, monitor_state, setup_state, plot_state, time_l
       smach.StateMachine.add('RESET_READING', RestartReader(),
                      transitions={'NEXT_BAG':'READING'},
                      remapping={'bar_counter_in':'sm_counter'})
-      smach.StateMachine.add('READING', MyBagReader(limit = time_limit),
+      smach.StateMachine.add('READING', MyBagReader(limit = time_limit, max_bag_file = max_bag_file),
                              transitions={'RESTART_READER':'RESET_READING',
                                           'END_READER':'END_READING_SM'},
                              remapping={'foo_counter_in':'sm_counter',
@@ -48,6 +51,7 @@ def start_sm(path, common_string, monitor_state, setup_state, plot_state, time_l
   monitoring_sm.userdata.cam_results = sm.userdata.cam_results
   monitoring_sm.userdata.odom_results = sm.userdata.odom_results
   monitoring_sm.userdata.imu_results = sm.userdata.imu_results
+  monitoring_sm.userdata.lidar_results = sm.userdata.lidar_results
 
 
   #montoring_sm.userdata.window_size_array = sm.window_size_array
@@ -61,6 +65,7 @@ def start_sm(path, common_string, monitor_state, setup_state, plot_state, time_l
                                 'acc_cum':'acc_results',
                                 'cam_cum':'cam_results',
                                 'odom_cum': 'odom_results',
+                                'lidar_cum': 'lidar_results',
                                 'imu_cum': 'imu_results'})
 
   # Open the container
@@ -74,6 +79,7 @@ def start_sm(path, common_string, monitor_state, setup_state, plot_state, time_l
                                 'cam_cum':'cam_results',
                                 'odom_cum':'odom_results',
                                 'imu_cum': 'imu_results',
+                                'lidar_cum': 'lidar_results',
                                 'x_array': 'window_size_array'})
 
       #Concurrent
