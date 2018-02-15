@@ -27,12 +27,13 @@ import matplotlib.pyplot as plt
 from my_sm import start_sm
 
 class Setup(smach.State):
-    def __init__(self):
+    def __init__(self, max_window_size = 75):
         smach.State.__init__(self,
                              outcomes=['SETUP_DONE', 'FINISH'],
                              input_keys=['counter_in','acc_results', 'cam_results', 'odom_results', 'lidar_results', 'result_cum', 'results_', 'x_array'],
                              output_keys=['counter_out','acc_results', 'cam_results', 'odom_results', 'lidar_results', 'result_cum', 'results_', 'x_array'])
         #rospy.spin()
+        self.max_window_size = max_window_size
         self.acc_client = Client("accelerometer_process", timeout=3, config_callback=self.callback)
         self.cam_client = Client("vision_utils_ros", timeout=3, config_callback=self.callback)
         self.odom_client = Client("odom_collisions", timeout=3, config_callback=self.callback)
@@ -62,7 +63,7 @@ class Setup(smach.State):
         self.cam_client.update_configuration({"reset": True})
 
         rospy.sleep(0.5)
-        if userdata.counter_in < 3: # Window SIZe Define max TODO
+        if userdata.counter_in < self.max_window_size: # Window SIZe Define max TODO
             userdata.x_array.append(userdata.counter_in)
             userdata.counter_out = userdata.counter_in + 5
             return 'SETUP_DONE'
