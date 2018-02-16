@@ -63,6 +63,7 @@ class FusionLaser(ChangeDetection):
         #Filling Message
         msg.header.frame_id = self.frame
         msg.window_size = self.window_size
+        msg.header.stamp = rospy.Time.now()
 
         #Detecting Collisions
         #if any(t > self.threshold for t in cur):
