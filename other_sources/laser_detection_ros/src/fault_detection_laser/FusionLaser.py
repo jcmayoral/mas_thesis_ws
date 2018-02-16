@@ -20,7 +20,7 @@ class FusionLaser(ChangeDetection):
         self.weight = 1.0
         self.is_disable = False
 
-        ChangeDetection.__init__(self,721)
+        ChangeDetection.__init__(self,1)
         rospy.init_node("laser_fusion", anonymous=False)
         rospy.Subscriber("/scan_unified", LaserScan, self.laserCB)
         sensor_number = rospy.get_param("~sensor_number", 0)
@@ -47,7 +47,7 @@ class FusionLaser(ChangeDetection):
 
     def laserCB(self, msg):
 
-        self.addData([i/msg.range_max for i in msg.ranges])
+        self.addData(np.sum([i/msg.range_max for i in msg.ranges], axis=0))
 
         if ( len(self.samples) > self.window_size):
             self.samples.pop(0)
@@ -59,7 +59,6 @@ class FusionLaser(ChangeDetection):
         self.changeDetection(len(self.samples))
         cur = np.array(self.cum_sum)
         cur = np.nan_to_num(cur)
-        cur[np.isnan(cur)] = 0
 
         #Filling Message
         msg.header.frame_id = self.frame
@@ -69,12 +68,14 @@ class FusionLaser(ChangeDetection):
         #if any(t > self.threshold for t in cur):
 
         #if any(t > self.threshold for t in cur):
-        print (np.sum(cur)/721)
-        if np.sum(cur)/721 > self.threshold:
+        print (np.sum(cur))
+        if cur > self.threshold:
             msg.msg = sensorFusionMsg.ERROR
 
+        data = list()
+        data.append(cur)
         msg.sensor_id.data = self.sensor_id
-        msg.data = cur
+        msg.data = data
         msg.weight = self.weight
 
         if not self.is_disable:
