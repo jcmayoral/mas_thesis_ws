@@ -207,7 +207,7 @@ class Monitor(smach.State):
 
         if msg.data == "NEXT_BAG":
             print ("current_counter" , self.current_counter)
-            self.current_counter = 0
+            #self.current_counter = 0
         else:#FINISH
             print ("accel_count" , self.accel_count , " collisions detected " , self.current_counter)
             print ("cam_count" , self.cam_count , " collisions detected " , self.current_counter)
