@@ -90,7 +90,7 @@ class FusionLaser(ChangeDetection):
             msg.msg = sensorFusionMsg.ERROR
 
         data = list()
-        data.append(msg.msg) #TODO
+        data.append(cur) #TODO
         msg.sensor_id.data = self.sensor_id
         msg.data = data
         msg.weight = self.weight
