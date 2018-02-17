@@ -19,6 +19,7 @@ class FusionLaser(ChangeDetection):
         self.threshold = threshold
         self.weight = 1.0
         self.is_disable = False
+        self.is_over_lapping_required = False
 
         ChangeDetection.__init__(self,1)
         rospy.init_node("laser_fusion", anonymous=False)
