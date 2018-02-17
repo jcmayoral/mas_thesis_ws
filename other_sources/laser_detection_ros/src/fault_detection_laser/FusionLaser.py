@@ -92,7 +92,7 @@ class FusionLaser(ChangeDetection):
         data = list()
 
         if cur > 10000000:
-            data.append(10000000) #TODO
+            data.append(0) #TODO
         else:
             data.append(cur)
 

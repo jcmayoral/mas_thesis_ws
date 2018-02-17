@@ -4,7 +4,7 @@ from std_msgs.msg import Header, Float64
 
 def subCB(msg):
     global collision
-    collision = 10
+    collision = 0.1
 
 def publishLabel():
     global collision
@@ -14,17 +14,17 @@ def publishLabel():
     msg = Float64()
     collision = 0
     counter = 0
-    rate =rospy.Rate(10)
+    rate =rospy.Rate(1)
 
     while not rospy.is_shutdown():
         msg.data = collision
         pub.publish(msg)
-        rate.sleep()
-        if collision is 10:
+        if collision == 0.1:
             counter = counter + 1
-        if counter is 5:
+        if counter is 2:
             collision = 0
             counter = 0
+        rate.sleep()
 
 if __name__ == '__main__':
     publishLabel()
