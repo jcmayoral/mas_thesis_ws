@@ -1,0 +1,6 @@
+#!/usr/bin/env python
+import rospy
+from velocity_controller_monitoring_tools.Plotter import ControllerMonitoring
+
+if __name__ == '__main__':
+    main = ControllerMonitoring(100,2)

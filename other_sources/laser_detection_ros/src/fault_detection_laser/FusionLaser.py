@@ -38,6 +38,7 @@ class FusionLaser(ChangeDetection):
         self.weight = config["weight"]
         self.is_disable = config["is_disable"]
         self.sensor_number = config["detector_id"]
+        self.is_over_lapping_required = config["overlap"]
         self.reset_publisher()
 
         if config["reset"]:
@@ -47,10 +48,21 @@ class FusionLaser(ChangeDetection):
 
     def laserCB(self, msg):
 
-        self.addData(np.sum([i/msg.range_max for i in msg.ranges], axis=0))
 
-        if ( len(self.samples) > self.window_size):
+
+        if self.is_over_lapping_required:
+
+            self.addData(np.sum([i/msg.range_max for i in msg.ranges], axis=0))
+
+            if len(self.samples) > self.window_size:
+                self.samples.pop(0)
+
+        elif ( self.i < self.window_size):
+            self.addData(np.sum([i/msg.range_max for i in msg.ranges], axis=0))
+            self.i = self.i+1
+        else:
             self.samples.pop(0)
+            return
 
 
         msg = sensorFusionMsg()
