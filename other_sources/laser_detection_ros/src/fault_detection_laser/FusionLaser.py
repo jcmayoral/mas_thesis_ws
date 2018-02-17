@@ -21,7 +21,7 @@ class FusionLaser(ChangeDetection):
         self.is_disable = False
         self.is_over_lapping_required = False
 
-        ChangeDetection.__init__(self,1)
+        ChangeDetection.__init__(self,721)
         rospy.init_node("laser_fusion", anonymous=False)
         sensor_number = rospy.get_param("~sensor_number", 0)
         self.sensor_id = rospy.get_param("~sensor_id", sensor_id)
@@ -44,6 +44,7 @@ class FusionLaser(ChangeDetection):
 
         if config["reset"]:
             self.clear_values()
+            self.i = 0
             config["reset"] = False
         return config
 
@@ -56,12 +57,13 @@ class FusionLaser(ChangeDetection):
             if len(self.samples) > self.window_size:
                 self.samples.pop(0)
 
-        elif ( self.i < self.window_size):
-            self.addData([i/msg.range_max for i in msg.ranges])
-            self.i = self.i+1
         else:
-            self.samples.pop(0)
-            return
+            if (self.i < self.window_size and len(self.samples) < self.window_size):
+                self.addData([i/msg.range_max for i in msg.ranges])
+                self.i = self.i+1
+            else:
+                self.samples.pop(0)
+                return
 
 
         msg = sensorFusionMsg()
@@ -89,8 +91,8 @@ class FusionLaser(ChangeDetection):
 
         data = list()
 
-        if cur > sys.maxint:
-            data.append(sys.maxint) #TODO
+        if cur > 10000000:
+            data.append(10000000) #TODO
         else:
             data.append(cur)
 
