@@ -24,7 +24,6 @@ class LaserCUSUM(RealTimePlotter,ChangeDetection):
         plt.close("all")
 
     def laserCB(self, msg):
-        print ("inside")
         while (self.i< self.window_size):
             self.addData([i/msg.range_max for i in msg.ranges])
             self.i = self.i+1
