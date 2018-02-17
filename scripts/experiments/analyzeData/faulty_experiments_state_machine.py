@@ -253,4 +253,4 @@ class Monitor(smach.State):
 
 if __name__ == '__main__':
     rospy.init_node('smach_example_state_machine')
-    start_sm("/home/jose/data/", "collision_bags_bags", Monitor, Setup, Plotter, time_limit = 15, max_bag_file = 50)
+    start_sm("/home/jose/data/collision_test_1402/", "collision_bags_bags", Monitor, Setup, Plotter, time_limit = 15, max_bag_file = 50)
