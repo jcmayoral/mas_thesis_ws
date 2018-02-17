@@ -21,13 +21,13 @@ class FusionLaser(ChangeDetection):
         self.is_disable = False
         self.is_over_lapping_required = False
 
-        ChangeDetection.__init__(self,1)
+        ChangeDetection.__init__(self,721)
         rospy.init_node("laser_fusion", anonymous=False)
-        rospy.Subscriber("/scan_unified", LaserScan, self.laserCB)
         sensor_number = rospy.get_param("~sensor_number", 0)
         self.sensor_id = rospy.get_param("~sensor_id", sensor_id)
         self.pub = rospy.Publisher('collisions_'+ str(sensor_number), sensorFusionMsg, queue_size=10)
         self.dyn_reconfigure_srv = Server(laserConfig, self.dynamic_reconfigureCB)
+        rospy.Subscriber("/scan_unified", LaserScan, self.laserCB)
         rospy.spin()
 
     def reset_publisher(self):
@@ -53,13 +53,13 @@ class FusionLaser(ChangeDetection):
 
         if self.is_over_lapping_required:
 
-            self.addData(np.sum([i/msg.range_max for i in msg.ranges], axis=0))
+            self.addData(np.array([i/msg.range_max for i in msg.ranges]))
 
             if len(self.samples) > self.window_size:
                 self.samples.pop(0)
 
         elif ( self.i < self.window_size):
-            self.addData(np.sum([i/msg.range_max for i in msg.ranges], axis=0))
+            self.addData(np.array([i/msg.range_max for i in msg.ranges]))
             self.i = self.i+1
         else:
             self.samples.pop(0)
@@ -70,8 +70,11 @@ class FusionLaser(ChangeDetection):
 
         self.i=0
         self.changeDetection(len(self.samples))
+
         cur = np.array(self.cum_sum)
         cur = np.nan_to_num(cur)
+        cur[np.isnan(cur)] = 0
+        cur = np.var(cur)
 
         #Filling Message
         msg.header.frame_id = self.frame
@@ -82,12 +85,12 @@ class FusionLaser(ChangeDetection):
         #if any(t > self.threshold for t in cur):
 
         #if any(t > self.threshold for t in cur):
-        print (np.sum(cur))
+
         if cur > self.threshold:
             msg.msg = sensorFusionMsg.ERROR
 
         data = list()
-        data.append(cur)
+        data.append(msg.msg) #TODO
         msg.sensor_id.data = self.sensor_id
         msg.data = data
         msg.weight = self.weight
