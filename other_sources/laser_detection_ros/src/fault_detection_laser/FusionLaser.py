@@ -4,7 +4,7 @@ from geometry_msgs.msg import AccelStamped
 from sensor_msgs.msg import LaserScan
 from fusion_msgs.msg import sensorFusionMsg
 import numpy as np
-
+import sys
 from dynamic_reconfigure.server import Server
 from laser_detection_ros.cfg import laserConfig
 
@@ -21,7 +21,7 @@ class FusionLaser(ChangeDetection):
         self.is_disable = False
         self.is_over_lapping_required = False
 
-        ChangeDetection.__init__(self,721)
+        ChangeDetection.__init__(self,1)
         rospy.init_node("laser_fusion", anonymous=False)
         sensor_number = rospy.get_param("~sensor_number", 0)
         self.sensor_id = rospy.get_param("~sensor_id", sensor_id)
@@ -49,17 +49,15 @@ class FusionLaser(ChangeDetection):
 
     def laserCB(self, msg):
 
-
-
         if self.is_over_lapping_required:
 
-            self.addData(np.array([i/msg.range_max for i in msg.ranges]))
+            self.addData([i/msg.range_max for i in msg.ranges])
 
             if len(self.samples) > self.window_size:
                 self.samples.pop(0)
 
         elif ( self.i < self.window_size):
-            self.addData(np.array([i/msg.range_max for i in msg.ranges]))
+            self.addData([i/msg.range_max for i in msg.ranges])
             self.i = self.i+1
         else:
             self.samples.pop(0)
@@ -90,7 +88,12 @@ class FusionLaser(ChangeDetection):
             msg.msg = sensorFusionMsg.ERROR
 
         data = list()
-        data.append(cur) #TODO
+
+        if cur > sys.maxint:
+            data.append(sys.maxint) #TODO
+        else:
+            data.append(cur)
+
         msg.sensor_id.data = self.sensor_id
         msg.data = data
         msg.weight = self.weight
