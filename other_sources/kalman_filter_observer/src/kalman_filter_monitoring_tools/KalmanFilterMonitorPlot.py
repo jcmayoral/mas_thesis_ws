@@ -11,7 +11,7 @@ from FaultDetection import ChangeDetection
 import matplotlib.pyplot as plt
 
 
-class ControllerCUSUM(RealTimePlotter,ChangeDetection):
+class KalmanFilterPloter(RealTimePlotter,ChangeDetection):
     def __init__(self, max_samples = 500, pace = 2, cusum_window_size = 10 ):
         self.data_ = []
         self.data_.append([0,0,0])

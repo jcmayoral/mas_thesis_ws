@@ -1,14 +1,14 @@
 import rospy
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
+from sensor_msgs.msg import Imu
 from dynamic_reconfigure.server import Server
 from fusion_msgs.msg import controllerFusionMsg
 import numpy as np
-from FaultDetection import ChangeDetection
+from MyKalmanFilter.SimpleKalmanFilter import SimpleKalmanFilter
 from velocity_controller_monitoring.cfg import filterConfig
 
-
-class CollisionFilter(ChangeDetection):
+class KalmanFilterMonitor(SimpleKalmanFilter):
     def __init__(self, cusum_window_size = 10, threshold = 10 ):
         self.data_ = []
         self.data_.append([0,0,0])
@@ -22,64 +22,64 @@ class CollisionFilter(ChangeDetection):
         self.frame = 'test'
         self.window_size = cusum_window_size
         self.is_disable = False
-        self.callBackFunction = self.updateChangeDetectionData
-        ChangeDetection.__init__(self,3)
-        rospy.init_node("controller_cusum", anonymous=True)
+        self.callBackFunction = self.updateThreshold
+
+        self.initKalmanFilter()
+        rospy.init_node("kalman_filter", anonymous=True)
         self.openLoop_ = Twist()
         self.closeLoop_ = Twist()
         self.pub = rospy.Publisher('filter', controllerFusionMsg, queue_size=10)
         self.dyn_reconfigure_srv = Server(filterConfig, self.dynamic_reconfigureCB)
-        rospy.Subscriber("/base/twist_mux/command_navigation", Twist, self.openLoopCB)
-        rospy.Subscriber("/base/odometry_controller/odometry", Odometry, self.closeLoopCB)
+        rospy.Subscriber("/imu/data", Imu, self.closeLoopCB)
+        rospy.Subscriber("/base/odometry_controller/odometry", Odometry, self.openLoopCB)
+        rospy.loginfo("Kalman Filter Initialized")
         rospy.spin()
+
+    def initKalmanFilter(self):
+        dt = 1
+        x = np.array([0,0,10,0]).reshape((4,1)) # Initial state
+        P = np.eye(4) * 10 # Initial Uncertanty
+        A = np.eye(4) # Transition Matrix
+        A[0,2] = dt
+        A[1,3] = dt
+
+        H = np.array(([0,0,1,0],[0,0,0,1])) # Measurement Function
+        R = np.array(([10,0],[0,10])) # measurement noise covariance
+        Q = np.array(([1/4*np.power(dt,4), 1/4*np.power(dt,4),1/2*np.power(dt,3), 1/2*np.power(dt,3)],
+        	      [1/4*np.power(dt,4), 1/4*np.power(dt,4),1/2*np.power(dt,3), 1/2*np.power(dt,3)],
+        	      [1/2*np.power(dt,3), 1/2*np.power(dt,3), np.power(dt,2), np.power(dt,2)],
+        	      [1/2*np.power(dt,3), 1/2*np.power(dt,3), np.power(dt,2), np.power(dt,2)])) # Process Noise Covariance
+        SimpleKalmanFilter.__init__(self,x, A, H, R, Q, dt=1, size =4)
 
     def dynamic_reconfigureCB(self,config, level):
         self.threshold = config["threshold"]
         self.window_size = config["window_size"]
         self.is_disable = config["is_disable"]
 
-        if config["reset"]:
-            self.clear_values()
+        if config["reset"]: #TODO
             config["reset"] = False
-
-        if config["mode"]:
-            self.callBackFunction = self.updateThreshold
-        else:
-            self.callBackFunction = self.updateChangeDetectionData
 
         return config
 
 
     def updateThreshold(self,msg):
-        print ("Normal Threshold CB")
-        data = [np.fabs(self.current_data.linear.x),
+        Z = [np.fabs(self.current_data.linear.x),
                 np.fabs(self.current_data.linear.y),
                 np.fabs(self.current_data.angular.z)]
+        self.runFilter(Z)
+        data = self.getInnovationFunction().flatten()
         print (data)
         self.publishMsg(data)
 
-    def updateChangeDetectionData(self,msg):
-        print ("Change Detection")
-        self.addData([self.current_data.linear.x, self.current_data.linear.y, self.current_data.angular.z])
-
-        if ( len(self.samples) > self.window_size):
-            self.samples.pop(0)
-
-        self.changeDetection(len(self.samples))
-        cur = np.array(self.cum_sum, dtype = object)
-        self.publishMsg(cur)
-
-    def openLoopCB(self, msg):
-        self.openLoop_ = msg
-
     def closeLoopCB(self, msg):
-        self.closeLoop_ = msg.twist.twist
-        self.current_data.linear.x = self.openLoop_.linear.x - self.closeLoop_.linear.x
-        self.current_data.linear.y = self.openLoop_.linear.y - self.closeLoop_.linear.y
-        self.current_data.angular.z = self.openLoop_.angular.z - self.closeLoop_.angular.z
+        self.current_data.linear.x = self.openLoop_.linear.x - msg.linear_acceleration.x
+        self.current_data.linear.y = self.openLoop_.linear.y - msg.linear_acceleration.y
+        self.current_data.angular.z = self.openLoop_.angular.z - msg.angular_velocity.z
 
         self.callBackFunction(msg)
 
+    def openLoopCB(self, msg):
+        self.openLoop_ = msg.twist.twist
 
     def publishMsg(self,data):
         output_msg = controllerFusionMsg()
