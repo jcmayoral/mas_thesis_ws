@@ -37,19 +37,22 @@ class KalmanFilterMonitor(SimpleKalmanFilter):
 
     def initKalmanFilter(self):
         dt = 1
-        x = np.array([0,0,10,0]).reshape((4,1)) # Initial state
-        P = np.eye(4) * 10 # Initial Uncertanty
-        A = np.eye(4) # Transition Matrix
-        A[0,2] = dt
-        A[1,3] = dt
-
-        H = np.array(([0,0,1,0],[0,0,0,1])) # Measurement Function
-        R = np.array(([10,0],[0,10])) # measurement noise covariance
-        Q = np.array(([1/4*np.power(dt,4), 1/4*np.power(dt,4),1/2*np.power(dt,3), 1/2*np.power(dt,3)],
-        	      [1/4*np.power(dt,4), 1/4*np.power(dt,4),1/2*np.power(dt,3), 1/2*np.power(dt,3)],
-        	      [1/2*np.power(dt,3), 1/2*np.power(dt,3), np.power(dt,2), np.power(dt,2)],
-        	      [1/2*np.power(dt,3), 1/2*np.power(dt,3), np.power(dt,2), np.power(dt,2)])) # Process Noise Covariance
-        SimpleKalmanFilter.__init__(self,x, A, H, R, Q, dt=1, size =4)
+        x = np.array([0,0,0,0,0,0]).reshape((6,1)) # Initial state
+        P = np.eye(6) * 10 # Initial Uncertanty
+        A = np.eye(6) # Transition Matrix
+        A[0,3] = dt
+        A[1,4] = dt
+        A[2,5] = dt
+        H = np.array(([0,0,0,1,0,0],[0,0,0,0,1,0],[0,0,0,0,0,1])) # Measurement Function
+        R = np.array(([10,0,0],[0,10,0],[0,0,10])) # measurement noise covariance
+        Q = np.array(([1/4*np.power(dt,4), 1/4*np.power(dt,4), 1/4*np.power(dt,4),1/2*np.power(dt,3), 1/2*np.power(dt,3), 1/2*np.power(dt,3)],
+        	      [1/4*np.power(dt,4), 1/4*np.power(dt,4), 1/4*np.power(dt,4), 1/2*np.power(dt,3), 1/2*np.power(dt,3), 1/2*np.power(dt,3)],
+          	      [1/4*np.power(dt,4), 1/4*np.power(dt,4), 1/4*np.power(dt,4), 1/2*np.power(dt,3), 1/2*np.power(dt,3), 1/2*np.power(dt,3)],
+        	      [1/2*np.power(dt,3), 1/2*np.power(dt,3), 1/2*np.power(dt,3), np.power(dt,2), np.power(dt,2), np.power(dt,2)],
+        	      [1/2*np.power(dt,3), 1/2*np.power(dt,3), 1/2*np.power(dt,3) ,np.power(dt,2), np.power(dt,2), np.power(dt,2)],
+        	      [1/2*np.power(dt,3), 1/2*np.power(dt,3), 1/2*np.power(dt,3) ,np.power(dt,2), np.power(dt,2), np.power(dt,2)])) # Process Noise Covariance
+        print (Q)
+        SimpleKalmanFilter.__init__(self,x, A, H, R, Q, dt=1, size = 6)
 
     def dynamic_reconfigureCB(self,config, level):
         self.threshold = config["threshold"]
@@ -63,13 +66,14 @@ class KalmanFilterMonitor(SimpleKalmanFilter):
 
 
     def updateThreshold(self,msg):
-        Z = [np.fabs(self.current_data.linear.x),
+        Z = np.array([np.fabs(self.current_data.linear.x),
                 np.fabs(self.current_data.linear.y),
-                np.fabs(self.current_data.angular.z)]
+                np.fabs(self.current_data.angular.z)]).reshape(3,1)
         self.runFilter(Z)
-        data = self.getInnovationFunction().flatten()
-        print (data)
-        self.publishMsg(data)
+        #data = self.getInnovationFunction().flatten()
+        data = self.getEstimatedState()
+        print (data, data.shape)
+        self.publishMsg(data.flatten())
 
     def closeLoopCB(self, msg):
         self.current_data.linear.x = self.openLoop_.linear.x - msg.linear_acceleration.x
