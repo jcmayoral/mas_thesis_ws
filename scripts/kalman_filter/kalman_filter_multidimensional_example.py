@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 it = 100 #readings_number 
 realv=10 #true velocity
 
-measurements = np.array([[10.1,1.0],[12.1,1.0],[8.6,1.0],[10.5,1.0],[10.5,1.0],]) #measurements
-measurements.shape = (5,2)
+measurements = np.array([[10.1,1.0],[10.1,1.0],[10.1,1.0],[10.1,1.0],[10.1,1.0],[10.1,2.0],[10.1,1.0],[10.1,1.0],[15,1.0],[10.1,1.0],]) #measurements
+measurements.shape = (10,2)
 
 dt = 1
 
@@ -26,6 +26,7 @@ Q = np.array(([1/4*np.power(dt,4), 1/4*np.power(dt,4),1/2*np.power(dt,3), 1/2*np
 	      [1/2*np.power(dt,3), 1/2*np.power(dt,3), np.power(dt,2), np.power(dt,2)])) # Process Noise Covariance
 
 I = np.eye(4) # Identity Matrix
+plot_list = list()
 
 for m_i,m_j in measurements:
     x = np.dot(A,x) # Prediction State
@@ -34,8 +35,9 @@ for m_i,m_j in measurements:
     y = Z - (np.dot(H,x)) # Innovation Function
     S = np.dot(H, np.dot(P,H.T)) + R # Innovation Covariance
     K = np.dot(P, np.dot(H.T,np.linalg.inv(S))) #Kalman Gain
-    print K
+    plot_list.append(y.flatten())
     x = x + np.dot(K,y)
     P = (I-np.dot(K,H))*P
 
-
+plt.plot(np.arange(0,10),k_gain)
+plt.show()
