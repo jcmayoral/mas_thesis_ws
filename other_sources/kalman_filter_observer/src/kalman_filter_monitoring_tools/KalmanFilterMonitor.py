@@ -3,19 +3,19 @@ from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Imu
 from dynamic_reconfigure.server import Server
-from fusion_msgs.msg import controllerFusionMsg
+from fusion_msgs.msg import sensorFusionMsg
 import numpy as np
 from MyKalmanFilter.SimpleKalmanFilter import SimpleKalmanFilter
-from velocity_controller_monitoring.cfg import filterConfig
+from kalman_filter_observer.cfg import kalmanfilterConfig
 
 class KalmanFilterMonitor(SimpleKalmanFilter):
-    def __init__(self, cusum_window_size = 10, threshold = 10 ):
+    def __init__(self, cusum_window_size = 10, threshold = 10, sensor_id='kalman1'):
         self.data_ = []
         self.data_.append([0,0,0])
         self.step_ = []
         self.step_.append(0)
         self.threshold = threshold
-        self.controller_id = 'velocity_controller'
+        self.sensor_id = sensor_id
         self.i = 0
         self.msg = 0
         self.current_data = Twist()
@@ -28,8 +28,11 @@ class KalmanFilterMonitor(SimpleKalmanFilter):
         rospy.init_node("kalman_filter", anonymous=True)
         self.openLoop_ = Twist()
         self.closeLoop_ = Twist()
-        self.pub = rospy.Publisher('filter', controllerFusionMsg, queue_size=10)
-        self.dyn_reconfigure_srv = Server(filterConfig, self.dynamic_reconfigureCB)
+
+        sensor_number = rospy.get_param("~sensor_number", 0)
+        self.sensor_id = rospy.get_param("~sensor_id", sensor_id)
+        self.pub = rospy.Publisher('collisions_'+ str(sensor_number), sensorFusionMsg, queue_size=10)
+        self.dyn_reconfigure_srv = Server(kalmanfilterConfig, self.dynamic_reconfigureCB)
         rospy.Subscriber("/imu/data", Imu, self.closeLoopCB)
         rospy.Subscriber("/base/odometry_controller/odometry", Odometry, self.openLoopCB)
         rospy.loginfo("Kalman Filter Initialized")
@@ -54,16 +57,19 @@ class KalmanFilterMonitor(SimpleKalmanFilter):
         print (Q)
         SimpleKalmanFilter.__init__(self,x, A, H, R, Q, dt=1, size = 6)
 
+    def reset_publisher(self):
+        self.pub = rospy.Publisher('collisions_'+ str(self.sensor_number), sensorFusionMsg, queue_size=10)
+
     def dynamic_reconfigureCB(self,config, level):
         self.threshold = config["threshold"]
-        self.window_size = config["window_size"]
         self.is_disable = config["is_disable"]
+        self.sensor_number = config["detector_id"]
+        self.reset_publisher()
 
         if config["reset"]: #TODO
             config["reset"] = False
 
         return config
-
 
     def updateThreshold(self,msg):
         Z = np.array([np.fabs(self.current_data.linear.x),
@@ -86,17 +92,18 @@ class KalmanFilterMonitor(SimpleKalmanFilter):
         self.openLoop_ = msg.twist.twist
 
     def publishMsg(self,data):
-        output_msg = controllerFusionMsg()
+        output_msg = sensorFusionMsg()
         #Filling Message
         output_msg.header.frame_id = self.frame
         output_msg.window_size = self.window_size
         #print ("Accelerations " , x,y,z)
-        output_msg.controller_id.data = self.controller_id
+        output_msg.sensor_id.data = self.sensor_id
 
         if any(t > self.threshold for t in data):
-            rospy.logwarn("IGNORE")
-            output_msg.mode = controllerFusionMsg.IGNORE
+            rospy.logwarn("Collision")
+            output_msg.msg = sensorFusionMsg.ERROR
 
+        output_msg.data = data
         output_msg.header.stamp = rospy.Time.now()
 
         if not self.is_disable:
