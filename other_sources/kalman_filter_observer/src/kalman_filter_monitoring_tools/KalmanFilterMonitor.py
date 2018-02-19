@@ -18,6 +18,7 @@ class KalmanFilterMonitor(SimpleKalmanFilter):
         self.sensor_id = sensor_id
         self.i = 0
         self.msg = 0
+        self.mode = 0
         self.current_data = Twist()
         self.frame = 'test'
         self.window_size = cusum_window_size
@@ -39,7 +40,7 @@ class KalmanFilterMonitor(SimpleKalmanFilter):
         rospy.spin()
 
     def initKalmanFilter(self):
-        dt = 1
+        dt = 0.1
         x = np.array([0,0,0,0,0,0]).reshape((6,1)) # Initial state
         P = np.eye(6) * 10 # Initial Uncertanty
         A = np.eye(6) # Transition Matrix
@@ -54,7 +55,6 @@ class KalmanFilterMonitor(SimpleKalmanFilter):
         	      [1/2*np.power(dt,3), 1/2*np.power(dt,3), 1/2*np.power(dt,3), np.power(dt,2), np.power(dt,2), np.power(dt,2)],
         	      [1/2*np.power(dt,3), 1/2*np.power(dt,3), 1/2*np.power(dt,3) ,np.power(dt,2), np.power(dt,2), np.power(dt,2)],
         	      [1/2*np.power(dt,3), 1/2*np.power(dt,3), 1/2*np.power(dt,3) ,np.power(dt,2), np.power(dt,2), np.power(dt,2)])) # Process Noise Covariance
-        print (Q)
         SimpleKalmanFilter.__init__(self,x, A, H, R, Q, dt=1, size = 6)
 
     def reset_publisher(self):
@@ -64,6 +64,8 @@ class KalmanFilterMonitor(SimpleKalmanFilter):
         self.threshold = config["threshold"]
         self.is_disable = config["is_disable"]
         self.sensor_number = config["detector_id"]
+        self.mode = config["mode_selector"]
+
         self.reset_publisher()
 
         if config["reset"]: #TODO
@@ -77,8 +79,12 @@ class KalmanFilterMonitor(SimpleKalmanFilter):
                 np.fabs(self.current_data.linear.y),
                 np.fabs(self.current_data.angular.z)]).reshape(3,1)
         self.runFilter(Z)
-        #data = self.getInnovationFunction().flatten()
-        data = self.getEstimatedState()
+
+        if self.mode is 0:
+            data = self.getInnovationFunction()
+        else:
+            data = self.getEstimatedState()
+
         print (data, data.shape)
         self.publishMsg(data.flatten())
 
@@ -100,10 +106,14 @@ class KalmanFilterMonitor(SimpleKalmanFilter):
         #print ("Accelerations " , x,y,z)
         output_msg.sensor_id.data = self.sensor_id
 
-        if any(t > self.threshold for t in data):
+        #if any(t > self.threshold for t in data[3:5]):
+        print np.var(data[3:5])
+        if np.var(data[3:5]) > self.threshold:
             rospy.logwarn("Collision")
             output_msg.msg = sensorFusionMsg.ERROR
 
+        data[3] = data[3] - 10.8 #TODO
+        data[4] = data[4] - 6.67#TODO
         output_msg.data = data
         output_msg.header.stamp = rospy.Time.now()
 
