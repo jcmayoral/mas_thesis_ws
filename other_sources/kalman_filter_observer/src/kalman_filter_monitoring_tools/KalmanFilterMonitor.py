@@ -25,7 +25,7 @@ class KalmanFilterMonitor(SimpleKalmanFilter):
         self.callBackFunction = self.updateThreshold
 
         self.initKalmanFilter()
-        rospy.init_node("kalman_filter", anonymous=True)
+        rospy.init_node("kalman_filter", anonymous=False)
         self.openLoop_ = Twist()
         self.closeLoop_ = Twist()
 
@@ -67,6 +67,7 @@ class KalmanFilterMonitor(SimpleKalmanFilter):
         self.reset_publisher()
 
         if config["reset"]: #TODO
+            self.setInitialState(np.array([0,0,0,0,0,0]).reshape((6,1)))
             config["reset"] = False
 
         return config
