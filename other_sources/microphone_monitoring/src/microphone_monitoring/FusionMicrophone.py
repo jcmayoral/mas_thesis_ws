@@ -26,17 +26,16 @@ class FusionMicrophone(ChangeDetection):
         rospy.init_node("microphone_fusion", anonymous=False)
         ChangeDetection.__init__(self,1)
 
-        audio = pyaudio.PyAudio()
-        for i in range(audio.get_device_count()):
-             dev = audio.get_device_info_by_index(i)
+        self.audio = pyaudio.PyAudio()
+        for i in range(self.audio.get_device_count()):
+             dev = self.audio.get_device_info_by_index(i)
              print(i,dev)
-        device_index = 0
-        dev = audio.get_device_info_by_index(device_index)
-        print dev["defaultSampleRate"]
-        self.stream = audio.open(format=pyaudio.paInt16,
+        self.device_index = 0
+        self.device = self.audio.get_device_info_by_index(self.device_index)
+        self.stream = self.audio.open(format=pyaudio.paInt16,
                             channels=1,
-                            input_device_index = device_index,
-                            rate=(int)(dev["defaultSampleRate"]), input=True,
+                            input_device_index = self.device_index,
+                            rate=(int)(self.device["defaultSampleRate"]), input=True,
                             frames_per_buffer=self.CHUNK)
         self.stream.start_stream()
         r = rospy.Rate(10)
@@ -63,6 +62,15 @@ class FusionMicrophone(ChangeDetection):
         self.is_disable = config["is_disable"]
         self.sensor_number = config["detector_id"]
         self.reset_publisher()
+        self.stream.stop_stream()
+        while not self.stream.is_stopped:
+            print "h"
+        self.audio.close(self.stream)
+        self.stream = self.audio.open(format=pyaudio.paInt16,
+                            channels=1,
+                            input_device_index = self.device_index,
+                            rate=(int)(self.device["defaultSampleRate"]), input=True,
+                            frames_per_buffer=(int)(config['CHUNK']))
 
         if config["reset"]:
             self.clear_values()
