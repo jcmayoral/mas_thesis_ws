@@ -22,7 +22,7 @@ class Plotter(RealTimePlotter):
         self.stream = audio.open(format=pyaudio.paInt16,
                             channels=1,
                             rate=44100, input=True,
-                            frames_per_buffer=1024)
+                            frames_per_buffer=1)
         self.stream.start_stream()
         self.i = 0
         #_thread.start_new_thread( self.read, () )
@@ -36,11 +36,11 @@ class Plotter(RealTimePlotter):
         plt.close("all")
 
     def read(self):
-        data = self.stream.read(1024)
+        data = self.stream.read(1)
         amplitude = np.fromstring(data, np.int16)
         self.step_.append(self.i)
         self.i = self.i + 1
-        suma = np.sum(np.array(amplitude, dtype = object))
-        var = np.var(np.array(amplitude, dtype = object))
-        self.data_.append(var)
+        #suma = np.sum(np.array(amplitude, dtype = object))
+        #var = np.var(np.array(amplitude, dtype = object))
+        self.data_.append(amplitude)
         self.update(self.i,self.step_,self.data_)
