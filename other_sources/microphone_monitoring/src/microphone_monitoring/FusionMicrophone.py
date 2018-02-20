@@ -30,8 +30,7 @@ class FusionMicrophone(ChangeDetection):
         for i in range(audio.get_device_count()):
              dev = audio.get_device_info_by_index(i)
              print(i,dev)
-
-	    device_index = 0
+        device_index = 0
         dev = audio.get_device_info_by_index(device_index)
         print dev["defaultSampleRate"]
         self.stream = audio.open(format=pyaudio.paInt16,
