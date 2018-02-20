@@ -1,13 +1,13 @@
 import rospy
 from std_msgs.msg import Header, Float64
-
+import sys
 
 def subCB(msg):
-    global collision
-    collision = 0.1
+    global collision, const_collision_value
+    collision = const_collision_value
 
 def publishLabel():
-    global collision
+    global collision, const_collision_value
     rospy.init_node("labeler_collision", anonymous=True)
     rospy.Subscriber("/collision_label", Header, subCB)
     pub = rospy.Publisher("/label", Float64)
@@ -19,7 +19,7 @@ def publishLabel():
     while not rospy.is_shutdown():
         msg.data = collision
         pub.publish(msg)
-        if collision == 0.1:
+        if collision == const_collision_value:
             counter = counter + 1
         if counter is 2:
             collision = 0
@@ -27,4 +27,10 @@ def publishLabel():
         rate.sleep()
 
 if __name__ == '__main__':
+    global const_collision_value
+
+    if len(sys.argv) > 1:
+        const_collision_value = float(sys.argv[1])
+    else:
+        const_collision_value = 1.0
     publishLabel()
