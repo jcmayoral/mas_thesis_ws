@@ -33,7 +33,7 @@ class LabelerMicrophone(ChangeDetection):
              dev = audio.get_device_info_by_index(i)
              print(i,dev)
 
-	device_index = 0
+	    device_index = 0
         dev = audio.get_device_info_by_index(device_index)
         print dev["defaultSampleRate"]
         self.stream = audio.open(format=pyaudio.paInt16,
@@ -106,8 +106,11 @@ class LabelerMicrophone(ChangeDetection):
 
         #Detecting Collisions
         suma = np.sum(np.array(self.cum_sum, dtype = object))
+        var = np.var(np.array(self.cum_sum, dtype = object))
+
         print (suma)
-        if suma > self.threshold:
+        print (var)
+        if var > self.threshold:
             print ("COllision")
             if not self.is_disable:
                 self.pub.publish(msg)

@@ -36,9 +36,11 @@ class Plotter(RealTimePlotter):
         plt.close("all")
 
     def read(self):
-        data = self.stream.read(1)
+        data = self.stream.read(1024)
         amplitude = np.fromstring(data, np.int16)
         self.step_.append(self.i)
         self.i = self.i + 1
-        self.data_.append(amplitude)
+        suma = np.sum(np.array(amplitude, dtype = object))
+        var = np.var(np.array(amplitude, dtype = object))
+        self.data_.append(var)
         self.update(self.i,self.step_,self.data_)

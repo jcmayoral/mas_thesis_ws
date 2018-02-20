@@ -8,9 +8,7 @@ import pyaudio
 from dynamic_reconfigure.server import Server
 from microphone_monitoring.cfg import microphoneConfig
 
-
 #(0, {'defaultSampleRate': 44100.0, 'defaultLowOutputLatency': 0.008684807256235827, 'defaultLowInputLatency': 0.008684807256235827, 'maxInputChannels': 1L, 'structVersion': 2L, 'hostApi': 0L, 'index': 0, 'defaultHighOutputLatency': 0.034829931972789115, 'maxOutputChannels': 2L, 'name': u'USB Audio Device: - (hw:1,0)', 'defaultHighInputLatency': 0.034829931972789115})
-
 
 class FusionMicrophone(ChangeDetection):
     def __init__(self, cusum_window_size = 10, frame="base_link", sensor_id="microphone1", threshold = 1000, CHUNK=1024):
@@ -33,7 +31,7 @@ class FusionMicrophone(ChangeDetection):
              dev = audio.get_device_info_by_index(i)
              print(i,dev)
 
-	device_index = 0
+	    device_index = 0
         dev = audio.get_device_info_by_index(device_index)
         print dev["defaultSampleRate"]
         self.stream = audio.open(format=pyaudio.paInt16,
@@ -107,6 +105,8 @@ class FusionMicrophone(ChangeDetection):
 
         #Detecting Collisions
         suma = np.sum(np.array(self.cum_sum, dtype = object))
+        var = np.var(np.array(self.cum_sum, dtype = object))
+
         #print (suma)
         if suma > self.threshold:
             #print ("COllision")
