@@ -181,7 +181,7 @@ class Monitor(smach.State):
     def threshold_cb(self,msg):
         if msg.sensor_id.data == "accelerometer_1":
             self.accel_thr.append(msg.data)
-        if msg.sensor_id.data == "cam1":
+        if msg.sensor_id.data == "cam_0":
             self.cam_thr.append(msg.data)
         if msg.sensor_id.data == "odom_1":
             self.odom_thr.append(msg.data)
@@ -201,11 +201,11 @@ class Monitor(smach.State):
             self.current_counter = 0
         else:#FINISH
             #print ("current_counter" , self.current_counter)
-            print ("accel_thr" , np.nanmax(self.accel_thr, axis=0) , " number of samples " , len(self.accel_thr))
-            print ("cam_thr" , np.nanmax(self.cam_thr, axis=0), " number of samples " , len(self.cam_thr))
-            print ("odom_thr" , np.nanmax(self.odom_thr, axis=0), " number of samples " , len(self.odom_thr))
-            print ("lidar_thr" , np.nanmax(self.lidar_thr, axis=0), " number of samples " , len(self.lidar_thr))
-            print ("mic_thr" , np.nanmax(self.mic_thr, axis=0), " number of samples " , len(self.mic_thr))
+            print ("accel_thr" , np.nanmax(self.accel_thr, axis=0) , " number of samples " , len(self.accel_thr)) if len(self.accel_thr)>0 else 0
+            print ("cam_thr" , np.nanmax(self.cam_thr, axis=0), " number of samples " , len(self.cam_thr)) if len(self.cam_thr)>0 else 0
+            print ("odom_thr" , np.nanmax(self.odom_thr, axis=0), " number of samples " , len(self.odom_thr)) if len(self.odom_thr)>0 else 0
+            print ("lidar_thr" , np.nanmax(self.lidar_thr, axis=0), " number of samples " , len(self.lidar_thr)) if len(self.lidar_thr)>0 else 0
+            print ("mic_thr" , np.nanmax(self.mic_thr, axis=0), " number of samples " , len(self.mic_thr)) if len(self.mic_thr)>0 else 0
 
             self.stop_bag_request = True
 

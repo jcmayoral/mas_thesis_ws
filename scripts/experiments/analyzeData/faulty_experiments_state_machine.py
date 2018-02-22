@@ -163,7 +163,7 @@ class Monitor(smach.State):
                               output_keys=['acc_cum', 'cam_cum', 'odom_cum', 'imu_cum', 'lidar_cum', 'mic_cum', 'overall_cum', 'result_cum'])
         rospy.Subscriber("/finish_reading", String, self.fb_cb)
         rospy.Subscriber("/collision_label", Header, self.header_cb)
-        rospy.Subscriber("/detector_diagnoser_node/overall_collision", monitorStatusMsg, self.diagnoser_cb)
+        rospy.Subscriber("/detector_diagnoser_node/overall_collision", monitorStatusMsg, self.diagnoser_cb, queue_size = 1000)
 
 
         self.current_counter = 0
@@ -174,6 +174,7 @@ class Monitor(smach.State):
         self.lidar_count = 0
         self.mic_count = 0
         self.overall_count = 0
+        self.ground_truth_count = 0
 
         self.acc_cum = list()
         self.cam_cum = list()
@@ -197,7 +198,7 @@ class Monitor(smach.State):
 
         if msg.msg == 2:
             #rospy.logwarn("collision_detected by %s with data %s" , msg.sensor_id , msg.data)
-            rospy.logwarn("collision_detected by %s " , msg.sensor_id)
+            #rospy.logwarn("collision_detected by %s " , msg.sensor_id)
 
             if msg.sensor_id.data == "accelerometer_1":
                 self.accel_count = self.accel_count + 1
@@ -223,13 +224,15 @@ class Monitor(smach.State):
             print ("current_counter" , self.current_counter)
             #self.current_counter = 0
         else:#FINISH
+            print ("/n")
+            print ("Ground Truth Count ", self.ground_truth_count)
             print ("accel_count" , self.accel_count , " collisions detected " , self.current_counter)
             print ("cam_count" , self.cam_count , " collisions detected " , self.current_counter)
             print ("odom_count" , self.odom_count , " collisions detected " , self.current_counter)
             print ("imu_count" , self.imu_count , " collisions detected " , self.current_counter)
             print ("lidar_count" , self.lidar_count , " collisions detected " , self.current_counter)
             print ("mic_count" , self.mic_count, " number of samples " , self.current_counter)
-            print ("overall_count" , self.overall_count, " number of samples " , self.current_counter)
+            print ("overall_count" , self.overall_count, " ground truth " , self.ground_truth_count)
             self.stop_bag_request = True
 
     def header_cb(self,msg):
@@ -237,6 +240,8 @@ class Monitor(smach.State):
         print (end="\n")
         if (15 > curr_time - self.start_time > 5): #TO AVOID INITIAL FALSE
             rospy.logerr("GROUND TRUTH: %s", msg.stamp.secs)
+        self.ground_truth_count = self.ground_truth_count + 1
+
 
     def execute(self, userdata):
 
