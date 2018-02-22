@@ -136,7 +136,7 @@ class FusionAudioCapture(CollisionFusionSensor):
                               frame = "mic_1",
                               sensor_id = "mic_1",
                               threshold = 1000,
-                              node = "microphone",
+                              node = "microphone_collisions",
                               sensor_type = AudioData,
                               topic_name = "/audio",
                               sensor_number = 2,
