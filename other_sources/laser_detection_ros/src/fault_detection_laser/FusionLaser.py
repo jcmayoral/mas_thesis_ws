@@ -9,7 +9,7 @@ from dynamic_reconfigure.server import Server
 from laser_detection_ros.cfg import laserConfig
 
 class FusionLaser(ChangeDetection):
-    def __init__(self, cusum_window_size = 10, frame="base_link", sensor_id="laser1", threshold = 10000):
+    def __init__(self, cusum_window_size = 10, frame="base_link", sensor_id="laser1", threshold = 1):
         self.data_ = []
         self.data_.append([0,0,0])
         self.i = 0
