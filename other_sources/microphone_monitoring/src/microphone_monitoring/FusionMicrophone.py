@@ -1,6 +1,8 @@
 import rospy
 from FaultDetection import ChangeDetection
 from fusion_msgs.msg import sensorFusionMsg
+from audio_common_msgs.msg import AudioData
+from CollisionSensorTemplates.SensorFusion import CollisionFusionSensor
 import numpy as np
 import pyaudio
 
@@ -122,3 +124,24 @@ class FusionMicrophone(ChangeDetection):
         msg.weight = self.weight
         if not self.is_disable:
             self.pub.publish(msg)
+
+
+
+class FusionAudioCapture(CollisionFusionSensor):
+    def __init__(self):
+        self.__number_elements = 300
+        CollisionFusionSensor.__init__(self,
+                              number_elements=self.__number_elements,
+                              window_size = 10,
+                              frame = "mic_1",
+                              sensor_id = "mic_1",
+                              threshold = 1000,
+                              node = "microphone",
+                              sensor_type = AudioData,
+                              topic_name = "/audio",
+                              sensor_number = 2,
+                              config_type = microphoneConfig)
+
+    def updateData(self,msg):
+        print len(msg.data)
+        self.current_measure = np.fromstring(msg.data[0:self.__number_elements], np.int8)
