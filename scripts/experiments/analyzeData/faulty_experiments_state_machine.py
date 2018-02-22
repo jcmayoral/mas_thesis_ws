@@ -14,7 +14,6 @@ from __future__ import print_function
 import rospy
 import smach
 import smach_ros
-import time
 import math
 from geometry_msgs.msg import AccelStamped, Twist
 from nav_msgs.msg import Odometry
@@ -26,20 +25,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 from my_sm import start_sm
 
-from  common_states import MyBagReader, RestartReader
-
 class Setup(smach.State):
     def __init__(self):
         smach.State.__init__(self,
                              outcomes=['SETUP_DONE', 'FINISH'],
-                             input_keys=['counter_in','acc_results', 'cam_results', 'odom_results', 'imu_results', 'lidar_results', 'result_cum', 'results_', 'x_array'],
-                             output_keys=['counter_out','acc_results', 'cam_results', 'odom_results', 'imu_results', 'lidar_results', 'result_cum', 'results_', 'x_array'])
+                             input_keys=['counter_in','acc_results', 'cam_results', 'odom_results', 'imu_results', 'lidar_results', 'mic_results', 'result_cum', 'results_', 'x_array'],
+                             output_keys=['counter_out','acc_results', 'cam_results', 'odom_results', 'imu_results', 'lidar_results', 'mic_results', 'result_cum', 'results_', 'x_array'])
         #rospy.spin()
         self.acc_client = Client("accelerometer_process", timeout=3, config_callback=self.callback)
         self.cam_client = Client("vision_utils_ros", timeout=3, config_callback=self.callback)
         self.odom_client = Client("odom_collisions", timeout=3, config_callback=self.callback)
         self.imu_client = Client("imu_detector", timeout=3, config_callback=self.callback)
         self.lidar_client = Client("laser_collisions", timeout=3, config_callback=self.callback)
+        self.mic_client = Client("mic_collisions", timeout=3, config_callback=self.callback)
 
         self.is_first_time = True
 
@@ -61,6 +59,8 @@ class Setup(smach.State):
         self.imu_client.update_configuration({"reset": True})
         self.lidar_client.update_configuration({"window_size": 20})#userdata.counter_in})
         self.lidar_client.update_configuration({"reset": True})
+        self.mic_client.update_configuration({"window_size": userdata.counter_in})
+        self.mic_client.update_configuration({"reset": True})
 
         #SURF Version
         self.cam_client.update_configuration({"matching_threshold":  userdata.counter_in * 0.01})
@@ -79,6 +79,7 @@ class Setup(smach.State):
             userdata.results_['odom'] = userdata.odom_results
             userdata.results_['imu'] = userdata.imu_results
             userdata.results_['lidar'] = userdata.lidar_results
+            userdata.results_['mic'] = userdata.mic_results
 
             return 'FINISH'
 
@@ -157,8 +158,8 @@ class Monitor(smach.State):
     def __init__(self):
         smach.State.__init__(self,
                              outcomes=['NEXT_MONITOR', 'END_MONITOR'],
-                              input_keys=['acc_cum', 'cam_cum', 'odom_cum', 'imu_cum', 'lidar_cum', 'result_cum'],
-                              output_keys=['acc_cum', 'cam_cum', 'odom_cum', 'imu_cum', 'lidar_cum', 'result_cum'])
+                              input_keys=['acc_cum', 'cam_cum', 'odom_cum', 'imu_cum', 'lidar_cum', 'mic_cum', 'result_cum'],
+                              output_keys=['acc_cum', 'cam_cum', 'odom_cum', 'imu_cum', 'lidar_cum', 'mic_cum' 'result_cum'])
         rospy.Subscriber("/finish_reading", String, self.fb_cb)
         rospy.Subscriber("/collision_label", Header, self.header_cb)
 
@@ -168,13 +169,14 @@ class Monitor(smach.State):
         self.odom_count = 0
         self.imu_count = 0
         self.lidar_count = 0
-
+        self.mic_count = 0
 
         self.acc_cum = list()
         self.cam_cum = list()
         self.odom_cum = list()
         self.imu_cum = list()
         self.lidar_cum = list()
+        self.mic_cum = list()
 
         self.start_time = rospy.rostime.get_rostime().to_sec()
 
@@ -197,6 +199,8 @@ class Monitor(smach.State):
                 self.imu_count = self.imu_count + 1
             if msg.sensor_id.data == "lidar_1":
                 self.lidar_count = self.lidar_count + 1
+            if msg.sensor_id.data == "mic_1":
+                self.lidar_count = self.lidar_count + 1
 
             self.current_counter = self.current_counter + 1
 
@@ -214,7 +218,7 @@ class Monitor(smach.State):
             print ("odom_count" , self.odom_count , " collisions detected " , self.current_counter)
             print ("imu_count" , self.imu_count , " collisions detected " , self.current_counter)
             print ("lidar_count" , self.lidar_count , " collisions detected " , self.current_counter)
-
+            print ("mic_thr" , np.nanmax(self.mic_thr, axis=0), " number of samples " , len(self.mic_thr))
 
             self.stop_bag_request = True
 
@@ -242,7 +246,7 @@ class Monitor(smach.State):
             userdata.odom_cum.append(self.odom_count)
             userdata.imu_cum.append(self.imu_count)
             userdata.lidar_cum.append(self.lidar_count)
-
+            userdata.mic_cum.append(self.mic_count)
 
             return 'END_MONITOR'
         else:

@@ -27,7 +27,7 @@ def start_sm(path, common_string, monitor_state, setup_state, plot_state, time_l
   sm.userdata.odom_results = list()
   sm.userdata.imu_results = list()
   sm.userdata.lidar_results = list()
-
+  sm.userdata.mic_results = list()
 
   reading_sm = smach.StateMachine(outcomes=['END_READING_SM'])
   reading_sm.userdata.sm_counter = 1
@@ -52,7 +52,7 @@ def start_sm(path, common_string, monitor_state, setup_state, plot_state, time_l
   monitoring_sm.userdata.odom_results = sm.userdata.odom_results
   monitoring_sm.userdata.imu_results = sm.userdata.imu_results
   monitoring_sm.userdata.lidar_results = sm.userdata.lidar_results
-
+  monitoring_sm.userdata.mic_results = sm.userdata.mic_results
 
   #montoring_sm.userdata.window_size_array = sm.window_size_array
 
@@ -66,7 +66,8 @@ def start_sm(path, common_string, monitor_state, setup_state, plot_state, time_l
                                 'cam_cum':'cam_results',
                                 'odom_cum': 'odom_results',
                                 'lidar_cum': 'lidar_results',
-                                'imu_cum': 'imu_results'})
+                                'imu_cum': 'imu_results',
+                                'mic_cum': 'mic_results'})
 
   # Open the container
   with sm:
@@ -80,6 +81,7 @@ def start_sm(path, common_string, monitor_state, setup_state, plot_state, time_l
                                 'odom_cum':'odom_results',
                                 'imu_cum': 'imu_results',
                                 'lidar_cum': 'lidar_results',
+                                'mic_cum': 'mic_results',
                                 'x_array': 'window_size_array'})
 
       #Concurrent

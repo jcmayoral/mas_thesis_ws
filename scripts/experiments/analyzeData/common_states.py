@@ -7,17 +7,21 @@ from geometry_msgs.msg import AccelStamped, Twist
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Image, LaserScan, Imu
 from std_msgs.msg import Empty, String, Header
+from audio_common_msgs.msg import AudioData
 
 # define state ReadBag
 class MyBagReader(smach.State):
     def __init__(self,  limit=float("inf"), max_bag_file = 100):
-        mytypes = [AccelStamped, Twist, Odometry, Odometry, LaserScan, LaserScan, LaserScan, Image, Image, Odometry, Header, Imu]
+        mytypes = [AccelStamped, Twist, Odometry, Odometry, LaserScan, LaserScan, LaserScan, Image,
+                   Image, Odometry, Header, Imu,AudioData]
         #self.path = '/home/jose/ROS/thesis_ws/my_ws/rosbag_test/cob3/static_runs_2911/static_runs/' #TODO
         #self.path = '/home/jose/ROS/thesis_ws/my_ws/rosbag_test/cob3/cob3-test-2301/'
         self.max_bag_file = max_bag_file
         self.mytopics = ["/accel", "/cmd_vel", "/odom", "/base/odometry_controller/odom",
             "/scan_front", "/scan_rear", "/scan_unified",
-            "/arm_cam3d/rgb/image_raw","/cam3d/rgb/image_raw", "/base/odometry_controller/odometry", "/collision_label", "/imu/data"]
+            "/arm_cam3d/rgb/image_raw","/cam3d/rgb/image_raw",
+            "/base/odometry_controller/odometry", "/collision_label",
+            "/imu/data", "/audio"]
 
         self.myPublishers = list()
         self.limit = limit
@@ -83,13 +87,13 @@ class MyBagReader(smach.State):
         if userdata.foo_counter_in < max_bag_file:  #n number of bag files // TODO default 35
             print("restarting")
             userdata.foo_counter_out = userdata.foo_counter_in + 1
+            print("ending")
             fb = String()
             fb.data = "NEXT_BAG"
             self.finish_pub.publish(fb)
             rospy.sleep(2)
             return 'RESTART_READER'
         else:
-            print("ending")
             fb = String()
             fb.data = "END_BAG"
             userdata.foo_counter_out = 1
