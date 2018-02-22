@@ -107,8 +107,8 @@ class KalmanFilterMonitor(SimpleKalmanFilter):
         output_msg.sensor_id.data = self.sensor_id
 
         #if any(t > self.threshold for t in data[3:5]):
-        print np.var(data)
-        if np.var(data) > self.threshold:
+        print data
+        if any(t for t in data) > self.threshold:
             rospy.logwarn("Collision")
             output_msg.msg = sensorFusionMsg.ERROR
 

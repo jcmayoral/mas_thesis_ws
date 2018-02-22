@@ -143,5 +143,25 @@ class FusionAudioCapture(CollisionFusionSensor):
                               config_type = microphoneConfig)
 
     def updateData(self,msg):
-        print len(msg.data)
         self.current_measure = np.fromstring(msg.data[0:self.__number_elements], np.int8)
+
+    def publishMsg(self,data):
+        output_msg = sensorFusionMsg()
+        #Filling Message
+        output_msg.header.frame_id = self.frame
+        output_msg.window_size = self.window_size
+        #print ("Accelerations " , x,y,z)
+        print len(self.cum_sum)
+        suma = np.nansum(self.cum_sum)
+        print "Sum" , suma
+        var = np.var(self.cum_sum)
+        #print "Var" , var
+
+        if suma > self.threshold:
+            output_msg.msg = sensorFusionMsg.ERROR
+
+        output_msg.header.stamp = rospy.Time.now()
+        output_msg.sensor_id.data = self.sensor_id
+        output_msg.data = data
+        output_msg.weight = self.weight
+        self.pub.publish(output_msg)
