@@ -19,8 +19,9 @@ from geometry_msgs.msg import AccelStamped, Twist
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Image, LaserScan, Imu
 from std_msgs.msg import Empty, String, Header
-from fusion_msgs.msg import sensorFusionMsg, controllerFusionMsg
+from fusion_msgs.msg import sensorFusionMsg, controllerFusionMsg, monitorStatusMsg
 from dynamic_reconfigure.client import Client
+
 import numpy as np
 import matplotlib.pyplot as plt
 from my_sm import start_sm
@@ -158,10 +159,12 @@ class Monitor(smach.State):
     def __init__(self):
         smach.State.__init__(self,
                              outcomes=['NEXT_MONITOR', 'END_MONITOR'],
-                              input_keys=['acc_cum', 'cam_cum', 'odom_cum', 'imu_cum', 'lidar_cum', 'mic_cum', 'result_cum'],
-                              output_keys=['acc_cum', 'cam_cum', 'odom_cum', 'imu_cum', 'lidar_cum', 'mic_cum' 'result_cum'])
+                              input_keys=['acc_cum', 'cam_cum', 'odom_cum', 'imu_cum', 'lidar_cum', 'mic_cum', 'overall_cum', 'result_cum'],
+                              output_keys=['acc_cum', 'cam_cum', 'odom_cum', 'imu_cum', 'lidar_cum', 'mic_cum', 'overall_cum', 'result_cum'])
         rospy.Subscriber("/finish_reading", String, self.fb_cb)
         rospy.Subscriber("/collision_label", Header, self.header_cb)
+        rospy.Subscriber("/detector_diagnoser_node/overall_collision", monitorStatusMsg, self.diagnoser_cb)
+
 
         self.current_counter = 0
         self.accel_count = 0
@@ -170,6 +173,7 @@ class Monitor(smach.State):
         self.imu_count = 0
         self.lidar_count = 0
         self.mic_count = 0
+        self.overall_count = 0
 
         self.acc_cum = list()
         self.cam_cum = list()
@@ -177,11 +181,17 @@ class Monitor(smach.State):
         self.imu_cum = list()
         self.lidar_cum = list()
         self.mic_cum = list()
+        self.overall_cum = list()
 
         self.start_time = rospy.rostime.get_rostime().to_sec()
 
         for i in range(10):
             rospy.Subscriber("/collisions_"+str(i), sensorFusionMsg, self.counter_cb, queue_size=100)
+
+    def diagnoser_cb(self,msg):
+        self.overall_count = self.overall_count + 1
+        if msg.msg is 2:
+            rospy.logerr("Collision Detection")
 
     def counter_cb(self,msg):
 
@@ -218,8 +228,8 @@ class Monitor(smach.State):
             print ("odom_count" , self.odom_count , " collisions detected " , self.current_counter)
             print ("imu_count" , self.imu_count , " collisions detected " , self.current_counter)
             print ("lidar_count" , self.lidar_count , " collisions detected " , self.current_counter)
-            print ("mic_thr" , np.nanmax(self.mic_thr, axis=0), " number of samples " , len(self.mic_thr))
-
+            print ("mic_count" , self.mic_count, " number of samples " , self.current_counter)
+            print ("overall_count" , self.overall_count, " number of samples " , self.current_counter)
             self.stop_bag_request = True
 
     def header_cb(self,msg):
