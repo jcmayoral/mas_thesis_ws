@@ -52,9 +52,10 @@ class CollisionFilter(ChangeDetection):
 
     def updateThreshold(self,msg):
         print ("Normal Threshold CB")
-        data = [self.current_data.linear.x,
-                self.current_data.linear.y,
-                self.current_data.angular.z]
+        data = [np.fabs(self.current_data.linear.x),
+                np.fabs(self.current_data.linear.y),
+                np.fabs(self.current_data.angular.z)]
+        print (data)
         self.publishMsg(data)
 
     def updateChangeDetectionData(self,msg):
@@ -69,15 +70,16 @@ class CollisionFilter(ChangeDetection):
         self.publishMsg(cur)
 
     def openLoopCB(self, msg):
+        self.openLoop_ = msg
+
+    def closeLoopCB(self, msg):
+        self.closeLoop_ = msg.twist.twist
         self.current_data.linear.x = self.openLoop_.linear.x - self.closeLoop_.linear.x
         self.current_data.linear.y = self.openLoop_.linear.y - self.closeLoop_.linear.y
         self.current_data.angular.z = self.openLoop_.angular.z - self.closeLoop_.angular.z
 
         self.callBackFunction(msg)
-        self.openLoop_ = msg
 
-    def closeLoopCB(self, msg):
-        self.closeLoop_ = msg.twist.twist
 
     def publishMsg(self,data):
         output_msg = controllerFusionMsg()
@@ -88,6 +90,7 @@ class CollisionFilter(ChangeDetection):
         output_msg.controller_id.data = self.controller_id
 
         if any(t > self.threshold for t in data):
+            rospy.logwarn("IGNORE")
             output_msg.mode = controllerFusionMsg.IGNORE
 
         output_msg.header.stamp = rospy.Time.now()

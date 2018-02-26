@@ -10,12 +10,13 @@ class Plotter(RealTimePlotter):
         self.data_ = []
         self.step_ = []
         print ("Plotter Constructor Initialized")
-        super().__init__(threshold,pace,False)
+        RealTimePlotter.__init__(self,threshold,pace,False)
         self.ax.legend("False")
         rospy.init_node("laser_plotter", anonymous=True)
         rospy.Subscriber("/scan_unified", LaserScan, self.laserCB)
         plt.show()
         rospy.spin()
+        rospy.sleep(2)
         plt.close("all")
 
     def laserCB(self, msg):

@@ -7,7 +7,8 @@ import actionlib
 from actionlib_msgs.msg import GoalStatus
 from geometry_msgs.msg import AccelStamped, Twist, PoseStamped
 from nav_msgs.msg import Odometry
-from sensor_msgs.msg import Image, LaserScan
+from std_msgs.msg import Header
+from sensor_msgs.msg import Image, LaserScan, Imu
 import random
 import sys
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
@@ -19,17 +20,17 @@ class Setup(smach.State):
         smach.State.__init__(self,
                              outcomes=['SETUP_DONE', 'FINISH_REQUEST'],
                              input_keys=['counter_in', 'restart_requested'],
-                             output_keys=['counter_out', 'restart_requested_out'])
+                             output_keys=['counter_out', 'restart_requested_out', 'finish_requested_out'])
 
     def execute(self, userdata):
         rospy.loginfo('Executing SETUP')
         rospy.sleep(0.5)
-        if userdata.counter_in < 50:
+        if userdata.counter_in < 5: # TODO Automatic File Indexing
             userdata.counter_out = userdata.counter_in +1
             userdata.restart_requested_out = True
             return 'SETUP_DONE'
         else:
-            userdata.restart_requested_out = None
+            userdata.finish_requested_out = True
             return 'FINISH_REQUEST'
 
 class MyBagRecorder(smach.State):
@@ -37,7 +38,11 @@ class MyBagRecorder(smach.State):
         self.busy = False
         self.is_finished = False
         self.is_bag_started = False
+        #TODO  yaml file to load topics
         rospy.Subscriber("/accel", AccelStamped, self.mainCB, "/accel", queue_size=300)
+        rospy.Subscriber("/imu/data", Imu, self.mainCB, "/imu/data", queue_size=300)
+        rospy.Subscriber("/collision_label", Header, self.mainCB, "/collision_label", queue_size=300)
+
         rospy.Subscriber("/cmd_vel", Twist, self.mainCB, "/cmd_vel", queue_size=300)
         rospy.Subscriber("/base/twist_mux/command_navigation", Twist, self.mainCB, "/base/twist_mux/command_navigation", queue_size=300)
         rospy.Subscriber("/odom", Odometry, self.mainCB, "/odom", queue_size=300)
@@ -50,8 +55,8 @@ class MyBagRecorder(smach.State):
         self.startBag()
         smach.State.__init__(self,
                              outcomes=['RECORD_STARTED', 'RECORD_STOPPED', 'END_RECORD'],
-                             input_keys=['counter_in', 'shared_string', 'restart_requested'],
-                             output_keys=['counter_out', 'restart_requested_out'])
+                             input_keys=['counter_in', 'shared_string', 'restart_requested', 'stop_requested', 'finish_requested'],
+                             output_keys=['counter_out', 'restart_requested_out', 'stop_requested_out', 'finish_requested_out'])
         rospy.loginfo("Initializing")
 
     def startBag(self):
@@ -68,7 +73,7 @@ class MyBagRecorder(smach.State):
         #self.is_finished = False
 
         if userdata.stop_requested:
-            print ("NEW FILE")
+            print ("Stoping  Bag Recorder")
             rospy.sleep(0.5)
             self.close()
             self.is_finished = True # Filter error of cb when file is already closed
@@ -77,7 +82,7 @@ class MyBagRecorder(smach.State):
 
 
         if userdata.restart_requested:
-            print ("NEW FILE")
+            print ("Restarting Bag Recorder")
             rospy.sleep(0.5)
             self.close()
             self.is_finished = True # Filter error of cb when file is already closed
@@ -89,8 +94,8 @@ class MyBagRecorder(smach.State):
             userdata.restart_requested_out = False
             return "RECORD_STARTED"
 
-        if userdata.restart_requested is None:
-            print ("EXITING")
+        if userdata.finish_requested:
+            print ("Finishing Bag Recorder")
             self.is_finished = True
             self.close()
             return "END_RECORD"
@@ -115,10 +120,11 @@ class MyBagRecorder(smach.State):
 rospy.init_node("my_collision_bag_recorder")
 
 sm = smach.StateMachine(['succeeded','aborted','preempted','END_SM'])
-sm.userdata.sm_counter = 39
-sm.userdata.bag_family = "collision_test_bags_"
-sm.userdata.restart_requested = True
-sm.userdata.stop_requested = False
+sm.userdata.sm_counter = 0
+sm.userdata.bag_family = "collision_bags_bags"
+sm.userdata.restart_requested = True # This flag restart the cycle
+sm.userdata.stop_requested = False # This flag stops the recorder
+sm.userdata.finish_requested = False # This flag finishes sm
 
 with sm:
     def collision_goal_cb(userdata, goal):
@@ -126,7 +132,7 @@ with sm:
         tf_listener = tf.TransformListener()
         pose = PoseStamped()
         pose.header.frame_id = '/base_link'
-        pose.pose.position.x = 2.0
+        pose.pose.position.x = 2.0 # Default 2.0
         pose.pose.orientation.w = 1
 
         goal = MoveBaseGoal()
@@ -138,7 +144,7 @@ with sm:
         goal = MoveBaseSafeGoal()
         goal.arm_safe_position = 'folded'
         goal.source_location = 'START'
-        goal.destination_location = 'start_collision_position'
+        goal.destination_location = 'start_collision_position'# DEFAULT'start_collision_position'
         return goal
 
     def result_cb(userdata, status, result):
@@ -153,9 +159,11 @@ with sm:
     def collision_result_cb(userdata, status, result):
         print type(status)
         print result
-        if status == GoalStatus.SUCCEEDED or status == GoalStatus.ABORTED:
-            userdata.stop_requested_out = True
-            return 'succeeded'
+        #if status == GoalStatus.SUCCEEDED or status == GoalStatus.ABORTED:
+        print ("Waiting 3 seconds")
+        rospy.sleep(3)
+        userdata.stop_requested_out = True
+        return 'succeeded'
 
 
 
@@ -174,7 +182,8 @@ with sm:
                        transitions={'SETUP_DONE':'CONFIG_WRITER', 'FINISH_REQUEST': 'CONFIG_WRITER'},
                        remapping={'counter_in':'sm_counter',
                                   'counter_out':'sm_counter',
-                                  'restart_requested_out':'restart_requested'})
+                                  'restart_requested_out':'restart_requested',
+                                  'finish_requested_out':'finish_requested'})
 
     smach.StateMachine.add('CONFIG_WRITER', MyBagRecorder(),
                    transitions={'RECORD_STARTED':'TRIGGER_MOVE', 'RECORD_STOPPED': 'GO_START', 'END_RECORD': 'END_SM'},
@@ -190,6 +199,7 @@ with sm:
                                         goal_cb=collision_goal_cb,
                                         result_cb=collision_result_cb,
                                         server_wait_timeout=rospy.Duration(30.0),
+                                        output_keys=['stop_requested_out'],
                                         exec_timeout = rospy.Duration(30.0)),
                       transitions={'succeeded':'CONFIG_WRITER', 'aborted':'CONFIG_WRITER'},
                       remapping={'stop_requested_out':'stop_requested'})

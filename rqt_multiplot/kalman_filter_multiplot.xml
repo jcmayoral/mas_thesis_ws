@@ -11,13 +11,13 @@
                     <axes>
                         <axes>
                             <x_axis>
-                                <custom_title>Untitled Axis</custom_title>
-                                <title_type>0</title_type>
+                                <custom_title>Execution Time</custom_title>
+                                <title_type>1</title_type>
                                 <title_visible>true</title_visible>
                             </x_axis>
                             <y_axis>
-                                <custom_title>Untitled Axis</custom_title>
-                                <title_type>0</title_type>
+                                <custom_title>Speeds Measurements</custom_title>
+                                <title_type>1</title_type>
                                 <title_visible>true</title_visible>
                             </y_axis>
                         </axes>
@@ -35,11 +35,11 @@
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>0</type>
                                     </scale>
-                                    <topic>/collisions_0</topic>
+                                    <topic>/collisions_10</topic>
                                     <type>fusion_msgs/sensorFusionMsg</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>msg</field>
+                                    <field>data/3</field>
                                     <field_type>0</field_type>
                                     <scale>
                                         <absolute_maximum>1000</absolute_maximum>
@@ -48,7 +48,7 @@
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>0</type>
                                     </scale>
-                                    <topic>/collisions_0</topic>
+                                    <topic>/collisions_10</topic>
                                     <type>fusion_msgs/sensorFusionMsg</type>
                                 </y_axis>
                             </axes>
@@ -63,7 +63,7 @@
                             </data>
                             <style>
                                 <lines_interpolate>false</lines_interpolate>
-                                <pen_style>3</pen_style>
+                                <pen_style>1</pen_style>
                                 <pen_width>1</pen_width>
                                 <render_antialias>false</render_antialias>
                                 <steps_invert>false</steps_invert>
@@ -72,12 +72,12 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>100</subscriber_queue_size>
-                            <title>Collision 0</title>
+                            <title>Predicted Speed X</title>
                         </curve_0>
                         <curve_1>
                             <axes>
                                 <x_axis>
-                                    <field></field>
+                                    <field>data/4</field>
                                     <field_type>1</field_type>
                                     <scale>
                                         <absolute_maximum>1000</absolute_maximum>
@@ -86,11 +86,11 @@
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>0</type>
                                     </scale>
-                                    <topic>/collisions_1</topic>
+                                    <topic>/collisions_10</topic>
                                     <type>fusion_msgs/sensorFusionMsg</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>msg</field>
+                                    <field>data/4</field>
                                     <field_type>0</field_type>
                                     <scale>
                                         <absolute_maximum>1000</absolute_maximum>
@@ -99,7 +99,7 @@
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>0</type>
                                     </scale>
-                                    <topic>/collisions_1</topic>
+                                    <topic>/collisions_10</topic>
                                     <type>fusion_msgs/sensorFusionMsg</type>
                                 </y_axis>
                             </axes>
@@ -114,7 +114,7 @@
                             </data>
                             <style>
                                 <lines_interpolate>false</lines_interpolate>
-                                <pen_style>3</pen_style>
+                                <pen_style>1</pen_style>
                                 <pen_width>1</pen_width>
                                 <render_antialias>false</render_antialias>
                                 <steps_invert>false</steps_invert>
@@ -123,12 +123,12 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>100</subscriber_queue_size>
-                            <title>Collision 1</title>
+                            <title>Predicted Speed Y</title>
                         </curve_1>
                         <curve_2>
                             <axes>
                                 <x_axis>
-                                    <field></field>
+                                    <field>data/4</field>
                                     <field_type>1</field_type>
                                     <scale>
                                         <absolute_maximum>1000</absolute_maximum>
@@ -137,11 +137,11 @@
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>0</type>
                                     </scale>
-                                    <topic>/collisions_2</topic>
+                                    <topic>/collisions_10</topic>
                                     <type>fusion_msgs/sensorFusionMsg</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>msg</field>
+                                    <field>data/5</field>
                                     <field_type>0</field_type>
                                     <scale>
                                         <absolute_maximum>1000</absolute_maximum>
@@ -150,7 +150,7 @@
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>0</type>
                                     </scale>
-                                    <topic>/collisions_2</topic>
+                                    <topic>/collisions_10</topic>
                                     <type>fusion_msgs/sensorFusionMsg</type>
                                 </y_axis>
                             </axes>
@@ -165,7 +165,7 @@
                             </data>
                             <style>
                                 <lines_interpolate>false</lines_interpolate>
-                                <pen_style>3</pen_style>
+                                <pen_style>1</pen_style>
                                 <pen_width>1</pen_width>
                                 <render_antialias>false</render_antialias>
                                 <steps_invert>false</steps_invert>
@@ -174,7 +174,7 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>100</subscriber_queue_size>
-                            <title>Collision 2</title>
+                            <title>Predicted Yaw Speed</title>
                         </curve_2>
                         <curve_3>
                             <axes>
@@ -188,11 +188,11 @@
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>0</type>
                                     </scale>
-                                    <topic>/collisions_3</topic>
-                                    <type>fusion_msgs/sensorFusionMsg</type>
+                                    <topic>/imu/data</topic>
+                                    <type>sensor_msgs/Imu</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>msg</field>
+                                    <field>linear_acceleration/x</field>
                                     <field_type>0</field_type>
                                     <scale>
                                         <absolute_maximum>1000</absolute_maximum>
@@ -201,8 +201,8 @@
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>0</type>
                                     </scale>
-                                    <topic>/collisions_3</topic>
-                                    <type>fusion_msgs/sensorFusionMsg</type>
+                                    <topic>/imu/data</topic>
+                                    <type>sensor_msgs/Imu</type>
                                 </y_axis>
                             </axes>
                             <color>
@@ -216,7 +216,7 @@
                             </data>
                             <style>
                                 <lines_interpolate>false</lines_interpolate>
-                                <pen_style>3</pen_style>
+                                <pen_style>1</pen_style>
                                 <pen_width>1</pen_width>
                                 <render_antialias>false</render_antialias>
                                 <steps_invert>false</steps_invert>
@@ -225,7 +225,7 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>100</subscriber_queue_size>
-                            <title>Collision 3</title>
+                            <title>Imu Speed Raw X</title>
                         </curve_3>
                         <curve_4>
                             <axes>
@@ -239,11 +239,11 @@
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>0</type>
                                     </scale>
-                                    <topic>/collisions_4</topic>
-                                    <type>fusion_msgs/sensorFusionMsg</type>
+                                    <topic>/imu/data</topic>
+                                    <type>sensor_msgs/Imu</type>
                                 </x_axis>
                                 <y_axis>
-                                    <field>msg</field>
+                                    <field>linear_acceleration/y</field>
                                     <field_type>0</field_type>
                                     <scale>
                                         <absolute_maximum>1000</absolute_maximum>
@@ -252,8 +252,8 @@
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>0</type>
                                     </scale>
-                                    <topic>/collisions_4</topic>
-                                    <type>fusion_msgs/sensorFusionMsg</type>
+                                    <topic>/imu/data</topic>
+                                    <type>sensor_msgs/Imu</type>
                                 </y_axis>
                             </axes>
                             <color>
@@ -267,7 +267,7 @@
                             </data>
                             <style>
                                 <lines_interpolate>false</lines_interpolate>
-                                <pen_style>3</pen_style>
+                                <pen_style>1</pen_style>
                                 <pen_width>1</pen_width>
                                 <render_antialias>false</render_antialias>
                                 <steps_invert>false</steps_invert>
@@ -276,9 +276,60 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>100</subscriber_queue_size>
-                            <title>Collisions 4</title>
+                            <title>Imu Speed Y</title>
                         </curve_4>
                         <curve_5>
+                            <axes>
+                                <x_axis>
+                                    <field></field>
+                                    <field_type>1</field_type>
+                                    <scale>
+                                        <absolute_maximum>1000</absolute_maximum>
+                                        <absolute_minimum>0</absolute_minimum>
+                                        <relative_maximum>0</relative_maximum>
+                                        <relative_minimum>-1000</relative_minimum>
+                                        <type>0</type>
+                                    </scale>
+                                    <topic>/imu/data</topic>
+                                    <type>sensor_msgs/Imu</type>
+                                </x_axis>
+                                <y_axis>
+                                    <field>angular_velocity/z</field>
+                                    <field_type>0</field_type>
+                                    <scale>
+                                        <absolute_maximum>1000</absolute_maximum>
+                                        <absolute_minimum>0</absolute_minimum>
+                                        <relative_maximum>0</relative_maximum>
+                                        <relative_minimum>-1000</relative_minimum>
+                                        <type>0</type>
+                                    </scale>
+                                    <topic>/imu/data</topic>
+                                    <type>sensor_msgs/Imu</type>
+                                </y_axis>
+                            </axes>
+                            <color>
+                                <custom_color>#000000</custom_color>
+                                <type>0</type>
+                            </color>
+                            <data>
+                                <circular_buffer_capacity>1000</circular_buffer_capacity>
+                                <time_frame_length>10</time_frame_length>
+                                <type>0</type>
+                            </data>
+                            <style>
+                                <lines_interpolate>false</lines_interpolate>
+                                <pen_style>1</pen_style>
+                                <pen_width>1</pen_width>
+                                <render_antialias>false</render_antialias>
+                                <steps_invert>false</steps_invert>
+                                <sticks_baseline>0</sticks_baseline>
+                                <sticks_orientation>2</sticks_orientation>
+                                <type>0</type>
+                            </style>
+                            <subscriber_queue_size>100</subscriber_queue_size>
+                            <title>Imu Speed Yaw</title>
+                        </curve_5>
+                        <curve_6>
                             <axes>
                                 <x_axis>
                                     <field></field>
@@ -309,57 +360,6 @@
                             </axes>
                             <color>
                                 <custom_color>#000000</custom_color>
-                                <type>1</type>
-                            </color>
-                            <data>
-                                <circular_buffer_capacity>1000</circular_buffer_capacity>
-                                <time_frame_length>10</time_frame_length>
-                                <type>0</type>
-                            </data>
-                            <style>
-                                <lines_interpolate>false</lines_interpolate>
-                                <pen_style>1</pen_style>
-                                <pen_width>5</pen_width>
-                                <render_antialias>false</render_antialias>
-                                <steps_invert>false</steps_invert>
-                                <sticks_baseline>0</sticks_baseline>
-                                <sticks_orientation>2</sticks_orientation>
-                                <type>0</type>
-                            </style>
-                            <subscriber_queue_size>100</subscriber_queue_size>
-                            <title>Ground Truth</title>
-                        </curve_5>
-                        <curve_6>
-                            <axes>
-                                <x_axis>
-                                    <field></field>
-                                    <field_type>1</field_type>
-                                    <scale>
-                                        <absolute_maximum>1000</absolute_maximum>
-                                        <absolute_minimum>0</absolute_minimum>
-                                        <relative_maximum>0</relative_maximum>
-                                        <relative_minimum>-1000</relative_minimum>
-                                        <type>0</type>
-                                    </scale>
-                                    <topic>/detector_diagnoser_node/overall_collision</topic>
-                                    <type>fusion_msgs/monitorStatusMsg</type>
-                                </x_axis>
-                                <y_axis>
-                                    <field>msg</field>
-                                    <field_type>0</field_type>
-                                    <scale>
-                                        <absolute_maximum>1000</absolute_maximum>
-                                        <absolute_minimum>0</absolute_minimum>
-                                        <relative_maximum>0</relative_maximum>
-                                        <relative_minimum>-1000</relative_minimum>
-                                        <type>0</type>
-                                    </scale>
-                                    <topic>/detector_diagnoser_node/overall_collision</topic>
-                                    <type>fusion_msgs/monitorStatusMsg</type>
-                                </y_axis>
-                            </axes>
-                            <color>
-                                <custom_color>#000000</custom_color>
                                 <type>0</type>
                             </color>
                             <data>
@@ -370,7 +370,7 @@
                             <style>
                                 <lines_interpolate>false</lines_interpolate>
                                 <pen_style>1</pen_style>
-                                <pen_width>5</pen_width>
+                                <pen_width>1</pen_width>
                                 <render_antialias>false</render_antialias>
                                 <steps_invert>false</steps_invert>
                                 <sticks_baseline>0</sticks_baseline>
@@ -378,14 +378,14 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>100</subscriber_queue_size>
-                            <title>SF Collision Detection</title>
+                            <title>Collision Event</title>
                         </curve_6>
                     </curves>
                     <legend>
                         <visible>true</visible>
                     </legend>
                     <plot_rate>30</plot_rate>
-                    <title>Collisions Detection</title>
+                    <title>Kalman Filter Observer</title>
                 </column_0>
             </row_0>
         </plots>

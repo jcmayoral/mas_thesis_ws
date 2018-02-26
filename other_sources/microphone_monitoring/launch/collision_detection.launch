@@ -5,7 +5,7 @@
   <arg name="sensor_id" default="mic_1" />
   <arg name="sensor_number" default="3" />
 
-  <node pkg="microphone_monitoring" type="microphone_for_fusion" respawn="false" name="mic_collisions" output="screen">
+  <node pkg="microphone_monitoring" type="microphone_for_fusion" args="true" respawn="false" name="mic_collisions" output="screen">
     <remap from="~/camera" to="/cam3d/rgb/image_raw"/>
     <param name="sensor_id" type="string" value="$(arg sensor_id)"/>
     <param name="sensor_number" type="int" value="$(arg sensor_number)"/>

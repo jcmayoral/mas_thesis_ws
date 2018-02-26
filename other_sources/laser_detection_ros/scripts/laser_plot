@@ -2,4 +2,4 @@
 from laser_detection_plot.Plotter import Plotter
 
 if __name__ == '__main__':
-    main = Plotter(50,5)
+    main = Plotter(100,5)
