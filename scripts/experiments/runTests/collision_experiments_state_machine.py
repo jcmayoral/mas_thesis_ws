@@ -7,6 +7,7 @@ import actionlib
 from actionlib_msgs.msg import GoalStatus
 from geometry_msgs.msg import AccelStamped, Twist, PoseStamped
 from nav_msgs.msg import Odometry
+from audio_common_msgs.msg import AudioData
 from std_msgs.msg import Header
 from sensor_msgs.msg import Image, LaserScan, Imu
 import random
@@ -42,7 +43,7 @@ class MyBagRecorder(smach.State):
         rospy.Subscriber("/accel", AccelStamped, self.mainCB, "/accel", queue_size=300)
         rospy.Subscriber("/imu/data", Imu, self.mainCB, "/imu/data", queue_size=300)
         rospy.Subscriber("/collision_label", Header, self.mainCB, "/collision_label", queue_size=300)
-
+        rospy.Subscriber("/audio", AudioData, self.mainCB, "/audio", queue_size=300)
         rospy.Subscriber("/cmd_vel", Twist, self.mainCB, "/cmd_vel", queue_size=300)
         rospy.Subscriber("/base/twist_mux/command_navigation", Twist, self.mainCB, "/base/twist_mux/command_navigation", queue_size=300)
         rospy.Subscriber("/odom", Odometry, self.mainCB, "/odom", queue_size=300)
