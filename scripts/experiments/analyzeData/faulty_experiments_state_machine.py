@@ -175,6 +175,13 @@ class Monitor(smach.State):
         self.mic_count = 0
         self.overall_count = 0
         self.ground_truth_count = 0
+        self.is_header_received = False
+        self.ground_truth = 0
+        self.sf_detection = list()
+        self.false_positives_count = 0
+        self.false_negative_count = 0
+
+        self.delays = list()
 
         self.acc_cum = list()
         self.cam_cum = list()
@@ -190,9 +197,13 @@ class Monitor(smach.State):
             rospy.Subscriber("/collisions_"+str(i), sensorFusionMsg, self.counter_cb, queue_size=100)
 
     def diagnoser_cb(self,msg):
-        self.overall_count = self.overall_count + 1
+        curr_time = rospy.rostime.get_rostime().to_sec()
+
         if msg.msg is 2:
+            self.overall_count = self.overall_count + 1
             rospy.logerr("Collision Detection")
+            rospy.loginfo('curr_time %s',curr_time - self.start_time)
+            self.sf_detection.append(curr_time - self.start_time)
 
     def counter_cb(self,msg):
 
@@ -224,30 +235,38 @@ class Monitor(smach.State):
             print ("current_counter" , self.current_counter)
             #self.current_counter = 0
         else:#FINISH
-            print ("/n")
+            #print ("/n")
             print ("Ground Truth Count ", self.ground_truth_count)
-            print ("accel_count" , self.accel_count , " collisions detected " , self.current_counter)
-            print ("cam_count" , self.cam_count , " collisions detected " , self.current_counter)
-            print ("odom_count" , self.odom_count , " collisions detected " , self.current_counter)
-            print ("imu_count" , self.imu_count , " collisions detected " , self.current_counter)
-            print ("lidar_count" , self.lidar_count , " collisions detected " , self.current_counter)
-            print ("mic_count" , self.mic_count, " number of samples " , self.current_counter)
-            print ("overall_count" , self.overall_count, " ground truth " , self.ground_truth_count)
+            print ("Average Reaction Time ", np.mean(self.delays))
+            print ("False Positives ", self.false_positives_count)
+            print ("False Negatives ", self.false_negative_count)
+            print ("Total collisions detected by observers: " , self.current_counter)
+
+            print ("accel_count" , self.accel_count)
+            print ("cam_count" , self.cam_count)
+            print ("odom_count" , self.odom_count)
+            print ("imu_count" , self.imu_count)
+            print ("lidar_count" , self.lidar_count)
+            print ("mic_count" , self.mic_count)
+            print ("SF Total Collisions Detected" , self.overall_count)
             self.stop_bag_request = True
 
     def header_cb(self,msg):
         curr_time = rospy.rostime.get_rostime().to_sec()
         print (end="\n")
-        if (15 > curr_time - self.start_time > 5): #TO AVOID INITIAL FALSE
+        if not self.is_header_received: #TO AVOID INITIAL FALSE
             rospy.logerr("GROUND TRUTH: %s", msg.stamp.secs)
-        self.ground_truth_count = self.ground_truth_count + 1
-
+            rospy.loginfo('curr_time %s',curr_time - self.start_time)
+            self.is_header_received = True
+            self.ground_truth_count = self.ground_truth_count + 1
+            self.ground_truth = curr_time - self.start_time
 
     def execute(self, userdata):
 
         self.next_bag_request = False
         rospy.loginfo('Executing state MONITORING')
         #rospy.sleep(20)#TODO
+        self.start_time = rospy.rostime.get_rostime().to_sec()
 
         while not self.next_bag_request:
             pass #TODO
@@ -266,10 +285,37 @@ class Monitor(smach.State):
             return 'END_MONITOR'
         else:
             #print ("NEXT_MONITOR")
-            self.start_time = rospy.rostime.get_rostime().to_sec()
+            self.is_header_received = False
+            print ("GT " , self.ground_truth)
+            print ('SF [%s]' % ', '.join(map(str, self.sf_detection)))
+            collisions_detected = len(self.sf_detection)
+
+            if collisions_detected > 0: # If collisions were detected
+                delay = np.abs(np.array(self.sf_detection)-self.ground_truth).min() #closest collisions -> Ground Truth
+                arg_delay = np.abs(np.array(self.sf_detection)-self.ground_truth).argmin() # index of the closes collision detecteds
+
+                print ('Closest %s', delay) # Closest delay print
+
+                if delay < 1: #if delay is less than 1 second then it is considered as a true positive
+                    self.delays.append(delay)
+                    collisions_detected = collisions_detected - 1 #our counter decreased
+                    self.sf_detection.remove(self.sf_detection[arg_delay]) # removing from the detected collsiions
+
+                else:
+                    self.false_negative_count = self.false_positives_count + collisions_detected #if best delay is bigger than 1 second then the collision was not detected
+
+                for  c in self.sf_detection:
+                    if c - self.ground_truth > 1: # if a collision detected is more that 1 seconds it is considered as a false positive
+                        self.false_positives_count = self.false_positives_count + 1
+
+            else: #The ground truth was not detected
+                self.false_negative_count = self.false_positives_count + 1
+
+            self.ground_truth = 0
+            self.sf_detection = list()
             return 'NEXT_MONITOR'
 
 
 if __name__ == '__main__':
     rospy.init_node('smach_example_state_machine')
-    start_sm("/home/jose/data/collision_test_1402/", "collision_bags_bags", Monitor, Setup, Plotter, time_limit = 15, max_bag_file = 50)
+    start_sm("/home/jose/data/collisions_2702/", "collision_bags_bags_2702_", Monitor, Setup, Plotter, time_limit = 15, max_bag_file = 50)
