@@ -13,7 +13,7 @@ from audio_common_msgs.msg import AudioData
 class MyBagReader(smach.State):
     def __init__(self,  limit=float("inf"), max_bag_file = 100):
         mytypes = [AccelStamped, Twist, Odometry, Odometry, LaserScan, LaserScan, LaserScan, Image,
-                   Image, Odometry, Header, Imu,AudioData]
+                   Image, Odometry, Header, Imu,AudioData, Imu]
         #self.path = '/home/jose/ROS/thesis_ws/my_ws/rosbag_test/cob3/static_runs_2911/static_runs/' #TODO
         #self.path = '/home/jose/ROS/thesis_ws/my_ws/rosbag_test/cob3/cob3-test-2301/'
         self.max_bag_file = max_bag_file
@@ -21,7 +21,7 @@ class MyBagReader(smach.State):
             "/scan_front", "/scan_rear", "/scan_unified",
             "/arm_cam3d/rgb/image_raw","/cam3d/rgb/image_raw",
             "/base/odometry_controller/odometry", "/collision_label",
-            "/imu/data", "/audio"]
+            "/imu/data", "/audio", '/imu']
 
         self.myPublishers = list()
         self.limit = limit
