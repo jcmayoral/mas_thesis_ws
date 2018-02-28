@@ -166,6 +166,12 @@ class Monitor(smach.State):
         rospy.Subscriber("/detector_diagnoser_node/overall_collision", monitorStatusMsg, self.diagnoser_cb, queue_size = 1000)
 
 
+        sensor_id_labels = ['accelerometer_1', 'odom', 'imu_1', 'lidar_1', 'mic_1', 'cam_0']
+        self.collisions_id = dict()
+
+        for l in sensor_id_labels:
+            self.collisions_id[l] = 0
+
         self.current_counter = 0
         self.accel_count = 0
         self.cam_count = 0
@@ -203,6 +209,9 @@ class Monitor(smach.State):
         rospy.logerr("Collision Detection")
         rospy.loginfo('curr_time %s',curr_time - self.start_time)
         self.sf_detection.append(curr_time - self.start_time)
+
+        for m in msg.observers_ids:
+            self.collisions_id[m] = self.collisions_id[m] + 1
 
     def counter_cb(self,msg):
 
@@ -248,6 +257,8 @@ class Monitor(smach.State):
             print ("lidar_count" , self.lidar_count)
             print ("mic_count" , self.mic_count)
             print ("SF Total Collisions Detected" , self.overall_count)
+            print ("Participation Rate ", self.collisions_id)
+
             self.stop_bag_request = True
 
     def header_cb(self,msg):
