@@ -304,7 +304,8 @@ class Monitor(smach.State):
                 delay = np.abs(np.array(self.sf_detection)-self.ground_truth).min() #closest collisions -> Ground Truth
                 arg_delay = np.abs(np.array(self.sf_detection)-self.ground_truth).argmin() # index of the closes collision detecteds
 
-                print ('Closest %s', delay) # Closest delay print
+                print ("Collisions Detected " , collisions_detected)
+                print ('Closest', delay) # Closest delay print
 
                 if delay < 0.5: #if delay is less than 1 second then it is considered as a true positive
                     self.delays.append(delay)
@@ -314,16 +315,20 @@ class Monitor(smach.State):
 
                     for  c in self.sf_detection:
                         if np.abs(c - self.ground_truth) > 0.7: # if a collision detected is less than 0.7 seconds it is considered as a false positive
+                            print ("FOUND FALSE POSITIVE " , c - self.ground_truth)
                             self.false_positives_count = self.false_positives_count + 1
 
 
                 else:
+                    print ("Collision NOT FOUND")
                     self.false_negative_count = self.false_negative_count + 1
+                    print ("FALSE POSITIVES FOUND : ", collisions_detected )
                     self.false_positives_count = collisions_detected + self.false_positives_count #if best delay is bigger than 1 second then the collision was not detected
 
 
             else: #The ground truth was not detected
-                self.false_negative_count = self.false_positives_count + 1
+                print ("ANY COLLISION DETECTED")
+                self.false_negative_count = self.false_negative_count + 1
 
             self.ground_truth = 0
             self.sf_detection = list()
