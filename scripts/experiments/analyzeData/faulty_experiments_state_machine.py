@@ -198,12 +198,11 @@ class Monitor(smach.State):
 
     def diagnoser_cb(self,msg):
         curr_time = rospy.rostime.get_rostime().to_sec()
-
-        if msg.msg is 2:
-            self.overall_count = self.overall_count + 1
-            rospy.logerr("Collision Detection")
-            rospy.loginfo('curr_time %s',curr_time - self.start_time)
-            self.sf_detection.append(curr_time - self.start_time)
+        print (msg)
+        self.overall_count = self.overall_count + 1
+        rospy.logerr("Collision Detection")
+        rospy.loginfo('curr_time %s',curr_time - self.start_time)
+        self.sf_detection.append(curr_time - self.start_time)
 
     def counter_cb(self,msg):
 
@@ -303,7 +302,7 @@ class Monitor(smach.State):
                     #self.false_positives_count = self.false_positives_count + collisions_detected - 1 # all detections minus the closest are false positives
 
                     for  c in self.sf_detection:
-                        if np.fabs(c - self.ground_truth) > 0.7: # if a collision detected is more that 1 seconds it is considered as a false positive
+                        if np.abs(c - self.ground_truth) > 0.7: # if a collision detected is less than 0.7 seconds it is considered as a false positive
                             self.false_positives_count = self.false_positives_count + 1
 
 
