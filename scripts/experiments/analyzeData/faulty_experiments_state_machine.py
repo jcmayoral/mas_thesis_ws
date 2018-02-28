@@ -222,7 +222,7 @@ class Monitor(smach.State):
             if msg.sensor_id.data == "lidar_1":
                 self.lidar_count = self.lidar_count + 1
             if msg.sensor_id.data == "mic_1":
-                self.lidar_count = self.lidar_count + 1
+                self.mic_count = self.mic_count + 1
 
             self.current_counter = self.current_counter + 1
 
@@ -296,17 +296,21 @@ class Monitor(smach.State):
 
                 print ('Closest %s', delay) # Closest delay print
 
-                if delay < 1: #if delay is less than 1 second then it is considered as a true positive
+                if delay < 0.5: #if delay is less than 1 second then it is considered as a true positive
                     self.delays.append(delay)
                     collisions_detected = collisions_detected - 1 #our counter decreased
                     self.sf_detection.remove(self.sf_detection[arg_delay]) # removing from the detected collsiions
+                    #self.false_positives_count = self.false_positives_count + collisions_detected - 1 # all detections minus the closest are false positives
+
+                    for  c in self.sf_detection:
+                        if np.fabs(c - self.ground_truth) > 0.7: # if a collision detected is more that 1 seconds it is considered as a false positive
+                            self.false_positives_count = self.false_positives_count + 1
+
 
                 else:
-                    self.false_negative_count = self.false_positives_count + collisions_detected #if best delay is bigger than 1 second then the collision was not detected
+                    self.false_negative_count = self.false_negative_count + 1
+                    self.false_positives_count = collisions_detected + self.false_positives_count #if best delay is bigger than 1 second then the collision was not detected
 
-                for  c in self.sf_detection:
-                    if c - self.ground_truth > 1: # if a collision detected is more that 1 seconds it is considered as a false positive
-                        self.false_positives_count = self.false_positives_count + 1
 
             else: #The ground truth was not detected
                 self.false_negative_count = self.false_positives_count + 1
