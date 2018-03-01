@@ -90,68 +90,7 @@ class Plotter(smach.State):
                              outcomes=['PLOT_DONE'],
                              input_keys=['data_in', 'x_array'])
     def execute(self, userdata):
-        rospy.loginfo('Executing SETUP')
-        pass
-        """
-        #Accelerometer Plot
-        plt.figure()
-        data = np.array(userdata.data_in['accel'])
-        x_array = userdata.x_array
-        plt.plot(x_array,data[:,0], label='Accelerometer Threshold X')
-        plt.plot(x_array,data[:,1], label='Accelerometer Threshold Y')
-        plt.plot(x_array,data[:,2], label='Accelerometer Threshold Z')
-        plt.xlabel("Window Size")
-        plt.ylabel("Maximum Threshold Detected")
-        plt.legend()
-        plt.title('Accelerometer on Motion Thresholding') # subplot 211 title
-        plt.savefig('accelerometer_motion_threshold.png') # TODO
-
-        #Camera Plot
-        plt.figure()
-        data = np.array(userdata.data_in['cam'])
-        plt.plot(np.asarray(x_array) * 0.01, data[:,0], label='RGB Camera Thresholds')
-        plt.xlabel("Matching Threshold Variation")
-        plt.ylabel("Maximum Threshold Detected")
-        plt.title('Camera on Motion Thresholding') # subplot 211 title
-        plt.legend()
-        plt.savefig('camera_motion_threshold.png') # TODO
-
-        plt.figure()
-        data = np.array(userdata.data_in['odom'])
-        x_array = userdata.x_array
-        plt.plot(x_array,data[:,0], label='Odometry Threshold X')
-        plt.plot(x_array,data[:,1], label='Odometry Threshold Y')
-        plt.plot(x_array,data[:,2], label='Odometry Threshold Z')
-        plt.xlabel("Window Size")
-        plt.ylabel("Maximum Threshold Detected")
-        plt.legend()
-        plt.title('Odometry Speeds on Motion Thresholding') # subplot 211 title
-        plt.savefig('odometry_motion_threshold.png') # TODO
-
-        plt.figure()
-        data = np.array(userdata.data_in['imu'])
-        x_array = userdata.x_array
-        plt.plot(x_array,data[:,0], label='Linear Acceleration X')
-        plt.plot(x_array,data[:,1], label='Linear Acceleration Y')
-        plt.plot(x_array,data[:,2], label='Linear Acceleration Z')
-        plt.plot(x_array,data[:,3], label='Angular Velocity X')
-        plt.plot(x_array,data[:,4], label='Angular Velocity Y')
-        plt.plot(x_array,data[:,5], label='Angular Velocity Z')
-        plt.xlabel("Window Size")
-        plt.ylabel("Maximum Threshold Detected")
-        plt.legend()
-        plt.title('IMU Speeds on Motion Thresholding') # subplot 211 title
-        plt.savefig('imu_motion_threshold.png') # TODO
-
-        f = open( 'file', 'w' )
-        for key, value in userdata.data_in.iteritems():
-        #for item in userdata.data_in:
-            f.write("'{0}'/n".format(key))
-            f.write("'{0}'/n".format(value))
-        f.close()
-        #plt.show()
-        rospy.sleep(0.5)
-        """
+        rospy.loginfo('Executing Plotter')
         return 'PLOT_DONE'
 
 # define state Monitor
@@ -168,9 +107,11 @@ class Monitor(smach.State):
 
         sensor_id_labels = ['accelerometer_1', 'odom', 'imu_1', 'lidar_1', 'mic_1', 'cam_0']
         self.collisions_id = dict()
+        self.observer_counter = dict()
 
         for l in sensor_id_labels:
             self.collisions_id[l] = 0
+            self.observer_counter[l] = 0
 
         self.current_counter = 0
         self.accel_count = 0
@@ -181,8 +122,7 @@ class Monitor(smach.State):
         self.mic_count = 0
         self.overall_count = 0
         self.ground_truth_count = 0
-        self.is_header_received = False
-        self.ground_truth = 0
+        self.ground_truth = list()
         self.sf_detection = list()
         self.false_positives_count = 0
         self.false_negative_count = 0
@@ -204,7 +144,6 @@ class Monitor(smach.State):
 
     def diagnoser_cb(self,msg):
         curr_time = rospy.rostime.get_rostime().to_sec()
-        print (msg)
         self.overall_count = self.overall_count + 1
         rospy.logerr("Collision Detection")
         rospy.loginfo('curr_time %s',curr_time - self.start_time)
@@ -214,24 +153,8 @@ class Monitor(smach.State):
             self.collisions_id[m] = self.collisions_id[m] + 1
 
     def counter_cb(self,msg):
-
         if msg.msg == 2:
-            #rospy.logwarn("collision_detected by %s with data %s" , msg.sensor_id , msg.data)
-            #rospy.logwarn("collision_detected by %s " , msg.sensor_id)
-
-            if msg.sensor_id.data == "accelerometer_1":
-                self.accel_count = self.accel_count + 1
-            if msg.sensor_id.data == "cam_0":
-                self.cam_count = self.cam_count + 1
-            if msg.sensor_id.data == "odom":
-                self.odom_count = self.odom_count + 1
-            if msg.sensor_id.data == "imu_1":
-                self.imu_count = self.imu_count + 1
-            if msg.sensor_id.data == "lidar_1":
-                self.lidar_count = self.lidar_count + 1
-            if msg.sensor_id.data == "mic_1":
-                self.mic_count = self.mic_count + 1
-
+            self.observer_counter[msg.sensor_id.data] = self.observer_counter[msg.sensor_id.data] + 1
             self.current_counter = self.current_counter + 1
 
     def fb_cb(self,msg):
@@ -248,14 +171,8 @@ class Monitor(smach.State):
             print ("Average Reaction Time ", np.mean(self.delays))
             print ("False Positives ", self.false_positives_count)
             print ("False Negatives ", self.false_negative_count)
-            print ("Total collisions detected by observers: " , self.current_counter)
-
-            print ("accel_count" , self.accel_count)
-            print ("cam_count" , self.cam_count)
-            print ("odom_count" , self.odom_count)
-            print ("imu_count" , self.imu_count)
-            print ("lidar_count" , self.lidar_count)
-            print ("mic_count" , self.mic_count)
+            print ("Total collisions detected by all observers: " , self.current_counter)
+            print ("Collisions by Observer " , self.observer_counter)
             print ("SF Total Collisions Detected" , self.overall_count)
             print ("Participation Rate ", self.collisions_id)
 
@@ -263,13 +180,10 @@ class Monitor(smach.State):
 
     def header_cb(self,msg):
         curr_time = rospy.rostime.get_rostime().to_sec()
-        print (end="\n")
-        if not self.is_header_received: #TO AVOID INITIAL FALSE
-            rospy.logerr("GROUND TRUTH: %s", msg.stamp.secs)
-            rospy.loginfo('curr_time %s',curr_time - self.start_time)
-            self.is_header_received = True
-            self.ground_truth_count = self.ground_truth_count + 1
-            self.ground_truth = curr_time - self.start_time
+        rospy.logerr("GROUND TRUTH: %s", msg.stamp.secs)
+        rospy.loginfo('curr_time %s',curr_time - self.start_time)
+        self.ground_truth_count = self.ground_truth_count + 1
+        self.ground_truth.append(curr_time - self.start_time)
 
     def execute(self, userdata):
 
@@ -285,52 +199,52 @@ class Monitor(smach.State):
         self.next_bag_request = False
 
         if self.stop_bag_request:
-            userdata.acc_cum.append(self.accel_count)
-            userdata.cam_cum.append(self.cam_count)
-            userdata.odom_cum.append(self.odom_count)
-            userdata.imu_cum.append(self.imu_count)
-            userdata.lidar_cum.append(self.lidar_count)
-            userdata.mic_cum.append(self.mic_count)
+            userdata.acc_cum.append(self.observer_counter['accelerometer_1'])
+            userdata.cam_cum.append(self.observer_counter['cam_0'])
+            userdata.odom_cum.append(self.observer_counter['odom'])
+            userdata.imu_cum.append(self.observer_counter['imu_1'])
+            userdata.lidar_cum.append(self.observer_counter['lidar_1'])
+            userdata.mic_cum.append(self.observer_counter['mic_1'])
 
             return 'END_MONITOR'
         else:
             #print ("NEXT_MONITOR")
-            self.is_header_received = False
-            print ("GT " , self.ground_truth)
-            print ('SF [%s]' % ', '.join(map(str, self.sf_detection)))
+            print ("Ground Truths " , self.ground_truth)
             collisions_detected = len(self.sf_detection)
+            print ('SF [%s]' % ', '.join(map(str, self.sf_detection)))
+            print ("Collisions Detected " , collisions_detected)
 
-            if collisions_detected > 0: # If collisions were detected
-                delay = np.abs(np.array(self.sf_detection)-self.ground_truth).min() #closest collisions -> Ground Truth
-                arg_delay = np.abs(np.array(self.sf_detection)-self.ground_truth).argmin() # index of the closes collision detecteds
+            if collisions_detected > 0: # If collisions were detecteds
 
-                print ("Collisions Detected " , collisions_detected)
-                print ('Closest', delay) # Closest delay print
+                for gt in self.ground_truth:
+                    delay = np.abs(np.array(self.sf_detection)-gt).min() #closest collisions -> Ground Truth
+                    arg_delay = np.abs(np.array(self.sf_detection)-gt).argmin() # index of the closes collision detecteds
 
-                if delay < 0.5: #if delay is less than 1 second then it is considered as a true positive
-                    self.delays.append(delay)
-                    collisions_detected = collisions_detected - 1 #our counter decreased
-                    self.sf_detection.remove(self.sf_detection[arg_delay]) # removing from the detected collsiions
-                    #self.false_positives_count = self.false_positives_count + collisions_detected - 1 # all detections minus the closest are false positives
+                    print ('Closest to ', gt ," is ", delay) # Closest delay print
 
-                    for  c in self.sf_detection:
-                        if np.abs(c - self.ground_truth) > 0.7: # if a collision detected is less than 0.7 seconds it is considered as a false positive
-                            print ("FOUND FALSE POSITIVE " , c - self.ground_truth)
-                            self.false_positives_count = self.false_positives_count + 1
-
-
-                else:
-                    print ("Collision NOT FOUND")
-                    self.false_negative_count = self.false_negative_count + 1
-                    print ("FALSE POSITIVES FOUND : ", collisions_detected )
-                    self.false_positives_count = collisions_detected + self.false_positives_count #if best delay is bigger than 1 second then the collision was not detected
-
+                    if delay < 0.2: #if delay is less than 1 second then it is considered as a true positive
+                        self.delays.append(delay)
+                        collisions_detected = collisions_detected - 1 #our counter decreased
+                        self.sf_detection.remove(self.sf_detection[arg_delay]) # removing from the detected collsiions
+                        #self.false_positives_count = self.false_positives_count + collisions_detected - 1 # all detections minus the closest are false positives
+                        for  c in self.sf_detection:
+                            if 0.3> np.abs(c - gt) > 0.2: # if a collision detected is less than 0.7 seconds it is considered as a false positive
+                                print ("FOUND COllision Close to Ground Truth " , c - gt)
+                                self.sf_detection.remove(c) # removing from the detected collsiions
+                                collisions_detected = collisions_detected - 1 #our counter decreased
+                    else:
+                        print ("Collision NOT FOUND")
+                        self.false_negative_count = self.false_negative_count + 1
 
             else: #The ground truth was not detected
-                print ("ANY COLLISION DETECTED")
-                self.false_negative_count = self.false_negative_count + 1
+                print ("ANY COLLISION DETECTED, false negatives added ", len(self.ground_truth))
+                self.false_negative_count = self.false_negative_count + len(self.ground_truth)
 
-            self.ground_truth = 0
+
+            print ("FALSE POSITIVES FOUND : ", collisions_detected )
+            self.false_positives_count = collisions_detected + self.false_positives_count #if best delay is bigger than 1 second then the collision was not detected
+
+            self.ground_truth = list()
             self.sf_detection = list()
             return 'NEXT_MONITOR'
 
