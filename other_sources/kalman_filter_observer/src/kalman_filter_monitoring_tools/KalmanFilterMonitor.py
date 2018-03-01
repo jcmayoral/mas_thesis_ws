@@ -43,19 +43,29 @@ class KalmanFilterMonitor(SimpleKalmanFilter):
         dt = 1
         x = np.array([0,0,0,0,0,0]).reshape((6,1)) # Initial state
         P = np.eye(6) * 10 # Initial Uncertanty
-        A = np.eye(6) # Transition Matrix
-        A[0,3] = dt
-        A[1,4] = dt
-        A[2,5] = dt
-        H = np.array(([0,0,0,1,0,0],[0,0,0,0,1,0],[0,0,0,0,0,1])) # Measurement Function
-        R = np.array(([10,0,0],[0,10,0],[0,0,10])) # measurement noise covariance
-        Q = np.array(([1/4*np.power(dt,4), 1/4*np.power(dt,4), 1/4*np.power(dt,4),1/2*np.power(dt,3), 1/2*np.power(dt,3), 1/2*np.power(dt,3)],
-        	      [1/4*np.power(dt,4), 1/4*np.power(dt,4), 1/4*np.power(dt,4), 1/2*np.power(dt,3), 1/2*np.power(dt,3), 1/2*np.power(dt,3)],
-          	      [1/4*np.power(dt,4), 1/4*np.power(dt,4), 1/4*np.power(dt,4), 1/2*np.power(dt,3), 1/2*np.power(dt,3), 1/2*np.power(dt,3)],
-        	      [1/2*np.power(dt,3), 1/2*np.power(dt,3), 1/2*np.power(dt,3), np.power(dt,2), np.power(dt,2), np.power(dt,2)],
-        	      [1/2*np.power(dt,3), 1/2*np.power(dt,3), 1/2*np.power(dt,3) ,np.power(dt,2), np.power(dt,2), np.power(dt,2)],
-        	      [1/2*np.power(dt,3), 1/2*np.power(dt,3), 1/2*np.power(dt,3) ,np.power(dt,2), np.power(dt,2), np.power(dt,2)])) # Process Noise Covariance
-        SimpleKalmanFilter.__init__(self,x, A, H, R, Q, dt=1, size = 6)
+        A = np.array(([1,0,0,dt,0,0],
+                      [0,1,0,0,dt,0],
+                      [0,0,1,0,0,0.5*np.power(dt,2)],
+                      [0,0,0,1,0,0],
+                      [0,0,0,0,1,0],
+                      [0,0,0,0,0,1])) # Dynamic Matrix Function
+
+        H = np.array(([1,0,0,0,0,0],
+                      [0,1,0,0,0,0],
+                      [0,0,1,0,0,0],
+                      [0,0,0,1,0,0],
+                      [0,0,0,0,1,0],
+                      [0,0,0,0,0,1])) # Measurement Function
+        #Q = np.array(([1/4*np.power(dt,4), 1/4*np.power(dt,4), 1/4*np.power(dt,4),1/2*np.power(dt,3), 1/2*np.power(dt,3), 1/2*np.power(dt,3)],
+        # 	      [1/4*np.power(dt,4), 1/4*np.power(dt,4), 1/4*np.power(dt,4), 1/2*np.power(dt,3), 1/2*np.power(dt,3), 1/2*np.power(dt,3)],
+        #   	      [1/4*np.power(dt,4), 1/4*np.power(dt,4), 1/4*np.power(dt,4), 1/2*np.power(dt,3), 1/2*np.power(dt,3), 1/2*np.power(dt,3)],
+        # 	      [1/2*np.power(dt,3), 1/2*np.power(dt,3), 1/2*np.power(dt,3), np.power(dt,2), np.power(dt,2), np.power(dt,2)],
+        # 	      [1/2*np.power(dt,3), 1/2*np.power(dt,3), 1/2*np.power(dt,3) ,np.power(dt,2), np.power(dt,2), np.power(dt,2)],
+        # 	      [1/2*np.power(dt,3), 1/2*np.power(dt,3), 1/2*np.power(dt,3) ,np.power(dt,2), np.power(dt,2), np.power(dt,2)])) # Process Noise Covariance
+
+        R =  np.eye(6)
+        Q = np.zeros(6)
+        SimpleKalmanFilter.__init__(self,x, A, H, R, Q, dt=dt, size = 6)
 
     def reset_publisher(self):
         self.pub = rospy.Publisher('collisions_'+ str(self.sensor_number), sensorFusionMsg, queue_size=10)
@@ -75,9 +85,12 @@ class KalmanFilterMonitor(SimpleKalmanFilter):
         return config
 
     def updateThreshold(self,msg):
-        Z = np.array([np.fabs(self.current_data.linear.x),
-                np.fabs(self.current_data.linear.y),
-                np.fabs(self.current_data.angular.z)]).reshape(3,1)
+        Z = np.array([self.openLoop_.linear.x,
+                      self.openLoop_.linear.y,
+                      self.openLoop_.angular.z,
+                      self.closeLoop_.linear_acceleration.x - 10.8,
+                      self.closeLoop_.linear_acceleration.y - 5.7,
+                      self.closeLoop_.angular_velocity.z + 14.6]).reshape(6,1)
         self.runFilter(Z)
 
         if self.mode is 0:
@@ -89,10 +102,10 @@ class KalmanFilterMonitor(SimpleKalmanFilter):
         self.publishMsg(data.flatten())
 
     def closeLoopCB(self, msg):
-        self.current_data.linear.x = self.openLoop_.linear.x - msg.linear_acceleration.x
-        self.current_data.linear.y = self.openLoop_.linear.y - msg.linear_acceleration.y
-        self.current_data.angular.z = self.openLoop_.angular.z - msg.angular_velocity.z
-
+        self.current_data.linear.x = self.openLoop_.linear.x - msg.linear_acceleration.x - 10.8
+        self.current_data.linear.y = self.openLoop_.linear.y - msg.linear_acceleration.y - 5.7
+        self.current_data.angular.z = self.openLoop_.angular.z - msg.angular_velocity.z + 14.6
+        self.closeLoop_ = msg
         self.callBackFunction(msg)
 
     def openLoopCB(self, msg):
@@ -112,9 +125,9 @@ class KalmanFilterMonitor(SimpleKalmanFilter):
             rospy.logwarn("Collision")
             output_msg.msg = sensorFusionMsg.ERROR
 
-        data[0] = data[0] - 10.8 #TODO
-        data[1] = data[1] - 6.67#TODO
-        data[2] = data[2] + 0.02#TODO
+        #data[0] = data[0] - 10.8 #TODO
+        #data[1] = data[1] - 6.67#TODO
+        #data[2] = data[2] + 14.02#TODO
         output_msg.data = data
         output_msg.header.stamp = rospy.Time.now()
 
