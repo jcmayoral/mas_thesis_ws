@@ -29,7 +29,6 @@ class MyBagReader(smach.State):
         before = self.finish_pub.get_num_connections()
         while self.finish_pub.get_num_connections() is not before:
             pass
-        rospy.sleep(2)
 
         for topic_name, msg_type in zip(self.mytopics,mytypes):
             publisher = rospy.Publisher(topic_name, msg_type, queue_size=1)
@@ -117,9 +116,9 @@ class RestartReader(smach.State):
         rospy.loginfo('Executing state RESTART READER')
         #rospy.loginfo('Counter = %f'%userdata.bar_counter_in)
         monitor_reset_pub = rospy.Publisher('/sm_reset', Empty, queue_size=1)
-        before = monitor_reset_pub.get_num_connections()
-        while monitor_reset_pub.get_num_connections() is not before:
+        while monitor_reset_pub.get_num_connections() < 1:
             pass
+
         #print (monitor_reset_pub.get_num_connections())
         monitor_reset_pub.publish(Empty())
         print ("Send EMPTY")

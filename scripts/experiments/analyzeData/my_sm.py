@@ -59,6 +59,7 @@ def start_sm(path, common_string, monitor_state, setup_state, plot_state, time_l
   with monitoring_sm:
       smach.StateMachine.add('WAIT_FOR_READER', smach_ros.MonitorState("/sm_reset", Empty, monitor_cb),
                               transitions={'invalid':'MONITOR', 'valid':'WAIT_FOR_READER', 'preempted':'WAIT_FOR_READER'})
+
       smach.StateMachine.add('MONITOR', monitor_state(),
                      transitions={'NEXT_MONITOR':'WAIT_FOR_READER', 'END_MONITOR':'END_MONITORING_SM'},
                      remapping={'result_cum':'results_',

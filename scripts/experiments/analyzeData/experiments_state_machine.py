@@ -198,6 +198,7 @@ class Monitor(smach.State):
         self.lidar_thr = list()
         self.mic_thr = list()
         self.imu_thr = list()
+        self.stop_bag_request = False
 
 
         self.acc_cum = list()
@@ -252,7 +253,7 @@ class Monitor(smach.State):
         rospy.loginfo('Executing state MONITORING')
         #rospy.sleep(20)#TODO
 
-        while not self.next_bag_request:
+        while not self.next_bag_request and not self.stop_bag_request:
             pass #TODO
 
         rospy.sleep(0.2)
@@ -260,12 +261,18 @@ class Monitor(smach.State):
 
         if self.stop_bag_request:
             print ('Stop Received')
-            userdata.acc_cum.append(np.nanmax(self.accel_thr, axis=0))
-            userdata.cam_cum.append(np.nanmax(self.cam_thr, axis=0))
-            userdata.odom_cum.append(np.nanmax(self.odom_thr, axis=0))
-            userdata.lidar_cum.append(np.nanmax(self.lidar_thr, axis=0))
-            userdata.mic_cum.append(np.nanmax(self.mic_thr, axis=0))
-            userdata.imu_cum.append(np.nanmax(self.imu_cum, axis=0))
+            if len(self.accel_thr) > 0:
+                userdata.acc_cum.append(np.nanmax(self.accel_thr, axis=0))
+            if len(self.cam_cum) > 0:
+                userdata.cam_cum.append(np.nanmax(self.cam_thr, axis=0))
+            if len(self.odom_cum) > 0:
+                userdata.odom_cum.append(np.nanmax(self.odom_thr, axis=0))
+            if len(self.lidar_cum) > 0:
+                userdata.lidar_cum.append(np.nanmax(self.lidar_thr, axis=0))
+            if len(self.mic_thr) > 0:
+                userdata.mic_cum.append(np.nanmax(self.mic_thr, axis=0))
+            if len(self.imu_cum) > 0:
+                userdata.imu_cum.append(np.nanmax(self.imu_cum, axis=0))
 
             del self.accel_thr[:]
             del self.cam_thr[:]
