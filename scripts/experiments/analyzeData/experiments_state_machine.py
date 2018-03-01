@@ -190,6 +190,7 @@ class Monitor(smach.State):
                               input_keys=['acc_cum', 'cam_cum', 'odom_cum', 'lidar_cum', 'mic_cum', 'imu_cum', 'result_cum'],
                               output_keys=['acc_cum', 'cam_cum', 'odom_cum', 'lidar_cum', 'mic_cum', 'imu_cum ', 'result_cum'])
         rospy.Subscriber("/finish_reading", String, self.fb_cb)
+        rospy.sleep(2)
         self.current_counter = 0
         self.accel_thr = list()
         self.cam_thr = list()
@@ -258,6 +259,7 @@ class Monitor(smach.State):
         self.next_bag_request = False
 
         if self.stop_bag_request:
+            print ('Stop Received')
             userdata.acc_cum.append(np.nanmax(self.accel_thr, axis=0))
             userdata.cam_cum.append(np.nanmax(self.cam_thr, axis=0))
             userdata.odom_cum.append(np.nanmax(self.odom_thr, axis=0))
