@@ -81,8 +81,6 @@ class Setup(smach.State):
             userdata.results_['lidar'] = userdata.lidar_results
             userdata.results_['mic'] = userdata.mic_results
             userdata.results_['imu'] = userdata.imu_results
-
-
             return 'FINISH'
 
 class Plotter(smach.State):
@@ -189,7 +187,9 @@ class Monitor(smach.State):
                              outcomes=['NEXT_MONITOR', 'END_MONITOR'],
                               input_keys=['acc_cum', 'cam_cum', 'odom_cum', 'lidar_cum', 'mic_cum', 'imu_cum', 'result_cum'],
                               output_keys=['acc_cum', 'cam_cum', 'odom_cum', 'lidar_cum', 'mic_cum', 'imu_cum ', 'result_cum'])
-        rospy.Subscriber("/finish_reading", String, self.fb_cb)
+        self.finish_subscriber = rospy.Subscriber("/finish_reading", String, self.fb_cb)
+        while self.finish_subscriber.get_num_connections() < 1:
+                    print ("Wait finish_reading")
         rospy.sleep(2)
         self.current_counter = 0
         self.accel_thr = list()
@@ -207,8 +207,6 @@ class Monitor(smach.State):
         self.lidar_cum = list()
         self.mic_cum = list()
         self.imu_cum = list()
-
-
 
         for i in range(10):
             rospy.Subscriber("/collisions_"+str(i), sensorFusionMsg, self.threshold_cb, queue_size=100)
@@ -238,14 +236,14 @@ class Monitor(smach.State):
             self.current_counter = 0
         else:#FINISH
             #print ("current_counter" , self.current_counter)
-            print ("accel_thr" , np.nanmax(self.accel_thr, axis=0) , " number of samples " , len(self.accel_thr)) if len(self.accel_thr)>0 else 0
-            print ("cam_thr" , np.nanmax(self.cam_thr, axis=0), " number of samples " , len(self.cam_thr)) if len(self.cam_thr)>0 else 0
-            print ("odom_thr" , np.nanmax(self.odom_thr, axis=0), " number of samples " , len(self.odom_thr)) if len(self.odom_thr)>0 else 0
-            print ("lidar_thr" , np.nanmax(self.lidar_thr, axis=0), " number of samples " , len(self.lidar_thr)) if len(self.lidar_thr)>0 else 0
-            print ("mic_thr" , np.nanmax(self.mic_thr, axis=0), " number of samples " , len(self.mic_thr)) if len(self.mic_thr)>0 else 0
-            print ("imu_thr" , np.nanmax(self.imu_thr, axis=0), " number of samples " , len(self.imu_thr)) if len(self.imu_thr)>0 else 0
-
             self.stop_bag_request = True
+            #print ("accel_thr" , np.nanmax(self.accel_thr, axis=0) , " number of samples " , len(self.accel_thr)) if len(self.accel_thr)>0 else 0
+            #print ("cam_thr" , np.nanmax(self.cam_thr, axis=0), " number of samples " , len(self.cam_thr)) if len(self.cam_thr)>0 else 0
+            #print ("odom_thr" , np.nanmax(self.odom_thr, axis=0), " number of samples " , len(self.odom_thr)) if len(self.odom_thr)>0 else 0
+            #print ("lidar_thr" , np.nanmax(self.lidar_thr, axis=0), " number of samples " , len(self.lidar_thr)) if len(self.lidar_thr)>0 else 0
+            #print ("mic_thr" , np.nanmax(self.mic_thr, axis=0), " number of samples " , len(self.mic_thr)) if len(self.mic_thr)>0 else 0
+            #print ("imu_thr" , np.nanmax(self.imu_thr, axis=0), " number of samples " , len(self.imu_thr)) if len(self.imu_thr)>0 else 0
+
 
     def execute(self, userdata):
 
@@ -253,8 +251,9 @@ class Monitor(smach.State):
         rospy.loginfo('Executing state MONITORING')
         #rospy.sleep(20)#TODO
 
-        while not self.next_bag_request and not self.stop_bag_request:
-            pass #TODO
+        while not self.next_bag_request:
+            pass
+            #print ("waiting next_bag_request")
 
         rospy.sleep(0.2)
         self.next_bag_request = False
@@ -263,16 +262,16 @@ class Monitor(smach.State):
             print ('Stop Received')
             if len(self.accel_thr) > 0:
                 userdata.acc_cum.append(np.nanmax(self.accel_thr, axis=0))
-            if len(self.cam_cum) > 0:
+            if len(self.cam_thr) > 0:
                 userdata.cam_cum.append(np.nanmax(self.cam_thr, axis=0))
-            if len(self.odom_cum) > 0:
+            if len(self.odom_thr) > 0:
                 userdata.odom_cum.append(np.nanmax(self.odom_thr, axis=0))
-            if len(self.lidar_cum) > 0:
+            if len(self.lidar_thr) > 0:
                 userdata.lidar_cum.append(np.nanmax(self.lidar_thr, axis=0))
             if len(self.mic_thr) > 0:
                 userdata.mic_cum.append(np.nanmax(self.mic_thr, axis=0))
-            if len(self.imu_cum) > 0:
-                userdata.imu_cum.append(np.nanmax(self.imu_cum, axis=0))
+            if len(self.imu_thr) > 0:
+                userdata.imu_cum.append(np.nanmax(self.imu_thr, axis=0))
 
             del self.accel_thr[:]
             del self.cam_thr[:]
@@ -280,13 +279,14 @@ class Monitor(smach.State):
             del self.lidar_thr[:]
             del self.mic_thr[:]
             del self.imu_thr[:]
+            print ("END_MONITOR")
 
             return 'END_MONITOR'
         else:
-            #print ("NEXT_MONITOR")
+            print ("NEXT_MONITOR")
             return 'NEXT_MONITOR'
 
 
 if __name__ == '__main__':
     rospy.init_node('smach_example_state_machine')
-    start_sm("/home/jose/data/free_motion-2602/", "cob3-2602-", Monitor, Setup, Plotter)
+    start_sm("/home/jose/data/free_motion-2602/", "cob3-2602-", Monitor, Setup, Plotter, max_bag_file=100)
