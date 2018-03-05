@@ -28,12 +28,13 @@ import matplotlib.pyplot as plt
 from my_sm import start_sm
 
 class Setup(smach.State):
-    def __init__(self, max_window_size = 75):
+    def __init__(self, max_window_size = 75,step=5):
         smach.State.__init__(self,
                              outcomes=['SETUP_DONE', 'FINISH'],
                              input_keys=['counter_in','acc_results', 'cam_results', 'odom_results', 'lidar_results', 'mic_results','imu_results', 'result_cum', 'results_', 'x_array'],
                              output_keys=['counter_out','acc_results', 'cam_results', 'odom_results', 'lidar_results', 'mic_results','imu_results','result_cum', 'results_', 'x_array'])
         #rospy.spin()
+        self.step = step
         self.max_window_size = max_window_size
         self.acc_client = Client("accelerometer_process", timeout=3, config_callback=self.callback)
         self.cam_client = Client("vision_utils_ros", timeout=3, config_callback=self.callback)
@@ -72,7 +73,7 @@ class Setup(smach.State):
         rospy.sleep(0.5)
         if userdata.counter_in < self.max_window_size: # Window SIZe Define max TODO
             userdata.x_array.append(userdata.counter_in)
-            userdata.counter_out = userdata.counter_in + 5
+            userdata.counter_out = userdata.counter_in + self.step
             return 'SETUP_DONE'
         else:
             userdata.results_['accel'] = userdata.acc_results
@@ -92,82 +93,98 @@ class Plotter(smach.State):
         rospy.loginfo('Executing SETUP')
 
         #Accelerometer Plot
-        plt.figure()
         data = np.array(userdata.data_in['accel'])
         x_array = userdata.x_array
-        plt.plot(x_array,data[:,0], label='Accelerometer Threshold X')
-        plt.plot(x_array,data[:,1], label='Accelerometer Threshold Y')
-        plt.plot(x_array,data[:,2], label='Accelerometer Threshold Z')
-        plt.xlabel("Window Size")
-        plt.ylabel("Maximum Threshold Detected")
-        plt.legend()
-        plt.title('Accelerometer on Motion Thresholding') # subplot 211 title
-        plt.savefig('accelerometer_motion_threshold.png') # TODO
+
+        if len(data) > 0:
+            plt.figure()
+            plt.plot(x_array,data[:,0], label='Accelerometer Threshold X')
+            plt.plot(x_array,data[:,1], label='Accelerometer Threshold Y')
+            plt.plot(x_array,data[:,2], label='Accelerometer Threshold Z')
+            plt.xlabel("Window Size")
+            plt.ylabel("Maximum Threshold Detected")
+            plt.legend()
+            plt.title('Accelerometer on Motion Thresholding') # subplot 211 title
+            plt.savefig('accelerometer_motion_threshold.png') # TODO
 
         #Camera Plot
-        plt.figure()
         data = np.array(userdata.data_in['cam'])
-        plt.plot(np.asarray(x_array) * 0.01, data[:,0], label='RGB Camera Thresholds')
-        plt.xlabel("Matching Threshold Variation")
-        plt.ylabel("Maximum Threshold Detected")
-        plt.title('Camera on Motion Thresholding') # subplot 211 title
-        plt.legend()
-        plt.savefig('camera_motion_threshold.png') # TODO
 
-        plt.figure()
-        data = np.array(userdata.data_in['odom'])
-        x_array = userdata.x_array
-        plt.plot(x_array,data[:,0], label='Odometry Threshold X')
-        plt.plot(x_array,data[:,1], label='Odometry Threshold Y')
-        plt.plot(x_array,data[:,2], label='Odometry Threshold Z')
-        plt.xlabel("Window Size")
-        plt.ylabel("Maximum Threshold Detected")
-        plt.legend()
-        plt.title('Odometry Speeds on Motion Thresholding') # subplot 211 title
-        plt.savefig('odometry_motion_threshold.png') # TODO
+        if len(data) > 0:
+            plt.plot(np.asarray(x_array) * 0.01, data[:,0], label='RGB Camera Thresholds')
+            plt.xlabel("Matching Threshold Variation")
+            plt.ylabel("Maximum Threshold Detected")
+            plt.title('Camera on Motion Thresholding') # subplot 211 title
+            plt.legend()
+            plt.figure()
+            plt.savefig('camera_motion_threshold.png') # TODO
 
-        plt.figure() #TODO
+
+        # data = np.array(userdata.data_in['odom'])
+        # plt.figure()
+        # plt.plot(x_array,data[:,0], label='Odometry Threshold X')
+        # plt.plot(x_array,data[:,1], label='Odometry Threshold Y')
+        # plt.plot(x_array,data[:,2], label='Odometry Threshold Z')
+        # plt.xlabel("Window Size")
+        # plt.ylabel("Maximum Threshold Detected")
+        # plt.legend()
+        # plt.title('Odometry Speeds on Motion Thresholding') # subplot 211 title
+        # plt.savefig('odometry_motion_threshold.png') # TODO
+
+
         data = np.array(userdata.data_in['lidar'])
-        x_array = userdata.x_array
-        plt.plot(x_array,data, label='Lidar Threshold')
-        plt.xlabel("Window Size")
-        plt.ylabel("Maximum Threshold Detected")
-        plt.legend()
-        plt.title('Lidar on Motion Thresholding') # subplot 211 title
-        plt.savefig('lidar_motion_threshold.png') # TODO
 
-        plt.figure() #TODO
+        if len(data) > 0:
+            plt.figure() #TODO
+            plt.plot(x_array,data, label='Lidar Threshold')
+            plt.xlabel("Window Size")
+            plt.ylabel("Maximum Threshold Detected")
+            plt.legend()
+            plt.title('Lidar on Motion Thresholding') # subplot 211 title
+            plt.savefig('lidar_motion_threshold.png') # TODO
+
         data = np.array(userdata.data_in['mic'])
         x_array = userdata.x_array
-        plt.plot(x_array,data, label='Microphone Threshold')
-        plt.xlabel("Window Size")
-        plt.ylabel("Maximum Threshold Detected")
-        plt.legend()
-        plt.title('Microphone on Motion Thresholding') # subplot 211 title
-        plt.savefig('mic_motion_threshold.png') # TODO
+
+        if len(data) > 0:
+            plt.figure() #TODO
+            plt.plot(x_array,np.nansum(data, axis=1), label='Microphone Threshold Sum')
+            plt.xlabel("Window Size")
+            plt.ylabel("Maximum Threshold Detected")
+            plt.legend()
+            plt.title('Microphone on Motion Thresholding') # subplot 211 title
+            plt.savefig('mic_motion_threshold_sum.png') # TODO
+            plt.figure() #TODO
+            plt.plot(x_array,np.nanvar(data, axis=1), label='Microphone Threshold Variance')
+            plt.xlabel("Window Size")
+            plt.ylabel("Maximum Threshold Detected")
+            plt.legend()
+            plt.title('Microphone on Motion Thresholding') # subplot 211 title
+            plt.savefig('mic_motion_threshold_sum.png') # TODO
 
 
-        plt.figure()
         data = np.array(userdata.data_in['imu'])
         x_array = userdata.x_array
-        plt.plot(x_array,data[:,0], label='IMU Threshold Linear Acc X')
-        plt.plot(x_array,data[:,1], label='IMU Threshold Linear Acc Y')
-        plt.plot(x_array,data[:,2], label='IMU Threshold Linear Acc Z')
-        plt.xlabel("Window Size")
-        plt.ylabel("Maximum Threshold Detected")
-        plt.legend()
-        plt.title('Imu on Motion Linear Accelerations Thresholding') # subplot 211 title
-        plt.savefig('imu_linear_motion_threshold.png') # TODO
+        if len(data) > 0:
+            plt.figure() #TODO
+            plt.plot(x_array,data[:,0], label='IMU Threshold Linear Acc X')
+            plt.plot(x_array,data[:,1], label='IMU Threshold Linear Acc Y')
+            plt.plot(x_array,data[:,2], label='IMU Threshold Linear Acc Z')
+            plt.xlabel("Window Size")
+            plt.ylabel("Maximum Threshold Detected")
+            plt.legend()
+            plt.title('Imu on Motion Linear Accelerations Thresholding') # subplot 211 title
+            plt.savefig('imu_linear_motion_threshold.png') # TODO
 
-        plt.figure()
-        plt.plot(x_array,data[:,3], label='IMU Threshold Ang. Vel. X')
-        plt.plot(x_array,data[:,4], label='IMU Threshold Ang. Vel. Y')
-        plt.plot(x_array,data[:,5], label='IMU Threshold Ang. Vel. Z')
-        plt.xlabel("Window Size")
-        plt.ylabel("Maximum Threshold Detected")
-        plt.legend()
-        plt.title('Imu on Motion Angular Velocities Thresholding') # subplot 211 title
-        plt.savefig('imu_angular_motion_threshold.png') # TODO
+            plt.figure()
+            plt.plot(x_array,data[:,3], label='IMU Threshold Ang. Vel. X')
+            plt.plot(x_array,data[:,4], label='IMU Threshold Ang. Vel. Y')
+            plt.plot(x_array,data[:,5], label='IMU Threshold Ang. Vel. Z')
+            plt.xlabel("Window Size")
+            plt.ylabel("Maximum Threshold Detected")
+            plt.legend()
+            plt.title('Imu on Motion Angular Velocities Thresholding') # subplot 211 title
+            plt.savefig('imu_angular_motion_threshold.png') # TODO
 
 
         f = open( 'file', 'w' )
@@ -289,4 +306,4 @@ class Monitor(smach.State):
 
 if __name__ == '__main__':
     rospy.init_node('smach_example_state_machine')
-    start_sm("/home/jose/data/free_motion-2602/", "cob3-2602-", Monitor, Setup, Plotter, max_bag_file=100)
+    start_sm("/home/jose/data/free_motion-2602/", "cob3-2602-", Monitor, Setup, Plotter, max_bag_file=100, max_window_size=75, step=5)
