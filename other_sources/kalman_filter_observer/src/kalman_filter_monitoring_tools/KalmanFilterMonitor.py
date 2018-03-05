@@ -19,6 +19,10 @@ class KalmanFilterMonitor(SimpleKalmanFilter):
         self.i = 0
         self.msg = 0
         self.mode = 0
+        self.delta = 1
+        self.offset_x = 0
+        self.offset_y = 0
+        self.offset_z = 0
         self.current_data = Twist()
         self.frame = 'test'
         self.window_size = cusum_window_size
@@ -40,12 +44,12 @@ class KalmanFilterMonitor(SimpleKalmanFilter):
         rospy.spin()
 
     def initKalmanFilter(self):
-        dt = 1
+        dt = self.delta
         x = np.array([0,0,0,0,0,0]).reshape((6,1)) # Initial state
         P = np.eye(6) * 10 # Initial Uncertanty
         A = np.array(([1,0,0,dt,0,0],
                       [0,1,0,0,dt,0],
-                      [0,0,1,0,0,0.5*np.power(dt,2)],
+                      [0,0,1,0,0,dt],
                       [0,0,0,1,0,0],
                       [0,0,0,0,1,0],
                       [0,0,0,0,0,1])) # Dynamic Matrix Function
@@ -75,6 +79,12 @@ class KalmanFilterMonitor(SimpleKalmanFilter):
         self.is_disable = config["is_disable"]
         self.sensor_number = config["detector_id"]
         self.mode = config["mode_selector"]
+        self.delta = config["delta"]
+        self.offset_x = config["offset_x"]
+        self.offset_y = config["offset_y"]
+        self.offset_z = config["offset_z"]
+
+        self.initKalmanFilter()
 
         self.reset_publisher()
 
@@ -88,9 +98,9 @@ class KalmanFilterMonitor(SimpleKalmanFilter):
         Z = np.array([self.openLoop_.linear.x,
                       self.openLoop_.linear.y,
                       self.openLoop_.angular.z,
-                      self.closeLoop_.linear_acceleration.x - 10.8,
-                      self.closeLoop_.linear_acceleration.y - 5.7,
-                      self.closeLoop_.angular_velocity.z + 14.6]).reshape(6,1)
+                      self.closeLoop_.linear_acceleration.x - self.offset_x,
+                      self.closeLoop_.linear_acceleration.y - self.offset_y,
+                      self.closeLoop_.angular_velocity.z - self.offset_z]).reshape(6,1)
         self.runFilter(Z)
 
         if self.mode is 0:
@@ -102,9 +112,9 @@ class KalmanFilterMonitor(SimpleKalmanFilter):
         self.publishMsg(data.flatten())
 
     def closeLoopCB(self, msg):
-        self.current_data.linear.x = self.openLoop_.linear.x - msg.linear_acceleration.x - 10.8
-        self.current_data.linear.y = self.openLoop_.linear.y - msg.linear_acceleration.y - 5.7
-        self.current_data.angular.z = self.openLoop_.angular.z - msg.angular_velocity.z + 14.6
+        self.current_data.linear.x = self.openLoop_.linear.x - msg.linear_acceleration.x - 10.5
+        self.current_data.linear.y = self.openLoop_.linear.y - msg.linear_acceleration.y - 5.4
+        self.current_data.angular.z = self.openLoop_.angular.z - msg.angular_velocity.z + 14.3
         self.closeLoop_ = msg
         self.callBackFunction(msg)
 
