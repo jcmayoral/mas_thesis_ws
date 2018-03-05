@@ -76,19 +76,10 @@ class FusionLaser(ChangeDetection):
         cur[np.isnan(cur)] = 0
         cur = np.var(cur)
 
-        #Filling Message
-        msg.header.frame_id = self.frame
-        msg.window_size = self.window_size
-        msg.header.stamp = rospy.Time.now()
-
         #Detecting Collisions
         #if any(t > self.threshold for t in cur):
 
         #if any(t > self.threshold for t in cur):
-
-        if cur > self.threshold:
-            msg.msg = sensorFusionMsg.ERROR
-
         data = list()
 
         if cur > 10000000:
@@ -96,9 +87,13 @@ class FusionLaser(ChangeDetection):
         else:
             data.append(cur)
 
-        msg.sensor_id.data = self.sensor_id
-        msg.data = data
-        msg.weight = self.weight
-
-        if not self.is_disable:
+        if cur > self.threshold and not self.is_disable:
+            #Filling Message
+            msg.header.frame_id = self.frame
+            msg.window_size = self.window_size
+            msg.header.stamp = rospy.Time.now()
+            msg.msg = sensorFusionMsg.ERROR
+            msg.sensor_id.data = self.sensor_id
+            msg.data = data
+            msg.weight = self.weight
             self.pub.publish(msg)
