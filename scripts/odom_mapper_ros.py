@@ -20,8 +20,8 @@ class OdometryMapper:
             data_y_to_plot.append(self.Odom.pose.pose.position.y)
             rate.sleep()
 
-        plt.plot(data_x_to_plot, data_y_to_plot)
-        plt.scatter('Odometry Positions Map on Odometry Frame')
+        plt.scatter(data_x_to_plot, data_y_to_plot)
+        plt.title('Odometry Positions Map on Odometry Frame')
         plt.xlabel('X Coordinate [m]')
         plt.ylabel('Y Coordinate [m]')
         plt.legend()

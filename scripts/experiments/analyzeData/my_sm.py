@@ -16,7 +16,7 @@ def monitor_cb(ud, msg):
     return None
 
 # Create a SMACH state machine
-def start_sm(path, common_string, monitor_state, setup_state, plot_state, time_limit = float("inf"), max_bag_file = 110):
+def start_sm(path, common_string, monitor_state, setup_state, plot_state, time_limit = float("inf"), max_bag_file = 110, max_window_size = 75, step=5):
   sm = smach.StateMachine(outcomes=['END_SM'])
   sm.userdata.window_size = 2
   #sm.userdata.bag_family = "cob3-attempt-2001-" #TODO
@@ -80,7 +80,7 @@ def start_sm(path, common_string, monitor_state, setup_state, plot_state, time_l
 
   # Open the container
   with sm:
-      smach.StateMachine.add('SETUP', setup_state(),
+      smach.StateMachine.add('SETUP', setup_state(max_window_size,step),
                      transitions={'SETUP_DONE':'CON', 'FINISH': 'PLOT_RESULTS'},
                      remapping={'counter_in':'window_size',
                                 'counter_out':'window_size',
