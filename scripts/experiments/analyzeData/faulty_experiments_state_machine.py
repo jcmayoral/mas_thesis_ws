@@ -27,12 +27,13 @@ import matplotlib.pyplot as plt
 from my_sm import start_sm
 
 class Setup(smach.State):
-    def __init__(self):
+    def __init__(self,max_window_size=75,step=5):
         smach.State.__init__(self,
                              outcomes=['SETUP_DONE', 'FINISH'],
                              input_keys=['counter_in','acc_results', 'cam_results', 'odom_results', 'imu_results', 'lidar_results', 'mic_results', 'result_cum', 'results_', 'x_array'],
                              output_keys=['counter_out','acc_results', 'cam_results', 'odom_results', 'imu_results', 'lidar_results', 'mic_results', 'result_cum', 'results_', 'x_array'])
         #rospy.spin()
+        self.step = step
         self.acc_client = Client("accelerometer_process", timeout=3, config_callback=self.callback)
         self.cam_client = Client("vision_utils_ros", timeout=3, config_callback=self.callback)
         self.odom_client = Client("odom_collisions", timeout=3, config_callback=self.callback)
@@ -53,25 +54,25 @@ class Setup(smach.State):
     def execute(self, userdata):
         rospy.loginfo('Executing SETUP')
         self.acc_client.update_configuration({"window_size": 20})#userdata.counter_in})
-        self.acc_client.update_configuration({"reset": True})
+        #self.acc_client.update_configuration({"reset": True})
         self.odom_client.update_configuration({"window_size": 20})#userdata.counter_in})
-        self.odom_client.update_configuration({"reset": True})
+        #self.odom_client.update_configuration({"reset": True})
         self.imu_client.update_configuration({"window_size": 20})#userdata.counter_in})
-        self.imu_client.update_configuration({"reset": True})
+        #self.imu_client.update_configuration({"reset": True})
         self.lidar_client.update_configuration({"window_size": 20})#userdata.counter_in})
-        self.lidar_client.update_configuration({"reset": True})
+        #self.lidar_client.update_configuration({"reset": True})
         self.mic_client.update_configuration({"window_size": userdata.counter_in})
-        self.mic_client.update_configuration({"reset": True})
+        #self.mic_client.update_configuration({"reset": True})
 
         #SURF Version
         self.cam_client.update_configuration({"matching_threshold":  userdata.counter_in * 0.01})
         self.cam_client.update_configuration({"mode": 0})
-        self.cam_client.update_configuration({"reset": True})
+        #self.cam_client.update_configuration({"reset": True})
 
         rospy.sleep(0.5)
         if self.is_first_time:#userdata.counter_in < 75: # Window SIZe Define max TODO
             userdata.x_array.append(userdata.counter_in)
-            userdata.counter_out = userdata.counter_in + 5
+            userdata.counter_out = userdata.counter_in + self.step
             self.is_first_time = False
             return 'SETUP_DONE'
         else:
@@ -146,7 +147,7 @@ class Monitor(smach.State):
         curr_time = rospy.rostime.get_rostime().to_sec()
         self.overall_count = self.overall_count + 1
         rospy.logerr("Collision Detection")
-        rospy.loginfo('curr_time %s',curr_time - self.start_time)
+        rospy.logerr('curr_time %s',curr_time - self.start_time)
         self.sf_detection.append(curr_time - self.start_time)
 
         for m in msg.observers_ids:
@@ -168,7 +169,8 @@ class Monitor(smach.State):
         else:#FINISH
             #print ("/n")
             print ("Ground Truth Count ", self.ground_truth_count)
-            print ("Average Reaction Time ", np.mean(self.delays))
+            print (self.delays)
+            print ("Average Reaction Time ", np.nanmean(self.delays))
             print ("False Positives ", self.false_positives_count)
             print ("False Negatives ", self.false_negative_count)
             print ("Total collisions detected by all observers: " , self.current_counter)
@@ -220,15 +222,15 @@ class Monitor(smach.State):
                     delay = np.abs(np.array(self.sf_detection)-gt).min() #closest collisions -> Ground Truth
                     arg_delay = np.abs(np.array(self.sf_detection)-gt).argmin() # index of the closes collision detecteds
 
-                    print ('Closest to ', gt ," is ", delay) # Closest delay print
+                    print('Closest to ', gt ," is ", delay) # Closest delay print
 
-                    if delay < 0.2: #if delay is less than 1 second then it is considered as a true positive
+                    if delay < 0.3: #if delay is less than 1 second then it is considered as a true positive
                         self.delays.append(delay)
                         collisions_detected = collisions_detected - 1 #our counter decreased
                         self.sf_detection.remove(self.sf_detection[arg_delay]) # removing from the detected collsiions
                         #self.false_positives_count = self.false_positives_count + collisions_detected - 1 # all detections minus the closest are false positives
                         for  c in self.sf_detection:
-                            if 0.3> np.abs(c - gt) > 0.2: # if a collision detected is less than 0.7 seconds it is considered as a false positive
+                            if 0.5> np.abs(c - gt) > 0.3: # if a collision detected is less than 0.7 seconds it is considered as a false positive
                                 print ("FOUND COllision Close to Ground Truth " , c - gt)
                                 self.sf_detection.remove(c) # removing from the detected collsiions
                                 collisions_detected = collisions_detected - 1 #our counter decreased
