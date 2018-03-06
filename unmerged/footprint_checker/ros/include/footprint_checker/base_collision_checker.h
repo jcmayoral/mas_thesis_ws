@@ -22,6 +22,8 @@
 
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/PoseArray.h>
+#include <geometry_msgs/PointStamped.h>
+
 #include <string>
 #include <vector>
 #include <mutex>          // std::mutex
@@ -114,6 +116,7 @@ class BaseCollisionChecker
         ros::Subscriber footprint_sub_;
         ros::Publisher orientations_pub_;
         ros::Publisher point_cloud_pub_;
+        ros::Publisher collision_point_pub_;
 
         /**
          * Store costmap

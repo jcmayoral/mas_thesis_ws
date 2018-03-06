@@ -16,7 +16,7 @@ def monitor_cb(ud, msg):
     return None
 
 # Create a SMACH state machine
-def start_sm(path, common_string, monitor_state, setup_state, plot_state, time_limit = float("inf"), max_bag_file = 110):
+def start_sm(path, common_string, monitor_state, setup_state, plot_state, time_limit = float("inf"), max_bag_file = 110, max_window_size = 75, step=5):
   sm = smach.StateMachine(outcomes=['END_SM'])
   sm.userdata.window_size = 2
   #sm.userdata.bag_family = "cob3-attempt-2001-" #TODO
@@ -34,6 +34,19 @@ def start_sm(path, common_string, monitor_state, setup_state, plot_state, time_l
   reading_sm.userdata.path = path
   reading_sm.userdata.bag_family = common_string #TODO
 
+
+  monitoring_sm = smach.StateMachine(outcomes=['END_MONITORING_SM'])
+  monitoring_sm.userdata.results_ = sm.userdata.results_
+  monitoring_sm.userdata.acc_results = sm.userdata.acc_results
+  monitoring_sm.userdata.cam_results = sm.userdata.cam_results
+  monitoring_sm.userdata.odom_results = sm.userdata.odom_results
+  monitoring_sm.userdata.imu_results = sm.userdata.imu_results
+  monitoring_sm.userdata.lidar_results = sm.userdata.lidar_results
+  monitoring_sm.userdata.mic_results = sm.userdata.mic_results
+
+
+
+
   with reading_sm:
       smach.StateMachine.add('RESET_READING', RestartReader(),
                      transitions={'NEXT_BAG':'READING'},
@@ -45,20 +58,16 @@ def start_sm(path, common_string, monitor_state, setup_state, plot_state, time_l
                                         'shared_string':'bag_family',
                                         'foo_counter_out':'sm_counter'})
 
-  monitoring_sm = smach.StateMachine(outcomes=['END_MONITORING_SM'])
-  monitoring_sm.userdata.results_ = sm.userdata.results_
-  monitoring_sm.userdata.acc_results = sm.userdata.acc_results
-  monitoring_sm.userdata.cam_results = sm.userdata.cam_results
-  monitoring_sm.userdata.odom_results = sm.userdata.odom_results
-  monitoring_sm.userdata.imu_results = sm.userdata.imu_results
-  monitoring_sm.userdata.lidar_results = sm.userdata.lidar_results
-  monitoring_sm.userdata.mic_results = sm.userdata.mic_results
 
   #montoring_sm.userdata.window_size_array = sm.window_size_array
 
   with monitoring_sm:
       smach.StateMachine.add('WAIT_FOR_READER', smach_ros.MonitorState("/sm_reset", Empty, monitor_cb),
                               transitions={'invalid':'MONITOR', 'valid':'WAIT_FOR_READER', 'preempted':'WAIT_FOR_READER'})
+
+      while rospy.Subscriber("/sm_reset", Empty).get_num_connections() < 1:
+          print ("WAit subscriber to monitor")
+
       smach.StateMachine.add('MONITOR', monitor_state(),
                      transitions={'NEXT_MONITOR':'WAIT_FOR_READER', 'END_MONITOR':'END_MONITORING_SM'},
                      remapping={'result_cum':'results_',
@@ -71,7 +80,7 @@ def start_sm(path, common_string, monitor_state, setup_state, plot_state, time_l
 
   # Open the container
   with sm:
-      smach.StateMachine.add('SETUP', setup_state(),
+      smach.StateMachine.add('SETUP', setup_state(max_window_size,step),
                      transitions={'SETUP_DONE':'CON', 'FINISH': 'PLOT_RESULTS'},
                      remapping={'counter_in':'window_size',
                                 'counter_out':'window_size',

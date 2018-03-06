@@ -13,7 +13,7 @@ from audio_common_msgs.msg import AudioData
 class MyBagReader(smach.State):
     def __init__(self,  limit=float("inf"), max_bag_file = 100):
         mytypes = [AccelStamped, Twist, Odometry, Odometry, LaserScan, LaserScan, LaserScan, Image,
-                   Image, Odometry, Header, Imu,AudioData]
+                   Image, Odometry, Header, Imu,AudioData, Imu]
         #self.path = '/home/jose/ROS/thesis_ws/my_ws/rosbag_test/cob3/static_runs_2911/static_runs/' #TODO
         #self.path = '/home/jose/ROS/thesis_ws/my_ws/rosbag_test/cob3/cob3-test-2301/'
         self.max_bag_file = max_bag_file
@@ -21,12 +21,11 @@ class MyBagReader(smach.State):
             "/scan_front", "/scan_rear", "/scan_unified",
             "/arm_cam3d/rgb/image_raw","/cam3d/rgb/image_raw",
             "/base/odometry_controller/odometry", "/collision_label",
-            "/imu/data", "/audio"]
+            "/imu/data", "/audio", '/imu']
 
         self.myPublishers = list()
         self.limit = limit
         self.finish_pub = rospy.Publisher("finish_reading", String, queue_size=1)
-        rospy.sleep(2)
 
         for topic_name, msg_type in zip(self.mytopics,mytypes):
             publisher = rospy.Publisher(topic_name, msg_type, queue_size=1)
@@ -85,9 +84,7 @@ class MyBagReader(smach.State):
             self.bag.close()
 
         if userdata.foo_counter_in < max_bag_file:  #n number of bag files // TODO default 35
-            print("restarting")
             userdata.foo_counter_out = userdata.foo_counter_in + 1
-            print("ending")
             fb = String()
             fb.data = "NEXT_BAG"
             self.finish_pub.publish(fb)
@@ -108,16 +105,15 @@ class RestartReader(smach.State):
                              outcomes=['NEXT_BAG'],
                              input_keys=['bar_counter_in'])
         #rospy.spin()
+        self.monitor_reset_pub = rospy.Publisher('/sm_reset', Empty, queue_size=1)
         rospy.sleep(0.2)
 
     def execute(self, userdata):
         rospy.loginfo('Executing state RESTART READER')
         #rospy.loginfo('Counter = %f'%userdata.bar_counter_in)
-        monitor_reset_pub = rospy.Publisher('/sm_reset', Empty, queue_size=1)
-        while monitor_reset_pub.get_num_connections() < 1:
-            pass
+
         #print (monitor_reset_pub.get_num_connections())
-        monitor_reset_pub.publish(Empty())
+        self.monitor_reset_pub.publish(Empty())
         print ("Send EMPTY")
-        rospy.sleep(0.5)
+        rospy.sleep(2)
         return 'NEXT_BAG'

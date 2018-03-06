@@ -16,6 +16,8 @@ BaseCollisionChecker::BaseCollisionChecker(ros::NodeHandle &nh):
     footprint_sub_ = nh.subscribe("/move_base/local_costmap/footprint",4, &BaseCollisionChecker::footprintCB, this);
     point_cloud_sub_ = nh_.subscribe("/move_base/DWAPlannerROS/cost_cloud",1, &BaseCollisionChecker::pointCloudCB, this);
     point_cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("overlap_costmap",2);
+    collision_point_pub_ = nh_.advertise<geometry_msgs::PointStamped>("collision_contact_point",1);
+
     nh.param("collision_checker_threshold", collision_threshold_,30.0);
 
     footprint_extender_ = FootprintExtender(nh);
@@ -30,6 +32,7 @@ bool BaseCollisionChecker::runService(footprint_checker::CollisionCheckerMsg::Re
          footprint_checker::CollisionCheckerMsg::Response &resp)
 {
     resp.success = false;
+    double threshold = 0.2;
 
     if (is_point_cloud_received_ && is_footprint_received){
         ROS_INFO_STREAM("Request Received");
@@ -37,6 +40,52 @@ bool BaseCollisionChecker::runService(footprint_checker::CollisionCheckerMsg::Re
         updatePointCloud();
         ROS_INFO("Service Finished Correctly");
         resp.success = true;
+
+        double collision_yaw = tf::getYaw(req.collision_orientation);
+        ROS_INFO_STREAM("Measured orientation " << collision_yaw);
+        resp.is_static_collision = false;
+
+        tf::TransformListener tf_listener;
+        tf_listener.waitForTransform(footprint_extender_.goal_frame_, footprint_extender_.base_frame_, ros::Time(0), ros::Duration(1));
+
+        for (std::vector<std::pair<double,double> >::iterator it = footprint_extender_.footprint_extended_vector_.begin() ;
+                  it != footprint_extender_.footprint_extended_vector_.end(); ++it){
+
+          geometry_msgs::PoseStamped pose_in, pose_out;
+          pose_in.header.frame_id = footprint_extender_.base_frame_;
+          pose_in.pose.position.x = it->first;
+          pose_in.pose.position.y = it->second;
+
+          pose_in.pose.orientation.w = 1;
+
+          tf_listener.transformPose (footprint_extender_.goal_frame_, ros::Time(0), pose_in, footprint_extender_.base_frame_, pose_out);
+
+
+          ROS_INFO_STREAM("ANGLE " << atan2( pose_out.pose.position.y, pose_out.pose.position.x));
+
+          if (fabs(collision_yaw - atan2( pose_out.pose.position.y, pose_out.pose.position.x)) < threshold){
+            geometry_msgs::PointStamped msg;
+            msg.header.frame_id =  footprint_extender_.base_frame_;
+
+            if (it->first > 0){
+                msg.point.x = it->first + 0.05;
+            }
+            else{
+                msg.point.x = it->first - 0.05;
+            }
+
+            if (it->second > 0){
+                msg.point.y = it->second + 0.05;
+            }
+            else{
+                msg.point.y = it->second - 0.05;
+            }
+            collision_point_pub_.publish(msg);
+            resp.is_static_collision = true;
+
+          }
+        }
+        //req.collision_orientation
         resp.potential_collisions = collided_poses_array_;
         return true;
     }
@@ -125,7 +174,7 @@ void BaseCollisionChecker::updatePointCloud(){
             ROS_DEBUG_STREAM("costs " << partial_cost);
             //if(partial_cost<min_cost){
             if(partial_cost>= collision_threshold_){
-              ROS_DEBUG_STREAM("Collision Found in " << searchPoint.x << " , " << searchPoint.y);
+              ROS_DEBUG_STREAM("Potential Collision Found in " << searchPoint.x << " , " << searchPoint.y);
               //transformPoint(searchPoint);
               geometry_msgs::Pose tmp_pose;
               tmp_pose.position.x = searchPoint.x;
@@ -154,14 +203,14 @@ void BaseCollisionChecker::transformAndPublishPoints(){
 
   tf::TransformListener tf_listener;
   tf::StampedTransform transform;
-  tf_listener.waitForTransform(footprint_extender_.goal_frame_, footprint_extender_.base_frame_, ros::Time(), ros::Duration(0.5));
+  tf_listener.waitForTransform(footprint_extender_.goal_frame_, footprint_extender_.base_frame_, ros::Time(0), ros::Duration(1));
   //tf_listener.lookupTransform(footprint_extender_.goal_frame_, footprint_extender_.base_frame_,ros::Time(),transform);
 
   for (std::vector<geometry_msgs::Pose>::iterator it = collided_poses_.begin() ; it != collided_poses_.end(); ++it){
     geometry_msgs::PoseStamped pose_in, pose_out;
     pose_in.header.frame_id = footprint_extender_.base_frame_;
     pose_in.pose = *it;
-    tf_listener.transformPose (footprint_extender_.goal_frame_, ros::Time(), pose_in, footprint_extender_.base_frame_, pose_out);
+    tf_listener.transformPose (footprint_extender_.goal_frame_, ros::Time(0), pose_in, footprint_extender_.base_frame_, pose_out);
 
     tf::Quaternion quat = tf::createQuaternionFromYaw(atan2(pose_out.pose.position.y,pose_out.pose.position.x));
     tf::quaternionTFToMsg(quat,pose_out.pose.orientation);
