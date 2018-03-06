@@ -16,6 +16,8 @@ BaseCollisionChecker::BaseCollisionChecker(ros::NodeHandle &nh):
     footprint_sub_ = nh.subscribe("/move_base/local_costmap/footprint",4, &BaseCollisionChecker::footprintCB, this);
     point_cloud_sub_ = nh_.subscribe("/move_base/DWAPlannerROS/cost_cloud",1, &BaseCollisionChecker::pointCloudCB, this);
     point_cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("overlap_costmap",2);
+    collision_point_pub_ = nh_.advertise<geometry_msgs::PointStamped>("collision_contact_point",1);
+
     nh.param("collision_checker_threshold", collision_threshold_,30.0);
 
     footprint_extender_ = FootprintExtender(nh);
@@ -30,6 +32,8 @@ bool BaseCollisionChecker::runService(footprint_checker::CollisionCheckerMsg::Re
          footprint_checker::CollisionCheckerMsg::Response &resp)
 {
     resp.success = false;
+    double threshold = 0.2;
+
 
     if (is_point_cloud_received_ && is_footprint_received){
         ROS_INFO_STREAM("Request Received");
@@ -37,6 +41,25 @@ bool BaseCollisionChecker::runService(footprint_checker::CollisionCheckerMsg::Re
         updatePointCloud();
         ROS_INFO("Service Finished Correctly");
         resp.success = true;
+
+        double collision_yaw = tf::getYaw(req.collision_orientation);
+        ROS_INFO_STREAM("Measured orientation " << collision_yaw);
+
+        for (int i = 0; i<collided_poses_array_.poses.size();  ++i){
+          ROS_INFO_STREAM(tf::getYaw(collided_poses_array_.poses.at(i).orientation));
+          if (fabs(collision_yaw - tf::getYaw(collided_poses_array_.poses.at(i).orientation)) < threshold){
+            ROS_INFO_STREAM(collided_poses_array_.poses.at(i));
+            geometry_msgs::PointStamped msg;
+            msg.header.frame_id = "base_link";
+            msg.point.x = collided_poses_array_.poses.at(i).position.x + 0.05;
+            msg.point.y = collided_poses_array_.poses.at(i).position.y + 0.05;
+            collision_point_pub_.publish(msg);
+
+            ROS_INFO("STATIC");
+          }
+        }
+        //req.collision_orientation
+
         resp.potential_collisions = collided_poses_array_;
         return true;
     }
@@ -125,7 +148,7 @@ void BaseCollisionChecker::updatePointCloud(){
             ROS_DEBUG_STREAM("costs " << partial_cost);
             //if(partial_cost<min_cost){
             if(partial_cost>= collision_threshold_){
-              ROS_DEBUG_STREAM("Collision Found in " << searchPoint.x << " , " << searchPoint.y);
+              ROS_DEBUG_STREAM("Potential Collision Found in " << searchPoint.x << " , " << searchPoint.y);
               //transformPoint(searchPoint);
               geometry_msgs::Pose tmp_pose;
               tmp_pose.position.x = searchPoint.x;
