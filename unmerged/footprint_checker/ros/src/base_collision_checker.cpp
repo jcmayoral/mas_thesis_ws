@@ -34,7 +34,6 @@ bool BaseCollisionChecker::runService(footprint_checker::CollisionCheckerMsg::Re
     resp.success = false;
     double threshold = 0.2;
 
-
     if (is_point_cloud_received_ && is_footprint_received){
         ROS_INFO_STREAM("Request Received");
         footprint_extender_.getIntermediateFootprint(footprint_);
@@ -44,22 +43,49 @@ bool BaseCollisionChecker::runService(footprint_checker::CollisionCheckerMsg::Re
 
         double collision_yaw = tf::getYaw(req.collision_orientation);
         ROS_INFO_STREAM("Measured orientation " << collision_yaw);
+        resp.is_static_collision = false;
 
-        for (int i = 0; i<collided_poses_array_.poses.size();  ++i){
-          ROS_INFO_STREAM(tf::getYaw(collided_poses_array_.poses.at(i).orientation));
-          if (fabs(collision_yaw - tf::getYaw(collided_poses_array_.poses.at(i).orientation)) < threshold){
-            ROS_INFO_STREAM(collided_poses_array_.poses.at(i));
+        tf::TransformListener tf_listener;
+        tf_listener.waitForTransform(footprint_extender_.goal_frame_, footprint_extender_.base_frame_, ros::Time(0), ros::Duration(1));
+
+        for (std::vector<std::pair<double,double> >::iterator it = footprint_extender_.footprint_extended_vector_.begin() ;
+                  it != footprint_extender_.footprint_extended_vector_.end(); ++it){
+
+          geometry_msgs::PoseStamped pose_in, pose_out;
+          pose_in.header.frame_id = footprint_extender_.base_frame_;
+          pose_in.pose.position.x = it->first;
+          pose_in.pose.position.y = it->second;
+
+          pose_in.pose.orientation.w = 1;
+
+          tf_listener.transformPose (footprint_extender_.goal_frame_, ros::Time(0), pose_in, footprint_extender_.base_frame_, pose_out);
+
+
+          ROS_INFO_STREAM("ANGLE " << atan2( pose_out.pose.position.y, pose_out.pose.position.x));
+
+          if (fabs(collision_yaw - atan2( pose_out.pose.position.y, pose_out.pose.position.x)) < threshold){
             geometry_msgs::PointStamped msg;
-            msg.header.frame_id = "base_link";
-            msg.point.x = collided_poses_array_.poses.at(i).position.x + 0.05;
-            msg.point.y = collided_poses_array_.poses.at(i).position.y + 0.05;
-            collision_point_pub_.publish(msg);
+            msg.header.frame_id =  footprint_extender_.base_frame_;
 
-            ROS_INFO("STATIC");
+            if (it->first > 0){
+                msg.point.x = it->first + 0.05;
+            }
+            else{
+                msg.point.x = it->first - 0.05;
+            }
+
+            if (it->second > 0){
+                msg.point.y = it->second + 0.05;
+            }
+            else{
+                msg.point.y = it->second - 0.05;
+            }
+            collision_point_pub_.publish(msg);
+            resp.is_static_collision = true;
+
           }
         }
         //req.collision_orientation
-
         resp.potential_collisions = collided_poses_array_;
         return true;
     }
@@ -177,14 +203,14 @@ void BaseCollisionChecker::transformAndPublishPoints(){
 
   tf::TransformListener tf_listener;
   tf::StampedTransform transform;
-  tf_listener.waitForTransform(footprint_extender_.goal_frame_, footprint_extender_.base_frame_, ros::Time(), ros::Duration(0.5));
+  tf_listener.waitForTransform(footprint_extender_.goal_frame_, footprint_extender_.base_frame_, ros::Time(0), ros::Duration(1));
   //tf_listener.lookupTransform(footprint_extender_.goal_frame_, footprint_extender_.base_frame_,ros::Time(),transform);
 
   for (std::vector<geometry_msgs::Pose>::iterator it = collided_poses_.begin() ; it != collided_poses_.end(); ++it){
     geometry_msgs::PoseStamped pose_in, pose_out;
     pose_in.header.frame_id = footprint_extender_.base_frame_;
     pose_in.pose = *it;
-    tf_listener.transformPose (footprint_extender_.goal_frame_, ros::Time(), pose_in, footprint_extender_.base_frame_, pose_out);
+    tf_listener.transformPose (footprint_extender_.goal_frame_, ros::Time(0), pose_in, footprint_extender_.base_frame_, pose_out);
 
     tf::Quaternion quat = tf::createQuaternionFromYaw(atan2(pose_out.pose.position.y,pose_out.pose.position.x));
     tf::quaternionTFToMsg(quat,pose_out.pose.orientation);
