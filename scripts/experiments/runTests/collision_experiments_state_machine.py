@@ -41,6 +41,7 @@ class MyBagRecorder(smach.State):
         self.is_bag_started = False
         #TODO  yaml file to load topics
         rospy.Subscriber("/accel", AccelStamped, self.mainCB, "/accel", queue_size=300)
+        rospy.Subscriber("/imu", Imu, self.mainCB, "/imu", queue_size=300)
         rospy.Subscriber("/imu/data", Imu, self.mainCB, "/imu/data", queue_size=300)
         rospy.Subscriber("/collision_label", Header, self.mainCB, "/collision_label", queue_size=300)
         rospy.Subscriber("/audio", AudioData, self.mainCB, "/audio", queue_size=300)
