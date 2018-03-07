@@ -71,6 +71,8 @@ double KineticMonitor::calculateDrop(std_msgs::Header collision_time){
   double speed_0 = sqrt(pow(diff_speed_x_last,2) + pow(diff_speed_y_last,2)) + radius_ * diff_speed_z_last;
   double speed_1 = sqrt(pow(diff_speed_x,2) + pow(diff_speed_y,2)) + radius_ * diff_speed_z;
   ROS_INFO_STREAM("coefficient of restitution" << speed_1/speed_0);
+  ROS_INFO_STREAM("collision Angle" << atan2(speed_1,speed_0));
+
 
   double linear_speed = sqrt(pow(diff_speed_x - diff_speed_x_last,2) + pow(diff_speed_y - diff_speed_y_last,2));
   double angular_speed = radius_ * (diff_speed_z - diff_speed_z_last);
