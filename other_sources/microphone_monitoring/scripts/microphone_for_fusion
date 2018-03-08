@@ -3,7 +3,7 @@ from microphone_monitoring.FusionMicrophone import FusionMicrophone, FusionAudio
 import sys
 
 if __name__ == '__main__':
-    if True: #len(sys.argv)> 1:
+    if len(sys.argv)> 1:
         print ('hdgshgalghl;gh;wsahga;l')
         main = FusionAudioCapture()
     else:
