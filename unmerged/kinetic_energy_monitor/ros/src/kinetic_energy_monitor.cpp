@@ -5,14 +5,14 @@
 #include <kinetic_energy_monitor/kinetic_energy_monitor.h>
 
 KineticMonitor::KineticMonitor(ros::NodeHandle &nh):
-        nh_(nh), mass_(20), radius_(1), request_received_(false), max_number_elements_(3)
+        nh_(nh), mass_(20), radius_(1), request_received_(false), max_number_elements_(3), collision_angle_(0.0)
 {
     //From Local_planner
     open_loop_twist_sub_ = nh.subscribe("/base/twist_mux/command_navigation",1, &KineticMonitor::openLoopTwistCB, this);//TODO launch file with remap topic
     close_loop_twist_sub_ = nh.subscribe("/base/odometry_controller/odometry",1, &KineticMonitor::closeLoopTwistCB, this);//TODO launch file with remap topic
 
     nh.param("/platform_mass", mass_,30.0);
-    nh.param("/rotation_radius", radius_,30.0);
+    nh.param("/rotation_radius", radius_,0.6);
     nh.param("/queue_size", max_number_elements_,3);
     ROS_INFO("State: INIT");
 }
@@ -28,6 +28,7 @@ bool KineticMonitor::runService(KineticEnergyMonitorMsg::Request  &req,
 {
     if (twist_historial_open_loop_.size() > 1){
         resp.energy_lost = calculateDrop(req.collision_time);
+        resp.collision_angle = getAngle();
         resp.success = true;
         return true;
     }
@@ -36,6 +37,10 @@ bool KineticMonitor::runService(KineticEnergyMonitorMsg::Request  &req,
         resp.success = false;
         return true;
     }
+}
+
+double KineticMonitor::getAngle(){
+  return collision_angle_;
 }
 
 double KineticMonitor::calculateDrop(std_msgs::Header collision_time){
@@ -72,6 +77,7 @@ double KineticMonitor::calculateDrop(std_msgs::Header collision_time){
   double speed_1 = sqrt(pow(diff_speed_x,2) + pow(diff_speed_y,2)) + radius_ * diff_speed_z;
   ROS_INFO_STREAM("coefficient of restitution" << speed_1/speed_0);
   ROS_INFO_STREAM("collision Angle" << atan2(speed_1,speed_0));
+  collision_angle_ = atan2(speed_1,speed_0);
 
 
   double linear_speed = sqrt(pow(diff_speed_x - diff_speed_x_last,2) + pow(diff_speed_y - diff_speed_y_last,2));

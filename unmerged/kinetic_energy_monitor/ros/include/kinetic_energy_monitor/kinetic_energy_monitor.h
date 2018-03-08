@@ -47,6 +47,8 @@ class KineticMonitor
         void openLoopTwistCB(const geometry_msgs::TwistConstPtr &msg);
         void closeLoopTwistCB(const nav_msgs::OdometryConstPtr &msg);
 
+        double getAngle();
+
     private:
 
         /**
@@ -64,6 +66,7 @@ class KineticMonitor
 
         double mass_;
         double radius_;
+        double collision_angle_;
 
         bool request_received_;
         int max_number_elements_;
