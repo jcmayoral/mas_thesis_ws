@@ -13,7 +13,7 @@ from microphone_monitoring.cfg import microphoneConfig
 #(0, {'defaultSampleRate': 44100.0, 'defaultLowOutputLatency': 0.008684807256235827, 'defaultLowInputLatency': 0.008684807256235827, 'maxInputChannels': 1L, 'structVersion': 2L, 'hostApi': 0L, 'index': 0, 'defaultHighOutputLatency': 0.034829931972789115, 'maxOutputChannels': 2L, 'name': u'USB Audio Device: - (hw:1,0)', 'defaultHighInputLatency': 0.034829931972789115})
 
 class FusionMicrophone(ChangeDetection):
-    def __init__(self, cusum_window_size = 10, frame="base_link", sensor_id="microphone1", threshold = 1000, CHUNK=1):
+    def __init__(self, cusum_window_size = 10, frame="base_link", sensor_id="microphone1", threshold = 1000, CHUNK=1024):
         self.data_ = []
         self.data_.append([0,0,0])
         self.i = 0
@@ -31,8 +31,8 @@ class FusionMicrophone(ChangeDetection):
         self.audio = pyaudio.PyAudio()
         for i in range(self.audio.get_device_count()):
              dev = self.audio.get_device_info_by_index(i)
+             print(dev)
         self.device_index = 0
-        print(i,dev)
         self.device = self.audio.get_device_info_by_index(self.device_index)
         self.stream = self.audio.open(format=pyaudio.paInt16,
                             channels=1,
