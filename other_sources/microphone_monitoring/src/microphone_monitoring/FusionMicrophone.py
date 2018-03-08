@@ -48,7 +48,7 @@ class FusionMicrophone(ChangeDetection):
 
         while not rospy.is_shutdown():
             self.run()
-            #r.sleep()
+            r.sleep()
         self.stream.stop_stream()
         rospy.spin()
 

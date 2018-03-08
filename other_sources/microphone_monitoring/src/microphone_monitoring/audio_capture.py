@@ -40,9 +40,9 @@ class MyAudioCapture():
             print ("ERROR")
             return
 
-        amplitude = np.fromstring(data, np.int16)
-
+        amplitude = np.fromstring(data, np.uint8)
+        print type(amplitude)
         msg = AudioData()
-        msg.data = amplitude
+        msg.data = amplitude.tolist()
 
         self.pub.publish(msg)
