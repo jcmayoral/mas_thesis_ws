@@ -6,7 +6,7 @@ import pyaudio
 #(0, {'defaultSampleRate': 44100.0, 'defaultLowOutputLatency': 0.008684807256235827, 'defaultLowInputLatency': 0.008684807256235827, 'maxInputChannels': 1L, 'structVersion': 2L, 'hostApi': 0L, 'index': 0, 'defaultHighOutputLatency': 0.034829931972789115, 'maxOutputChannels': 2L, 'name': u'USB Audio Device: - (hw:1,0)', 'defaultHighInputLatency': 0.034829931972789115})
 
 class MyAudioCapture():
-    def __init__():
+    def __init__(self):
         rospy.init_node("my_audio_capture", anonymous=False)
 
         self.audio = pyaudio.PyAudio()
@@ -40,9 +40,9 @@ class MyAudioCapture():
             print ("ERROR")
             return
 
-        amplitude = np.fromstring(data, np.int16)
-
+        amplitude = np.fromstring(data, np.uint8)
+        print type(amplitude)
         msg = AudioData()
-        msg.data = amplitude
+        msg.data = amplitude.tolist()
 
         self.pub.publish(msg)
