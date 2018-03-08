@@ -10,11 +10,11 @@ class MyAudioCapture():
         rospy.init_node("my_audio_capture", anonymous=False)
 
         self.audio = pyaudio.PyAudio()
+        print (self.audio.get_device_count())
         for i in range(self.audio.get_device_count()):
              dev = self.audio.get_device_info_by_index(i)
         self.device_index = 0
         self.CHUNK = 1024
-        print(i,dev)
         self.device = self.audio.get_device_info_by_index(self.device_index)
         self.stream = self.audio.open(format=pyaudio.paInt16,
                             channels=1,

@@ -31,8 +31,8 @@ class FusionMicrophone(ChangeDetection):
         self.audio = pyaudio.PyAudio()
         for i in range(self.audio.get_device_count()):
              dev = self.audio.get_device_info_by_index(i)
+             print(dev)
         self.device_index = 0
-        print(i,dev)
         self.device = self.audio.get_device_info_by_index(self.device_index)
         self.stream = self.audio.open(format=pyaudio.paInt16,
                             channels=1,
