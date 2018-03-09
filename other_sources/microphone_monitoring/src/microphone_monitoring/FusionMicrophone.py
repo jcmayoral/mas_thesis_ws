@@ -48,7 +48,7 @@ class FusionMicrophone(ChangeDetection):
 
         while not rospy.is_shutdown():
             self.run()
-            r.sleep()
+            #r.sleep()
         self.stream.stop_stream()
         rospy.spin()
 
@@ -84,7 +84,7 @@ class FusionMicrophone(ChangeDetection):
         except IOError as ex:
             if ex[1] != pyaudio.paInputOverflowed:
                 raise
-            print ("ERROR")
+            rospy.logwarn("Sync error")
             return
 
         amplitude = np.fromstring(data, np.int16)
@@ -114,8 +114,10 @@ class FusionMicrophone(ChangeDetection):
         suma = np.sum(np.array(self.cum_sum, dtype = object))
         var = np.var(np.array(self.cum_sum, dtype = object))
 
-        #print (suma)
+        print ("S",suma)
+        print (var)
         if suma > self.threshold:
+        #if var > self.threshold:
             #print ("COllision")
             msg.msg = sensorFusionMsg.ERROR
 
@@ -153,9 +155,9 @@ class FusionAudioCapture(CollisionFusionSensor):
         #print ("Accelerations " , x,y,z)
         #print len(self.cum_sum)
         suma = np.nansum(self.cum_sum)
-        #print "Sum" , suma
+        print "Sum" , suma
         var = np.var(self.cum_sum)
-        #print "Var" , var
+        print "Var" , var
 
         if suma > self.threshold and not self.is_disable:
             output_msg.msg = sensorFusionMsg.ERROR

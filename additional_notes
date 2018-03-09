@@ -1,0 +1,98 @@
+No tienen unidades fisicas, son cuentas del ADC, para sacar el valor lo puedes hacer en función a la resolución ajustada, por ejemplo si el sensor de de 16 bits, quiere decir que puede contar hasta 65536, de los cuales supongamos que tenemos +/- 2G de rango. Tomando valores positivos y negativos quedaria entonces 32768 = +2G y -2G = -32767 por lo que por ejemplo AxC = (-4276/32768)*2G= -0.26 y si lo quieres en m/s2 seria por 9.8m/s2 que serian = -2.55m/s2. Saludos
+
+
+-255 = - 2? g
++ 255 = 2? g
+
+
+AxC = ( medición / 255) * 2 g =  n g
+
+ 9.81 * n g = a m/s2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Let's move on by considering a simple example, suppose our 10bit ADC module gave us the following values for the three accelerometer channels (axes):
+
+AdcRx = 586
+AdcRy = 630
+AdcRz = 561
+
+Each ADC module will have a reference voltage, let's assume in our example it is 3.3V. To convert a 10bit adc value to voltage we use the following formula:
+
+VoltsRx = AdcRx * Vref / 1023
+
+A quick note here: that for 8bit ADC the last divider would be 255 = 2 ^ 8 -1 , and for 12bit ADC last divider would be 4095 = 2^12 -1.
+
+Applying this formula to all 3 channels we get:
+
+VoltsRx = 586 * 3.3V / 1023 =~ 1.89V (we round all results to 2 decimal points)
+VoltsRy = 630 * 3.3V / 1023 =~ 2.03V
+VoltsRz = 561 * 3.3V / 1023 =~ 1.81V
+
+Each accelerometer has a zero-g voltage level, you can find it in specs, this is the voltage that corresponds to 0g. To get a signed voltage value we need to calculate the shift from this level. Let's say our 0g voltage level is VzeroG = 1.65V. We calculate the voltage shifts from zero-g voltage as follows::
+
+DeltaVoltsRx = 1.89V – 1.65V = 0.24V
+DeltaVoltsRy = 2.03V – 1.65V = 0.38V
+DeltaVoltsRz = 1.81V – 1.65V = 0.16V
+
+We now have our accelerometer readings in Volts , it's still not in g (9.8 m/s^2), to do the final conversion we apply the accelerometer sensitivity, usually expressed in mV/g. Lets say our Sensitivity = 478.5mV/g = 0.4785V/g. Sensitivity values can be found in accelerometer specifications. To get the final force values expressed in g we use the following formula:
+
+Rx = DeltaVoltsRx / Sensitivity
+
+Rx = 0.24V / 0.4785V/g =~ 0.5g
+Ry = 0.38V / 0.4785V/g =~ 0.79g
+Rz = 0.16V / 0.4785V/g =~ 0.33g
+
+We could of course combine all steps in one formula, but I went through all the steps to make it clear how you go from ADC readings to a force vector component expressed in g.
+
+Rx = (AdcRx * Vref / 1023 – VzeroG) / Sensitivity (Eq.2)
+Ry = (AdcRy * Vref / 1023 – VzeroG) / Sensitivity
+Rz = (AdcRz * Vref / 1023 – VzeroG) / Sensitivity
+
+We now have all 3 components that define our inertial force vector, if the device is not subject to other forces other than gravitation, we can assume this is the direction of our gravitation force vector. If you want to calculate inclination of device relative to the ground you can calculate the angle between this vector and Z axis. If you are also interested in per-axis direction of inclination you can split this result into 2 components: inclination on the X and Y axis that can be calculated as the angle between gravitation vector and X / Y axes. Calculating these angles is more simple than you might think, now that we have calculated the values for Rx,Ry and Rz. Let's go back to our last accelerometer model and do some additional notations:
+
+
+
+The angles that we are interested in are the angles between X,Y,Z axes and the force vector R. We'll define these angles as Axr, Ayr, Azr. You can notice from the right-angle triangle formed by R and Rx that:
+
+cos(Axr) = Rx / R , and similarly :
+cos(Ayr) = Ry / R
+cos(Azr) = Rz / R
+
+We can deduct from Eq.1 that R = SQRT( Rx^2 + Ry^2 + Rz^2).
+
+We can find now our angles by using arccos() function (the inverse cos() function ):
+
+Axr = arccos(Rx/R)
+Ayr = arccos(Ry/R)
+Azr = arccos(Rz/R)
+
+We've gone a long way to explain the accelerometer model, just to come up to these formulas. Depending on your applications you might want to use any intermediate formulas that we have derived. We'll also introduce the gyroscope model soon, and we'll see how accelerometer and gyroscope data can be combined to provide even more accurate inclination estimations.
+
+But before we do that let's do some more useful notations:
+
+cosX = cos(Axr) = Rx / R
+cosY = cos(Ayr) = Ry / R
+cosZ = cos(Azr) = Rz / R
+
+This triplet is often called Direction Cosine , and it basically represents the unit vector (vector with length 1) that has same direction as our R vector. You can easily verify that:
+
+SQRT(cosX^2 + cosY^2 + cosZ^2) = 1
+
+This is a nice property since it absolve us from monitoring the modulus(length) of R vector. Often times if we're just interested in direction of our inertial vector, it makes sense to normalize it's modulus in order to simplify other calculations.
