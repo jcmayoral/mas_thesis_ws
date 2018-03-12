@@ -62,15 +62,15 @@ class FusionMicrophone(ChangeDetection):
         self.is_disable = config["is_disable"]
         self.sensor_number = config["detector_id"]
         self.reset_publisher()
-        self.stream.stop_stream()
-        while not self.stream.is_stopped:
-            print "h"
-        self.audio.close(self.stream)
-        self.stream = self.audio.open(format=pyaudio.paInt16,
-                            channels=1,
-                            input_device_index = self.device_index,
-                            rate=(int)(self.device["defaultSampleRate"]), input=True,
-                            frames_per_buffer=(int)(config['CHUNK']))
+        #self.stream.stop_stream()
+        #while not self.stream.is_stopped:
+        #    print "h"
+        #self.audio.close(self.stream)
+        #self.stream = self.audio.open(format=pyaudio.paInt16,
+        #                    channels=1,
+        #                    input_device_index = self.device_index,
+        #                    rate=(int)(self.device["defaultSampleRate"]), input=True,
+        #                    frames_per_buffer=(int)(config['CHUNK']))
 
         if config["reset"]:
             self.clear_values()
