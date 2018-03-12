@@ -119,13 +119,15 @@ class FusionMicrophone(ChangeDetection):
         if suma > self.threshold:
         #if var > self.threshold:
             #print ("COllision")
+            msg.sensor_id.data = self.sensor_id
+            msg.data = cur
+            msg.weight = self.weight
             msg.msg = sensorFusionMsg.ERROR
 
-        msg.sensor_id.data = self.sensor_id
-        msg.data = cur
-        msg.weight = self.weight
-        if not self.is_disable:
-            self.pub.publish(msg)
+            if not self.is_disable:
+                self.pub.publish(msg)
+
+
 
 
 
