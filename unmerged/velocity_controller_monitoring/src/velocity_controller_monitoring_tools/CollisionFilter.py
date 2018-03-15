@@ -51,11 +51,9 @@ class CollisionFilter(ChangeDetection):
 
 
     def updateThreshold(self,msg):
-        print ("Normal Threshold CB")
         data = [np.fabs(self.current_data.linear.x),
                 np.fabs(self.current_data.linear.y),
                 np.fabs(self.current_data.angular.z)]
-        print (data)
         self.publishMsg(data)
 
     def updateChangeDetectionData(self,msg):
@@ -91,6 +89,7 @@ class CollisionFilter(ChangeDetection):
 
         if any(t > self.threshold for t in data):
             rospy.logwarn("IGNORE")
+            print (data)
             output_msg.mode = controllerFusionMsg.IGNORE
 
         output_msg.header.stamp = rospy.Time.now()
