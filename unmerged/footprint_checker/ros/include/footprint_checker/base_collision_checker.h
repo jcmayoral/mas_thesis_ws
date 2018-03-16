@@ -128,6 +128,8 @@ class BaseCollisionChecker
 
         double collision_threshold_;
         std::vector <geometry_msgs::Pose> collided_poses_;
+        std::vector <double> footprint_costs_;
+
         geometry_msgs::PoseArray collided_poses_array_;
 
 };

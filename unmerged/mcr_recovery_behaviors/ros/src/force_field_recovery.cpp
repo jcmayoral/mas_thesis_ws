@@ -107,6 +107,7 @@ void ForceFieldRecovery::runBehavior()
 
 bool ForceFieldRecovery::runService(mcr_recovery_behaviors::ForceFieldMsg::Request  &req,
                 mcr_recovery_behaviors::ForceFieldMsg::Response &resp){
+    ROS_INFO("Force Filed Recovery Service Called");
     runBehavior();
     resp.success = initialized_ && global_costmap_!=NULL && local_costmap_!= NULL;
     return resp.success;

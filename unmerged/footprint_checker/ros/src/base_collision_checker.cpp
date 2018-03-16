@@ -48,8 +48,12 @@ bool BaseCollisionChecker::runService(footprint_checker::CollisionCheckerMsg::Re
         tf::TransformListener tf_listener;
         tf_listener.waitForTransform(footprint_extender_.goal_frame_, footprint_extender_.base_frame_, ros::Time(0), ros::Duration(1));
 
-        for (std::vector<std::pair<double,double> >::iterator it = footprint_extender_.footprint_extended_vector_.begin() ;
-                  it != footprint_extender_.footprint_extended_vector_.end(); ++it){
+
+        //Iterator initialization
+        std::vector<std::pair<double,double> >::iterator it = footprint_extender_.footprint_extended_vector_.begin();
+        std::vector<double>::iterator cost_it = footprint_costs_.begin();
+
+        for ( ; it != footprint_extender_.footprint_extended_vector_.end(); ++it, ++cost_it){
 
           geometry_msgs::PoseStamped pose_in, pose_out;
           pose_in.header.frame_id = footprint_extender_.base_frame_;
@@ -61,27 +65,31 @@ bool BaseCollisionChecker::runService(footprint_checker::CollisionCheckerMsg::Re
           tf_listener.transformPose (footprint_extender_.goal_frame_, ros::Time(0), pose_in, footprint_extender_.base_frame_, pose_out);
 
 
-          ROS_INFO_STREAM("ANGLE " << atan2( pose_out.pose.position.y, pose_out.pose.position.x));
+          ROS_DEBUG_STREAM("ANGLE " << atan2( pose_out.pose.position.y, pose_out.pose.position.x));
 
           if (fabs(collision_yaw - atan2( pose_out.pose.position.y, pose_out.pose.position.x)) < threshold){
             geometry_msgs::PointStamped msg;
             msg.header.frame_id =  footprint_extender_.base_frame_;
 
             if (it->first > 0){
-                msg.point.x = it->first + 0.05;
+                msg.point.x = it->first + 0.06;
             }
             else{
-                msg.point.x = it->first - 0.05;
+                msg.point.x = it->first - 0.06;
             }
 
             if (it->second > 0){
-                msg.point.y = it->second + 0.05;
+                msg.point.y = it->second + 0.06;
             }
             else{
-                msg.point.y = it->second - 0.05;
+                msg.point.y = it->second - 0.06;
             }
+
+            ROS_WARN_STREAM("Cost of Collision "<< *cost_it);
             collision_point_pub_.publish(msg);
-            resp.is_static_collision = true;
+            if (*cost_it < 25){
+              resp.is_static_collision = true;
+            }
 
           }
         }
@@ -113,6 +121,7 @@ void BaseCollisionChecker::pointCloudCB(const sensor_msgs::PointCloud2ConstPtr &
 void BaseCollisionChecker::updatePointCloud(){
 
     collided_poses_.clear();
+    footprint_costs_.clear();
     /*for (int i=0; i< point_cloud_.fields.size(); i++){
       ROS_INFO_STREAM("field " << point_cloud_.fields[i]);
     }*/
@@ -173,6 +182,8 @@ void BaseCollisionChecker::updatePointCloud(){
             partial_cost /= pointIdxNKNSearch.size();
             ROS_DEBUG_STREAM("costs " << partial_cost);
             //if(partial_cost<min_cost){
+            footprint_costs_.push_back(partial_cost);
+
             if(partial_cost>= collision_threshold_){
               ROS_DEBUG_STREAM("Potential Collision Found in " << searchPoint.x << " , " << searchPoint.y);
               //transformPoint(searchPoint);
