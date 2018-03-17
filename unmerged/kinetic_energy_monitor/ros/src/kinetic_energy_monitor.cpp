@@ -11,9 +11,9 @@ KineticMonitor::KineticMonitor(ros::NodeHandle &nh):
     open_loop_twist_sub_ = nh.subscribe("/base/twist_mux/command_navigation",1, &KineticMonitor::openLoopTwistCB, this);//TODO launch file with remap topic
     close_loop_twist_sub_ = nh.subscribe("/base/odometry_controller/odometry",1, &KineticMonitor::closeLoopTwistCB, this);//TODO launch file with remap topic
 
-    nh.param("/platform_mass", mass_,30.0);
+    nh.param("/platform_mass", mass_,100.0);
     nh.param("/rotation_radius", radius_,0.6);
-    nh.param("/queue_size", max_number_elements_,3);
+    nh.param("/queue_size", max_number_elements_,5);
     ROS_INFO("State: INIT");
 }
 

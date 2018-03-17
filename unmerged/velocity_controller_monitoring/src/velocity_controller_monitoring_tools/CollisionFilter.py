@@ -92,6 +92,6 @@ class CollisionFilter(ChangeDetection):
             rospy.logwarn("IGNORE")
             print (data)
             output_msg.mode = controllerFusionMsg.IGNORE
-            if not self.is_disable:
-                self.pub.publish(output_msg)
-                rospy.sleep(0.1)
+        if not self.is_disable:
+            self.pub.publish(output_msg)
+            rospy.sleep(0.1)
