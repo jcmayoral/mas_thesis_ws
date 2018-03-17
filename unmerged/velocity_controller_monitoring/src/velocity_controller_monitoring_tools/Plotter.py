@@ -29,9 +29,9 @@ class ControllerMonitoring(RealTimePlotter):
         self.update(self.count,self.step_,self.data_)
 
     def openLoopCB(self, msg):
-        self.updateData()
         self.count = self.count + 1
         self.openLoop_ = msg
 
     def closeLoopCB(self, msg):
         self.closeLoop_ = msg.twist.twist
+        self.updateData()

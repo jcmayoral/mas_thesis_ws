@@ -86,13 +86,12 @@ class CollisionFilter(ChangeDetection):
         output_msg.window_size = self.window_size
         #print ("Accelerations " , x,y,z)
         output_msg.controller_id.data = self.controller_id
+        output_msg.header.stamp = rospy.Time.now()
 
         if any(t > self.threshold for t in data):
             rospy.logwarn("IGNORE")
             print (data)
             output_msg.mode = controllerFusionMsg.IGNORE
-
-        output_msg.header.stamp = rospy.Time.now()
-
-        if not self.is_disable:
-            self.pub.publish(output_msg)
+            if not self.is_disable:
+                self.pub.publish(output_msg)
+                rospy.sleep(0.1)
