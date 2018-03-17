@@ -60,9 +60,9 @@ double KineticMonitor::calculateDrop(std_msgs::Header collision_time){
   for ( ; it != twist_historial_open_loop_.end() || it2 != twist_historial_close_loop_.end(); ++it, ++it2){
 
     //ROS_INFO_STREAM("Loooking for " << collision_time.stamp << ", " << " Stored" << it->header.stamp);
-    diff_speed_x = it->twist.linear.x - it2->twist.linear.x;
-    diff_speed_y = it->twist.linear.y - it2->twist.linear.y;
-    diff_speed_z = it->twist.angular.z - it2->twist.angular.z;
+    diff_speed_x = it2->twist.linear.x;
+    diff_speed_y = it2->twist.linear.y;
+    diff_speed_z = it2->twist.angular.z;
     //ROS_INFO_STREAM("differences " << diff_speed_x << ", " << diff_speed_y << ", " << diff_speed_z);
 
     if (collision_time.stamp >= it->header.stamp && collision_time.stamp >= it2 -> header.stamp){
