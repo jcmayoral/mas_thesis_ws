@@ -8,7 +8,7 @@ from actionlib_msgs.msg import GoalStatus
 from geometry_msgs.msg import AccelStamped, Twist
 from audio_common_msgs.msg import AudioData
 from nav_msgs.msg import Odometry
-from sensor_msgs.msg import Image, LaserScan, Imu
+from sensor_msgs.msg import Image, LaserScan, Imu, CompressedImage
 import random
 import sys
 from mdr_move_base_safe.msg import MoveBaseSafeAction, MoveBaseSafeGoal
@@ -23,7 +23,7 @@ class Setup(smach.State):
     def execute(self, userdata):
         rospy.loginfo('Executing SETUP')
         rospy.sleep(0.5)
-        if userdata.counter_in < 5:
+        if userdata.counter_in < 10:
             userdata.counter_out = userdata.counter_in +1
             userdata.restart_requested_out = True
             return 'SETUP_DONE'
@@ -38,6 +38,7 @@ class MyBagRecorder(smach.State):
         self.is_bag_started = False
         rospy.Subscriber("/accel", AccelStamped, self.mainCB, "/accel", queue_size=300)
         rospy.Subscriber("/imu/data", Imu, self.mainCB, "/imu/data", queue_size=300)
+        rospy.Subscriber("/phone1/android/imu ", Imu, self.mainCB, "/phone1/android/imu", queue_size=300)
         rospy.Subscriber("/cmd_vel", Twist, self.mainCB, "/cmd_vel", queue_size=300)
         rospy.Subscriber("/base/twist_mux/command_navigation", Twist, self.mainCB, "/base/twist_mux/command_navigation", queue_size=300)
         rospy.Subscriber("/odom", Odometry, self.mainCB, "/odom", queue_size=300)
@@ -46,6 +47,7 @@ class MyBagRecorder(smach.State):
         rospy.Subscriber("/scan_rear", LaserScan, self.mainCB, "/scan_rear", queue_size=300)
         rospy.Subscriber("/scan_unified", LaserScan, self.mainCB, "/scan_unified", queue_size=300)
         rospy.Subscriber("/arm_cam3d/rgb/image_raw", Image, self.mainCB, "/arm_cam3d/rgb/image_raw", queue_size=300)
+        rospy.Subscriber("/phone1/camera/image/compressed", CompressedImage, self.mainCB, "/phone1/camera/image/compressed", queue_size=300)
         rospy.Subscriber("/cam3d/rgb/image_raw", Image, self.mainCB, "/cam3d/rgb/image_raw", queue_size=300)
         rospy.Subscriber("/audio", AudioData, self.mainCB, "/audio", queue_size=300)
 
@@ -132,7 +134,7 @@ sm.userdata.goal_location.append("lamp")
 sm.userdata.goal_location.append("exit")
 sm.userdata.last_location = "START"
 sm.userdata.sm_counter = 1
-sm.userdata.bag_family = "cob3-2602-"#"testing_bag"
+sm.userdata.bag_family = "cob3-1903-"#"testing_bag"
 sm.userdata.restart_requested = True
 
 with sm:
@@ -152,8 +154,6 @@ with sm:
         return goal
 
     def result_cb(userdata, status, result):
-        print type(status)
-        print result
         if status == GoalStatus.SUCCEEDED or status == GoalStatus.PREEMPTED:
             return 'succeeded'
 
