@@ -24,12 +24,12 @@ def init_dict():
     return dic
 
 # Create a SMACH state machine
-def start_sm(path, common_string, monitor_state, setup_state, plot_state, time_limit = float("inf"), max_bag_file = 110, max_window_size = 75, step=5):
+def start_sm(path, common_string, monitor_state, setup_state, plot_state, time_limit = float("inf"), max_bag_file = 110, max_window_size = 75, start_window = 2, step=5):
   sm = smach.StateMachine(outcomes=['END_SM'])
-  sm.userdata.window_size = 2
+  sm.userdata.window_size = start_window
   #sm.userdata.bag_family = "cob3-attempt-2001-" #TODO
   sm.userdata.window_size_array = list()
-  sm.userdata.results_ = init_dict()
+  sm.userdata.results_ = dict()
   sm.userdata.acc_results = init_dict()
   print (sm.userdata.acc_results)
   sm.userdata.cam_results = init_dict()
