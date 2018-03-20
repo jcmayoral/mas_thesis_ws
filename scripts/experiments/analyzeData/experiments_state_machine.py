@@ -90,17 +90,17 @@ class Plotter(smach.State):
                              outcomes=['PLOT_DONE'],
                              input_keys=['data_in', 'x_array'])
     def execute(self, userdata):
+
         rospy.loginfo('Executing SETUP')
-
         #Accelerometer Plot
-        data = np.array(userdata.data_in['accel'])
+        data = userdata.data_in['accel']
         x_array = userdata.x_array
+        print (data)
 
-        if len(data) > 0:
+        if len(data['std']) > 0:
             plt.figure()
-            plt.plot(x_array,data[:,0], label='Accelerometer Threshold X')
-            plt.plot(x_array,data[:,1], label='Accelerometer Threshold Y')
-            plt.plot(x_array,data[:,2], label='Accelerometer Threshold Z')
+            plt.errorbar(x_array, data["mean"],data["std"], fmt='ok', lw=3)
+            plt.errorbar(x_array, data["mean"], [data["mean"] - data["min"], data["max"] - data["mean"]], fmt='.k', ecolor='gray', lw=1)
             plt.xlabel("Window Size")
             plt.ylabel("Maximum Threshold Detected")
             plt.legend()
@@ -108,10 +108,12 @@ class Plotter(smach.State):
             plt.savefig('accelerometer_motion_threshold.png') # TODO
 
         #Camera Plot
-        data = np.array(userdata.data_in['cam'])
+        data = userdata.data_in['cam']
+        print (type(data))
 
-        if len(data) > 0:
-            plt.plot(np.asarray(x_array) * 0.01, data[:,0], label='RGB Camera Thresholds')
+        if len(data['std']) > 0:
+            plt.errorbar(np.asarray(x_array) * 0.01, data["mean"],data["std"], fmt='ok', lw=3)
+            #plt.errorbar(np.asarray(x_array) * 0.01,  np.array(data["mean"]), np.array(data["mean"]) -  np.array(data["min"]),  np.array(data["max"]) -  np.array(data["mean"]), fmt='.k', ecolor='gray', lw=1)
             plt.xlabel("Matching Threshold Variation")
             plt.ylabel("Maximum Threshold Detected")
             plt.title('Camera on Motion Thresholding') # subplot 211 title
@@ -132,23 +134,25 @@ class Plotter(smach.State):
         # plt.savefig('odometry_motion_threshold.png') # TODO
 
 
-        data = np.array(userdata.data_in['lidar'])
+        data = userdata.data_in['lidar']
 
-        if len(data) > 0:
+        if len(data['std']) > 0:
             plt.figure() #TODO
-            plt.plot(x_array,data, label='Lidar Threshold')
+            plt.errorbar(np.asarray(x_array) * 0.01, data["mean"],data["std"], fmt='ok', lw=3)
+            #plt.errorbar(np.asarray(x_array) * 0.01, data["mean"], [data["mean"] - data["min"], data["max"] - data["mean"]], fmt='.k', ecolor='gray', lw=1)
             plt.xlabel("Window Size")
             plt.ylabel("Maximum Threshold Detected")
             plt.legend()
             plt.title('Lidar on Motion Thresholding') # subplot 211 title
             plt.savefig('lidar_motion_threshold.png') # TODO
 
-        data = np.array(userdata.data_in['mic'])
+        data = userdata.data_in['mic']
         x_array = userdata.x_array
 
-        if len(data) > 0:
+        if len(data['std']) > 0:
             plt.figure() #TODO
-            plt.plot(x_array,np.nansum(data, axis=1), label='Microphone Threshold Sum')
+            plt.errorbar(np.asarray(x_array) * 0.01, data["mean"],data["std"], fmt='ok', lw=3)
+            #plt.errorbar(np.asarray(x_array) * 0.01, data["mean"], [data["mean"] - data["min"], data["max"] - data["mean"]], fmt='.k', ecolor='gray', lw=1)
             plt.xlabel("Window Size")
             plt.ylabel("Maximum Threshold Detected")
             plt.legend()
@@ -163,13 +167,12 @@ class Plotter(smach.State):
             plt.savefig('mic_motion_threshold_sum.png') # TODO
 
 
-        data = np.array(userdata.data_in['imu'])
+        data = userdata.data_in['imu']
         x_array = userdata.x_array
-        if len(data) > 0:
+        if len(data['std']) > 0:
             plt.figure() #TODO
-            plt.plot(x_array,data[:,0], label='IMU Threshold Linear Acc X')
-            plt.plot(x_array,data[:,1], label='IMU Threshold Linear Acc Y')
-            plt.plot(x_array,data[:,2], label='IMU Threshold Linear Acc Z')
+            plt.errorbar(np.asarray(x_array), data["mean"],data["std"], fmt='ok', lw=3)
+            #plt.errorbar(np.asarray(x_array), data["mean"], [data["mean"] - data["min"], data["max"] - data["mean"]], fmt='.k', ecolor='gray', lw=1)
             plt.xlabel("Window Size")
             plt.ylabel("Maximum Threshold Detected")
             plt.legend()
@@ -177,9 +180,8 @@ class Plotter(smach.State):
             plt.savefig('imu_linear_motion_threshold.png') # TODO
 
             plt.figure()
-            plt.plot(x_array,data[:,3], label='IMU Threshold Ang. Vel. X')
-            plt.plot(x_array,data[:,4], label='IMU Threshold Ang. Vel. Y')
-            plt.plot(x_array,data[:,5], label='IMU Threshold Ang. Vel. Z')
+            plt.errorbar(np.asarray(x_array), data["mean"],data["std"], fmt='ok', lw=3)
+            #plt.errorbar(np.asarray(x_array), data["mean"], [data["mean"] - data["min"], data["max"] - data["mean"]], fmt='.k', ecolor='gray', lw=1)
             plt.xlabel("Window Size")
             plt.ylabel("Maximum Threshold Detected")
             plt.legend()
@@ -218,15 +220,24 @@ class Monitor(smach.State):
         self.stop_bag_request = False
 
 
-        self.acc_cum = list()
-        self.cam_cum = list()
-        self.odom_cum = list()
-        self.lidar_cum = list()
-        self.mic_cum = list()
-        self.imu_cum = list()
+        self.acc_cum = self.init_dict()
+        self.cam_cum = self.init_dict()
+        self.odom_cum = self.init_dict()
+        self.lidar_cum = self.init_dict()
+        self.mic_cum = self.init_dict()
+        self.imu_cum = self.init_dict()
 
         for i in range(10):
             rospy.Subscriber("/collisions_"+str(i), sensorFusionMsg, self.threshold_cb, queue_size=100)
+
+    def init_dict(self):
+        dic = dict()
+        dic["min"] = list()
+        dic["max"] = list()
+        dic["mean"] = list()
+        dic["std"] = list()
+        return dic
+
 
     def threshold_cb(self,msg):
         if msg.sensor_id.data == "accelerometer_1":
@@ -278,17 +289,40 @@ class Monitor(smach.State):
         if self.stop_bag_request:
             print ('Stop Received')
             if len(self.accel_thr) > 0:
-                userdata.acc_cum.append(np.nanmax(self.accel_thr, axis=0))
+                userdata.acc_cum["min"].append(np.nanmin(self.accel_thr, axis=0))
+                userdata.acc_cum["max"].append(np.nanmax(self.accel_thr, axis=0))
+                userdata.acc_cum["mean"].append(np.nanmean(self.accel_thr, axis =0))
+                userdata.acc_cum["std"].append(np.nanstd(self.accel_thr, axis = 0))
+
             if len(self.cam_thr) > 0:
-                userdata.cam_cum.append(np.nanmax(self.cam_thr, axis=0))
+                userdata.cam_cum["min"].append(np.nanmin(self.cam_thr, axis=0))
+                userdata.cam_cum["max"].append(np.nanmax(self.cam_thr, axis=0))
+                userdata.cam_cum["mean"].append(np.nanmean(self.cam_thr, axis =0))
+                userdata.cam_cum["std"].append(np.nanstd(self.cam_thr, axis = 0))
+
             if len(self.odom_thr) > 0:
-                userdata.odom_cum.append(np.nanmax(self.odom_thr, axis=0))
+                userdata.odom_cum["min"].append(np.nanmin(self.odom_thr, axis=0))
+                userdata.odom_cum["max"].append(np.nanmax(self.odom_thr, axis=0))
+                userdata.odom_cum["mean"].append(np.nanmean(self.odom_thr, axis =0))
+                userdata.odom_cum["std"].append(np.nanstd(self.odom_thr, axis = 0))
+
             if len(self.lidar_thr) > 0:
-                userdata.lidar_cum.append(np.nanmax(self.lidar_thr, axis=0))
+                userdata.lidar_cum["min"].append(np.nanmin(self.lidar_thr, axis=0))
+                userdata.lidar_cum["max"].append(np.nanmax(self.lidar_thr, axis=0))
+                userdata.lidar_cum["mean"].append(np.nanmean(self.lidar_thr, axis =0))
+                userdata.lidar_cum["std"].append(np.nanstd(self.lidar_thr, axis = 0))
+
             if len(self.mic_thr) > 0:
-                userdata.mic_cum.append(np.nanmax(self.mic_thr, axis=0))
+                userdata.mic_cum["min"].append(np.nanmin(self.mic_thr, axis=0))
+                userdata.mic_cum["max"].append(np.nanmax(self.mic_thr, axis=0))
+                userdata.mic_cum["mean"].append(np.nanmean(self.mic_thr, axis =0))
+                userdata.mic_cum["std"].append(np.nanstd(self.mic_thr, axis = 0))
+
             if len(self.imu_thr) > 0:
-                userdata.imu_cum.append(np.nanmax(self.imu_thr, axis=0))
+                userdata.imu_cum["min"].append(np.nanmin(self.imu_thr, axis=0))
+                userdata.imu_cum["max"].append(np.nanmax(self.imu_thr, axis=0))
+                userdata.imu_cum["mean"].append(np.nanmean(self.imu_thr, axis =0))
+                userdata.imu_cum["std"].append(np.nanstd(self.imu_thr, axis = 0))
 
             del self.accel_thr[:]
             del self.cam_thr[:]
@@ -306,4 +340,4 @@ class Monitor(smach.State):
 
 if __name__ == '__main__':
     rospy.init_node('smach_example_state_machine')
-    start_sm("/home/jose/data/free_motion-2602/", "cob3-2602-", Monitor, Setup, Plotter, max_bag_file=100, max_window_size=75, step=5)
+    start_sm("/home/jose/data/freemotion-1903/", "cob3-1903-", Monitor, Setup, Plotter, max_bag_file=5, max_window_size=7, step=5)

@@ -53,20 +53,20 @@ class Setup(smach.State):
 
     def execute(self, userdata):
         rospy.loginfo('Executing SETUP')
-        self.acc_client.update_configuration({"window_size": 20})#userdata.counter_in})
+        self.acc_client.update_configuration({"window_size": 10})#userdata.counter_in})
         #self.acc_client.update_configuration({"reset": True})
-        self.odom_client.update_configuration({"window_size": 20})#userdata.counter_in})
+        self.odom_client.update_configuration({"window_size": 10})#userdata.counter_in})
         #self.odom_client.update_configuration({"reset": True})
-        self.imu_client.update_configuration({"window_size": 20})#userdata.counter_in})
+        self.imu_client.update_configuration({"window_size": 10})#userdata.counter_in})
         #self.imu_client.update_configuration({"reset": True})
-        self.lidar_client.update_configuration({"window_size": 20})#userdata.counter_in})
+        self.lidar_client.update_configuration({"window_size": 10})#userdata.counter_in})
         #self.lidar_client.update_configuration({"reset": True})
-        self.mic_client.update_configuration({"window_size": userdata.counter_in})
+        self.mic_client.update_configuration({"window_size": 10})
         #self.mic_client.update_configuration({"reset": True})
 
         #SURF Version
-        self.cam_client.update_configuration({"matching_threshold":  userdata.counter_in * 0.01})
-        self.cam_client.update_configuration({"mode": 0})
+        self.cam_client.update_configuration({"matching_threshold":  100})
+        self.cam_client.update_configuration({"mode": 1 })
         #self.cam_client.update_configuration({"reset": True})
 
         rospy.sleep(0.5)
@@ -77,7 +77,7 @@ class Setup(smach.State):
             return 'SETUP_DONE'
         else:
             userdata.results_['accel'] = userdata.acc_results
-            userdata.results_['cam'] = userdata.cam_results
+            userdata.results_['cam1'] = userdata.cam_results
             userdata.results_['odom'] = userdata.odom_results
             userdata.results_['imu'] = userdata.imu_results
             userdata.results_['lidar'] = userdata.lidar_results
@@ -106,7 +106,7 @@ class Monitor(smach.State):
         rospy.Subscriber("/detector_diagnoser_node/overall_collision", monitorStatusMsg, self.diagnoser_cb, queue_size = 1000)
 
 
-        sensor_id_labels = ['accelerometer_1', 'odom', 'imu_1', 'lidar_1', 'mic_1', 'cam_0']
+        sensor_id_labels = ['accelerometer_1', 'odom', 'imu_1', 'lidar_1', 'mic_1', 'cam1']
         self.collisions_id = dict()
         self.observer_counter = dict()
 
@@ -127,6 +127,7 @@ class Monitor(smach.State):
         self.sf_detection = list()
         self.false_positives_count = 0
         self.false_negative_count = 0
+        self.truth_positives = 0
 
         self.delays = list()
 
@@ -169,6 +170,8 @@ class Monitor(smach.State):
         else:#FINISH
             #print ("/n")
             print ("Ground Truth Count ", self.ground_truth_count)
+            print ("Truth Positves Count ", self.truth_positives)
+
             print (self.delays)
             print ("Average Reaction Time ", np.nanmean(self.delays))
             print ("False Positives ", self.false_positives_count)
@@ -202,7 +205,7 @@ class Monitor(smach.State):
 
         if self.stop_bag_request:
             userdata.acc_cum.append(self.observer_counter['accelerometer_1'])
-            userdata.cam_cum.append(self.observer_counter['cam_0'])
+            userdata.cam_cum.append(self.observer_counter['cam1'])
             userdata.odom_cum.append(self.observer_counter['odom'])
             userdata.imu_cum.append(self.observer_counter['imu_1'])
             userdata.lidar_cum.append(self.observer_counter['lidar_1'])
@@ -212,6 +215,8 @@ class Monitor(smach.State):
         else:
             #print ("NEXT_MONITOR")
             print ("Ground Truths " , self.ground_truth)
+            print ("Truth Positives " , self.truth_positives)
+
             collisions_detected = len(self.sf_detection)
             print ('SF [%s]' % ', '.join(map(str, self.sf_detection)))
             print ("Collisions Detected " , collisions_detected)
@@ -224,13 +229,14 @@ class Monitor(smach.State):
 
                     print('Closest to ', gt ," is ", delay) # Closest delay print
 
-                    if delay < 0.3: #if delay is less than 1 second then it is considered as a true positive
+                    if delay < 1.0: #if delay is less than 1 second then it is considered as a true positive
+                        self.truth_positives = self.truth_positives + 1
                         self.delays.append(delay)
                         collisions_detected = collisions_detected - 1 #our counter decreased
                         self.sf_detection.remove(self.sf_detection[arg_delay]) # removing from the detected collsiions
                         #self.false_positives_count = self.false_positives_count + collisions_detected - 1 # all detections minus the closest are false positives
                         for  c in self.sf_detection:
-                            if 0.5> np.abs(c - gt) > 0.3: # if a collision detected is less than 0.7 seconds it is considered as a false positive
+                            if 1.2> (c - gt) > 1.0: # if a collision detected is less than 0.7 seconds it is considered as a false positive
                                 print ("FOUND COllision Close to Ground Truth " , c - gt)
                                 self.sf_detection.remove(c) # removing from the detected collsiions
                                 collisions_detected = collisions_detected - 1 #our counter decreased

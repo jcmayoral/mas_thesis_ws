@@ -15,19 +15,28 @@ import matplotlib.pyplot as plt
 def monitor_cb(ud, msg):
     return None
 
+def init_dict():
+    dic = dict()
+    dic["min"] = list()
+    dic["max"] = list()
+    dic["mean"] = list()
+    dic["std"] = list()
+    return dic
+
 # Create a SMACH state machine
 def start_sm(path, common_string, monitor_state, setup_state, plot_state, time_limit = float("inf"), max_bag_file = 110, max_window_size = 75, step=5):
   sm = smach.StateMachine(outcomes=['END_SM'])
   sm.userdata.window_size = 2
   #sm.userdata.bag_family = "cob3-attempt-2001-" #TODO
   sm.userdata.window_size_array = list()
-  sm.userdata.results_ = dict()
-  sm.userdata.acc_results = list()
-  sm.userdata.cam_results = list()
-  sm.userdata.odom_results = list()
-  sm.userdata.imu_results = list()
-  sm.userdata.lidar_results = list()
-  sm.userdata.mic_results = list()
+  sm.userdata.results_ = init_dict()
+  sm.userdata.acc_results = init_dict()
+  print (sm.userdata.acc_results)
+  sm.userdata.cam_results = init_dict()
+  sm.userdata.odom_results = init_dict()
+  sm.userdata.imu_results = init_dict()
+  sm.userdata.lidar_results = init_dict()
+  sm.userdata.mic_results = init_dict()
 
   reading_sm = smach.StateMachine(outcomes=['END_READING_SM'])
   reading_sm.userdata.sm_counter = 1
@@ -43,8 +52,6 @@ def start_sm(path, common_string, monitor_state, setup_state, plot_state, time_l
   monitoring_sm.userdata.imu_results = sm.userdata.imu_results
   monitoring_sm.userdata.lidar_results = sm.userdata.lidar_results
   monitoring_sm.userdata.mic_results = sm.userdata.mic_results
-
-
 
 
   with reading_sm:
