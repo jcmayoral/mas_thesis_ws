@@ -8,6 +8,7 @@ from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Image, LaserScan, Imu
 from std_msgs.msg import Empty, String, Header
 from audio_common_msgs.msg import AudioData
+import subprocess
 
 # define state ReadBag
 class MyBagReader(smach.State):
@@ -44,7 +45,9 @@ class MyBagReader(smach.State):
         while not self.is_file_ok:
             try:
                 file_name = userdata.path + userdata.shared_string + str(userdata.foo_counter_in)+".bag"
-                self.bag = rosbag.Bag(file_name)
+                command = "rosbag play " + file_name
+                self.p = subprocess.Popen(command, stdin=subprocess.PIPE, shell=True)
+                #self.bag = rosbag.Bag(file_name)
                 print ("file_name" , file_name )
                 self.is_file_ok = True
             except:
@@ -60,28 +63,8 @@ class MyBagReader(smach.State):
                     return 'END_READER'
                 #print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
 
-
-        try:
-            start_time = self.bag.get_start_time()
-            end_time = self.bag.get_end_time()
-            duration_time = end_time - start_time
-            r = rospy.Rate(300) # Default 100
-            for topic, msg, t in self.bag.read_messages(topics=self.mytopics):
-                if t.to_sec() - start_time > self.limit:
-                    ROS_INFO("Quitting")
-                    break
-                print ("ROSBag  Running ", t.to_sec() - start_time, " of " , duration_time, end="\r")
-                for p, topic_name in self.myPublishers:
-                    if topic_name == topic:
-                        #print "printing on ", topic_name
-                        p.publish(msg)
-                        r.sleep()
-                        break
-            print ("\n")
-            self.bag.close()
-        except:
-            rospy.logwarn("ROSBAG FILE NOT FOUND")
-            self.bag.close()
+        rospy.loginfo(self.p)
+        self.p.wait()
 
         if userdata.foo_counter_in < max_bag_file:  #n number of bag files // TODO default 35
             userdata.foo_counter_out = userdata.foo_counter_in + 1
