@@ -1,5 +1,0 @@
-#!/usr/bin/env python3
-from fake_imu.IMUPlotter import IMUPlotter
-
-if __name__ == '__main__':
-    main = IMUPlotter(50,20)

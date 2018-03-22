@@ -1,5 +1,0 @@
-#!/usr/bin/env python
-from amcl_monitoring_tools.AMCLMonitoring import AMCLMonitoring
-
-if __name__ == '__main__':
-    main = AMCLMonitoring(4,1,2)

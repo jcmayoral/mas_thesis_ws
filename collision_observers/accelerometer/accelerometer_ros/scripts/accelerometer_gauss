@@ -1,5 +1,0 @@
-#!/usr/bin/env python
-from fault_detection.AccGaussCUSUM import AccGaussCUSUM
-
-if __name__ == '__main__':
-    main = AccGaussCUSUM(40,1,5)

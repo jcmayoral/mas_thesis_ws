@@ -1,6 +1,0 @@
-#!/usr/bin/env python
-import rospy
-from kalman_filter_monitoring_tools.KalmanFilterMonitorPlot import KalmanFilterPlotter
-
-if __name__ == '__main__':
-    main = KalmanFilterPlotter(100,5,10)
