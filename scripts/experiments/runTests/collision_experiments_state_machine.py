@@ -9,7 +9,7 @@ from geometry_msgs.msg import AccelStamped, Twist, PoseStamped
 from nav_msgs.msg import Odometry
 from audio_common_msgs.msg import AudioData
 from std_msgs.msg import Header
-from sensor_msgs.msg import Image, LaserScan, Imu
+from sensor_msgs.msg import Image, LaserScan, Imu, CompressedImage
 import random
 import sys
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
@@ -43,6 +43,7 @@ class MyBagRecorder(smach.State):
         rospy.Subscriber("/accel", AccelStamped, self.mainCB, "/accel", queue_size=300)
         rospy.Subscriber("/imu", Imu, self.mainCB, "/imu", queue_size=300)
         rospy.Subscriber("/imu/data", Imu, self.mainCB, "/imu/data", queue_size=300)
+        rospy.Subscriber("/phone1/android/imu ", Imu, self.mainCB, "/phone1/android/imu", queue_size=300)
         rospy.Subscriber("/collision_label", Header, self.mainCB, "/collision_label", queue_size=300)
         rospy.Subscriber("/audio", AudioData, self.mainCB, "/audio", queue_size=300)
         rospy.Subscriber("/cmd_vel", Twist, self.mainCB, "/cmd_vel", queue_size=300)
@@ -53,6 +54,7 @@ class MyBagRecorder(smach.State):
         rospy.Subscriber("/scan_rear", LaserScan, self.mainCB, "/scan_rear", queue_size=300)
         rospy.Subscriber("/scan_unified", LaserScan, self.mainCB, "/scan_unified", queue_size=300)
         rospy.Subscriber("/arm_cam3d/rgb/image_raw", Image, self.mainCB, "/arm_cam3d/rgb/image_raw", queue_size=300)
+        rospy.Subscriber("/phone1/camera/image/compressed", CompressedImage, self.mainCB, "/phone1/camera/image/compressed", queue_size=300)
         rospy.Subscriber("/cam3d/rgb/image_raw", Image, self.mainCB, "/cam3d/rgb/image_raw", queue_size=300)
         self.startBag()
         smach.State.__init__(self,
@@ -123,7 +125,7 @@ rospy.init_node("my_collision_bag_recorder")
 
 sm = smach.StateMachine(['succeeded','aborted','preempted','END_SM'])
 sm.userdata.sm_counter = 0
-sm.userdata.bag_family = "collision_bags_bags"
+sm.userdata.bag_family = "collision_bags_bags_2003_"
 sm.userdata.restart_requested = True # This flag restart the cycle
 sm.userdata.stop_requested = False # This flag stops the recorder
 sm.userdata.finish_requested = False # This flag finishes sm
