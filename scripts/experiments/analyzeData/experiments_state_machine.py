@@ -36,9 +36,9 @@ class Setup(smach.State):
         #rospy.spin()
         self.step = step
         self.max_window_size = max_window_size
-        self.acc_client = Client("accelerometer_process", timeout=3, config_callback=self.callback)
+        #self.acc_client = Client("accelerometer_process", timeout=3, config_callback=self.callback)
         self.cam_client = Client("vision_utils_ros_android", timeout=3, config_callback=self.callback)
-        self.odom_client = Client("odom_collisions", timeout=3, config_callback=self.callback)
+        #self.odom_client = Client("odom_collisions", timeout=3, config_callback=self.callback)
         self.lidar_client = Client("laser_collisions", timeout=3, config_callback=self.callback)
         self.mic_client = Client("mic_collisions", timeout=3, config_callback=self.callback)
         self.imu_client = Client("imu_collision_detection", timeout=3, config_callback=self.callback)
@@ -53,10 +53,10 @@ class Setup(smach.State):
 
     def execute(self, userdata):
         rospy.loginfo('Executing SETUP')
-        self.acc_client.update_configuration({"window_size": userdata.counter_in})
-        self.acc_client.update_configuration({"reset": True})
-        self.odom_client.update_configuration({"window_size": userdata.counter_in})
-        self.odom_client.update_configuration({"reset": True})
+        #self.acc_client.update_configuration({"window_size": userdata.counter_in})
+        #self.acc_client.update_configuration({"reset": True})
+        #self.odom_client.update_configuration({"window_size": userdata.counter_in})
+        #self.odom_client.update_configuration({"reset": True})
         self.lidar_client.update_configuration({"window_size": userdata.counter_in})
         self.lidar_client.update_configuration({"reset": True})
         self.mic_client.update_configuration({"window_size": userdata.counter_in})
@@ -72,9 +72,11 @@ class Setup(smach.State):
 
         rospy.sleep(0.5)
         if userdata.counter_in < self.max_window_size: # Window SIZe Define max TODO
+            print ("RESTART")
             userdata.x_array.append(userdata.counter_in)
             userdata.counter_out = userdata.counter_in + self.step
             return 'SETUP_DONE'
+
         else:
             userdata.results_['accel'] = userdata.acc_results
             userdata.results_['cam'] = userdata.cam_results
@@ -104,7 +106,7 @@ class Plotter(smach.State):
             plt.errorbar(x_array, np.array(data["mean"]), yerr=0.2, fmt='ok', lw=3)
             #plt.errorbar(x_array,np.array(data["mean"]), datayerr=yerr, fmt='.k', ecolor='gray', lw=1)
             plt.xlabel("Window Size")
-            plt.ylabel("Maximum Threshold Detected")
+            plt.ylabel("CUSUM Error")
             plt.legend()
             plt.title('Accelerometer on Motion Thresholding') # subplot 211 title
             plt.savefig('accelerometer_motion_threshold.png') # TODO
@@ -123,7 +125,7 @@ class Plotter(smach.State):
             #plt.errorbar(x_array, m.flatten(), yerr=0.2, fmt='ok', lw=3)
             #plt.errorbar(x_array, m ,datayerr=yerr, fmt='.k', ecolor='gray', lw=1)
             plt.xlabel("Matching Threshold Variation")
-            plt.ylabel("Maximum Threshold Detected")
+            plt.ylabel("CUSUM Erro")
             plt.title('Camera on Motion Thresholding') # subplot 211 title
             plt.legend()
             plt.figure()
@@ -156,7 +158,7 @@ class Plotter(smach.State):
             plt.errorbar(np.asarray(x_array), m.flatten(), yerr=s.flatten(), fmt='ok', lw=3)
             #plt.errorbar(np.asarray(x_array) * 0.01, np.array(data["mean"]), [np.array(data["mean"]) - np.array(data["min"]), np.array(data["max"]) - np.array(data["mean"])], fmt='.k', ecolor='gray', lw=1)
             plt.xlabel("Window Size")
-            plt.ylabel("Maximum Threshold Detected")
+            plt.ylabel("CUSUM Error")
             plt.legend()
             plt.title('Lidar on Motion Thresholding') # subplot 211 title
             plt.savefig('lidar_motion_threshold.png') # TODO
@@ -178,18 +180,10 @@ class Plotter(smach.State):
             plt.errorbar(np.asarray(x_array), m.flatten(), yerr=s.flatten(), fmt='ok', lw=3)
             #plt.errorbar(np.asarray(x_array) * 0.01, np.array(data["mean"]), [np.array(data["mean"]) - np.array(data["min"]), np.array(data["max"]) - np.array(data["mean"])], fmt='.k', ecolor='gray', lw=1)
             plt.xlabel("Window Size")
-            plt.ylabel("Maximum Threshold Detected")
+            plt.ylabel("CUSUM Error")
             plt.legend()
             plt.title('Microphone on Motion Thresholding') # subplot 211 title
             plt.savefig('mic_motion_threshold_sum.png') # TODO
-            plt.figure() #TODO
-            plt.plot(x_array,np.nanvar(data, axis=1), label='Microphone Threshold Variance')
-            plt.xlabel("Window Size")
-            plt.ylabel("Maximum Threshold Detected")
-            plt.legend()
-            plt.title('Microphone on Motion Thresholding') # subplot 211 title
-            plt.savefig('mic_motion_threshold_sum.png') # TODO
-
 
         data = userdata.data_in['imu']
         x_array = userdata.x_array
@@ -209,7 +203,7 @@ class Plotter(smach.State):
                 plt.errorbar(np.asarray(x_array), m.flatten(), yerr=s.flatten(), fmt='ok', lw=3)
                 #plt.errorbar(np.asarray(x_array), m, m - _min, _max - m, fmt='.k', ecolor='gray', lw=1)
                 plt.xlabel("Window Size")
-                plt.ylabel("Maximum Threshold Detected")
+                plt.ylabel("CUSUM sigma")
                 plt.legend()
                 plt.title('Imu on Motion Linear Accelerations Thresholding'+ str(i)) # subplot 211 title
                 plt.savefig('imu_linear_motion_threshold' + str(i) + '.png') # TODO
@@ -252,7 +246,7 @@ class Monitor(smach.State):
         self.mic_cum = self.init_dict()
         self.imu_cum = self.init_dict()
 
-        for i in range(10):
+        for i in range(5):
             rospy.Subscriber("/collisions_"+str(i), sensorFusionMsg, self.threshold_cb, queue_size=100)
 
     def init_dict(self):
@@ -365,4 +359,4 @@ class Monitor(smach.State):
 
 if __name__ == '__main__':
     rospy.init_node('smach_example_state_machine')
-    start_sm("/home/jose/data/freemotion-1903/", "cob3-1903-", Monitor, Setup, Plotter, max_bag_file=210, max_window_size=45, start_window=3, step=5)
+    start_sm("/home/jose/data/freemotion-1903/", "cob3-1903-", Monitor, Setup, Plotter, max_bag_file=210, max_window_size=75, start_window=2, step=3)
