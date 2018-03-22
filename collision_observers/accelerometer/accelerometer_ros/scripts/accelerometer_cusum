@@ -1,0 +1,5 @@
+#!/usr/bin/env python
+from fault_detection.AccCUSUM import AccCUSUM
+
+if __name__ == '__main__':
+    main = AccCUSUM(500,1,10)
