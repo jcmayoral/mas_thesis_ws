@@ -360,3 +360,4 @@ class Monitor(smach.State):
 if __name__ == '__main__':
     rospy.init_node('smach_example_state_machine')
     start_sm("/home/jose/data/freemotion-1903/", "cob3-1903-", Monitor, Setup, Plotter, max_bag_file=210, max_window_size=75, start_window=2, step=3)
+    #start_sm("/home/jose/data/stomach_collisions/", "stomach_collision_", Monitor, Setup, Plotter, max_bag_file=60, max_window_size=75, start_window=2, step=3)
