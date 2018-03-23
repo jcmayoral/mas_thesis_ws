@@ -29,33 +29,15 @@ class LedWidget(QWidget):
 
     def topicCB(self, msg):
         if msg.msg == 2:
-            print "Collision"
             self.setState(False)
         else:
-            print "nice"
             self.setState(True)
 
     def paintEvent(self, event):
         painter = QPainter()
         x = 0
         y = 0
-        """
-        if self._alignment & Qt.AlignLeft:
-            x = 0
-        elif self._alignment & Qt.AlignRight:
-            x = self.width() - self._diameter
-        elif self._alignment & Qt.AlignHCenter:
-            x = (self.width() - self._diameter) / 2
-        elif self._alignment & Qt.AlignJustify:
-            x = 0
 
-        if self._alignment & Qt.AlignTop:
-            y = 0
-        elif self._alignment & Qt.AlignBottom:
-            y = self.height() - self._diameter
-        elif self._alignment & Qt.AlignVCenter:
-            y = (self.height() - self._diameter) / 2
-        """
         gradient = QRadialGradient(x + self._diameter / 2, y + self._diameter / 2,
                                    self._diameter * 0.4, self._diameter * 0.4, self._diameter * 0.4)
         gradient.setColorAt(0, Qt.white)
@@ -92,16 +74,6 @@ class LedWidget(QWidget):
     def setDiameter(self, value):
         self._diameter = value
         self.update()
-
-    """
-    def getColor(self):
-        return self._color
-
-    #@pyqtSlot(QColor)
-    def setColor(self, value):
-        self._color = value
-        self.update()
-    """
 
     def getAlignment(self):
         return self._alignment
@@ -148,12 +120,6 @@ class LedWidget(QWidget):
     def stopFlashing(self):
         self.setFlashing(False)
 
-    #diameter = pyqtProperty(int, getDiameter, setDiameter)
-    #color = pyqtProperty(QColor, getColor, setColor)
-    #alignment = pyqtProperty(Qt.Alignment, getAlignment, setAlignment)
-    #state = pyqtProperty(bool, getState, setState)
-    #flashing = pyqtProperty(bool, isFlashing, setFlashing)
-    #flashRate = pyqtProperty(int, getFlashRate, setFlashRate)
 
 if __name__ == "__main__":
 

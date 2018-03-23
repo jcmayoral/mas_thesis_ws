@@ -1,0 +1,2 @@
+This video records one of the test of the visual tools for collision detection. The traffic light, shown on the video, validates collision detection turning red each time a sensor source i detecs the collision. Tested on accelerometer, camera and microphone (hit sounds on the video).
+
