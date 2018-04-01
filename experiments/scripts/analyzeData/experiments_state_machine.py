@@ -94,6 +94,16 @@ class Plotter(smach.State):
     def execute(self, userdata):
 
         rospy.loginfo('Executing Plotter')
+
+        f = open( 'file_coll_2003', 'w' )
+        for key, value in userdata.data_in.iteritems():
+        #for item in userdata.data_in:
+            f.write("'{0}'/n".format(key))
+            f.write("'{0}'/n".format(value))
+        f.close()
+
+
+
         #Accelerometer Plot
         print (userdata.data_in)
         data = userdata.data_in['accel']
@@ -109,9 +119,12 @@ class Plotter(smach.State):
             plt.ylabel("CUSUM Error")
             plt.legend()
             plt.title('Accelerometer on Motion Thresholding') # subplot 211 title
-            plt.savefig('accelerometer_motion_threshold.png') # TODO
+            plt.savefig('col_accelerometer_motion_threshold.png') # TODO
 
         #Camera Plot
+        data = userdata.data_in['cam']
+        x_array = userdata.x_array
+
 
         if len(data['std']) > 0:
             m = np.array(data["mean"])
@@ -127,9 +140,9 @@ class Plotter(smach.State):
             plt.xlabel("Matching Threshold Variation")
             plt.ylabel("CUSUM Erro")
             plt.title('Camera on Motion Thresholding') # subplot 211 title
+            plt.savefig('col_camera_motion_threshold.png') # TODO
             plt.legend()
             plt.figure()
-            plt.savefig('camera_motion_threshold.png') # TODO
 
 
         # data = np.array(userdata.data_in['odom'])
@@ -161,7 +174,7 @@ class Plotter(smach.State):
             plt.ylabel("CUSUM Error")
             plt.legend()
             plt.title('Lidar on Motion Thresholding') # subplot 211 title
-            plt.savefig('lidar_motion_threshold.png') # TODO
+            plt.savefig('collisions_lidar_motion_threshold.png') # TODO
 
 
         data = userdata.data_in['mic']
@@ -183,7 +196,7 @@ class Plotter(smach.State):
             plt.ylabel("CUSUM Error")
             plt.legend()
             plt.title('Microphone on Motion Thresholding') # subplot 211 title
-            plt.savefig('mic_motion_threshold_sum.png') # TODO
+            plt.savefig('col_mic_motion_threshold_sum.png') # TODO
 
         data = userdata.data_in['imu']
         x_array = userdata.x_array
@@ -200,20 +213,14 @@ class Plotter(smach.State):
                 x = np.asarray(x_array)
                 plt.xlim(0.1, x[-1]+1)
                 plt.figure() #TODO
-                plt.errorbar(np.asarray(x_array), m.flatten(), yerr=s.flatten(), fmt='ok', lw=3)
+                plt.errorbar(x, m.flatten(), yerr=s.flatten(), fmt='ok', lw=3)
                 #plt.errorbar(np.asarray(x_array), m, m - _min, _max - m, fmt='.k', ecolor='gray', lw=1)
                 plt.xlabel("Window Size")
                 plt.ylabel("CUSUM sigma")
                 plt.legend()
                 plt.title('Imu on Motion Linear Accelerations Thresholding'+ str(i)) # subplot 211 title
-                plt.savefig('imu_linear_motion_threshold' + str(i) + '.png') # TODO
+                plt.savefig('col_imu_linear_motion_threshold' + str(i) + '.png') # TODO
 
-        f = open( 'file', 'w' )
-        for key, value in userdata.data_in.iteritems():
-        #for item in userdata.data_in:
-            f.write("'{0}'/n".format(key))
-            f.write("'{0}'/n".format(value))
-        f.close()
         #plt.show()
         rospy.sleep(0.5)
         return 'PLOT_DONE'
@@ -359,5 +366,6 @@ class Monitor(smach.State):
 
 if __name__ == '__main__':
     rospy.init_node('smach_example_state_machine')
-    start_sm("/home/jose/data/freemotion-1903/", "cob3-1903-", Monitor, Setup, Plotter, max_bag_file=210, max_window_size=75, start_window=2, step=3)
+    #start_sm("/home/jose/data/freemotion-1903/", "cob3-1903-", Monitor, Setup, Plotter, max_bag_file=210, max_window_size=70, start_window=2, step=5)
     #start_sm("/home/jose/data/stomach_collisions/", "stomach_collision_", Monitor, Setup, Plotter, max_bag_file=60, max_window_size=75, start_window=2, step=3)
+    start_sm("/home/jose/data/collisions_2003/", "collision_bags_bags_2003_", Monitor, Setup, Plotter, max_bag_file=100, max_window_size=75, start_window=2, step=3)

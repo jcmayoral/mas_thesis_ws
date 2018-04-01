@@ -34,10 +34,10 @@ class Setup(smach.State):
                              output_keys=['counter_out','acc_results', 'cam_results', 'odom_results', 'imu_results', 'lidar_results', 'mic_results', 'result_cum', 'results_', 'x_array'])
         #rospy.spin()
         self.step = step
-        self.acc_client = Client("accelerometer_process", timeout=3, config_callback=self.callback)
-        self.cam_client = Client("vision_utils_ros", timeout=3, config_callback=self.callback)
-        self.odom_client = Client("odom_collisions", timeout=3, config_callback=self.callback)
-        self.imu_client = Client("imu_detector", timeout=3, config_callback=self.callback)
+        #self.acc_client = Client("accelerometer_process", timeout=3, config_callback=self.callback)
+        self.cam_client = Client("vision_utils_ros_android", timeout=3, config_callback=self.callback)
+        #self.odom_client = Client("odom_collisions", timeout=3, config_callback=self.callback)
+        self.imu_client = Client("imu_collision_detection", timeout=3, config_callback=self.callback)
         self.lidar_client = Client("laser_collisions", timeout=3, config_callback=self.callback)
         self.mic_client = Client("mic_collisions", timeout=3, config_callback=self.callback)
 
@@ -53,9 +53,9 @@ class Setup(smach.State):
 
     def execute(self, userdata):
         rospy.loginfo('Executing SETUP')
-        self.acc_client.update_configuration({"window_size": 10})#userdata.counter_in})
+        #self.acc_client.update_configuration({"window_size": 10})#userdata.counter_in})
         #self.acc_client.update_configuration({"reset": True})
-        self.odom_client.update_configuration({"window_size": 10})#userdata.counter_in})
+        #self.odom_client.update_configuration({"window_size": 10})#userdata.counter_in})
         #self.odom_client.update_configuration({"reset": True})
         self.imu_client.update_configuration({"window_size": 10})#userdata.counter_in})
         #self.imu_client.update_configuration({"reset": True})
@@ -65,8 +65,8 @@ class Setup(smach.State):
         #self.mic_client.update_configuration({"reset": True})
 
         #SURF Version
-        self.cam_client.update_configuration({"matching_threshold":  100})
-        self.cam_client.update_configuration({"mode": 1 })
+        #self.cam_client.update_configuration({"matching_threshold":  100})
+        self.cam_client.update_configuration({"mode": 0 })
         #self.cam_client.update_configuration({"reset": True})
 
         rospy.sleep(0.5)
@@ -106,9 +106,10 @@ class Monitor(smach.State):
         rospy.Subscriber("/detector_diagnoser_node/overall_collision", monitorStatusMsg, self.diagnoser_cb, queue_size = 1000)
 
 
-        sensor_id_labels = ['accelerometer_1', 'odom', 'imu_1', 'lidar_1', 'mic_1', 'cam1']
+        sensor_id_labels = ['accelerometer_1', 'odom', 'android_imu_1', 'lidar_1', 'mic_1', 'cam1']
         self.collisions_id = dict()
         self.observer_counter = dict()
+        self.first_collision = False
 
         for l in sensor_id_labels:
             self.collisions_id[l] = 0
@@ -145,6 +146,8 @@ class Monitor(smach.State):
             rospy.Subscriber("/collisions_"+str(i), sensorFusionMsg, self.counter_cb, queue_size=100)
 
     def diagnoser_cb(self,msg):
+        if self.first_collision:
+            return
         curr_time = rospy.rostime.get_rostime().to_sec()
         self.overall_count = self.overall_count + 1
         rospy.logerr("Collision Detection")
@@ -155,7 +158,7 @@ class Monitor(smach.State):
             self.collisions_id[m] = self.collisions_id[m] + 1
 
     def counter_cb(self,msg):
-        if msg.msg == 2:
+        if msg.msg == 2 and not self.first_collision:
             self.observer_counter[msg.sensor_id.data] = self.observer_counter[msg.sensor_id.data] + 1
             self.current_counter = self.current_counter + 1
 
@@ -165,6 +168,7 @@ class Monitor(smach.State):
         self.stop_bag_request = False
 
         if msg.data == "NEXT_BAG":
+
             print ("current_counter" , self.current_counter)
             #self.current_counter = 0
         else:#FINISH
@@ -184,11 +188,14 @@ class Monitor(smach.State):
             self.stop_bag_request = True
 
     def header_cb(self,msg):
-        curr_time = rospy.rostime.get_rostime().to_sec()
-        rospy.logerr("GROUND TRUTH: %s", msg.stamp.secs)
-        rospy.loginfo('curr_time %s',curr_time - self.start_time)
-        self.ground_truth_count = self.ground_truth_count + 1
-        self.ground_truth.append(curr_time - self.start_time)
+        if not self.first_collision:
+            curr_time = rospy.rostime.get_rostime().to_sec()
+            rospy.logerr("GROUND TRUTH: %s", msg.stamp.secs)
+            rospy.loginfo('curr_time %s',curr_time - self.start_time)
+            self.ground_truth_count = self.ground_truth_count + 1
+            self.ground_truth.append(curr_time - self.start_time)
+            rospy.sleep(0.5)
+            self.first_collision = True
 
     def execute(self, userdata):
 
@@ -202,6 +209,7 @@ class Monitor(smach.State):
 
         rospy.sleep(0.2)
         self.next_bag_request = False
+        self.first_collision = False
 
         if self.stop_bag_request:
             userdata.acc_cum.append(self.observer_counter['accelerometer_1'])
@@ -229,14 +237,14 @@ class Monitor(smach.State):
 
                     print('Closest to ', gt ," is ", delay) # Closest delay print
 
-                    if delay < 1.0: #if delay is less than 1 second then it is considered as a true positive
+                    if delay < 0.5: #if delay is less than 1 second then it is considered as a true positive
                         self.truth_positives = self.truth_positives + 1
                         self.delays.append(delay)
                         collisions_detected = collisions_detected - 1 #our counter decreased
                         self.sf_detection.remove(self.sf_detection[arg_delay]) # removing from the detected collsiions
                         #self.false_positives_count = self.false_positives_count + collisions_detected - 1 # all detections minus the closest are false positives
                         for  c in self.sf_detection:
-                            if 1.2> (c - gt) > 1.0: # if a collision detected is less than 0.7 seconds it is considered as a false positive
+                            if 0.8> (c - gt) > 0.5: # if a collision detected is less than 0.7 seconds it is considered as a false positiv
                                 print ("FOUND COllision Close to Ground Truth " , c - gt)
                                 self.sf_detection.remove(c) # removing from the detected collsiions
                                 collisions_detected = collisions_detected - 1 #our counter decreased
@@ -259,4 +267,5 @@ class Monitor(smach.State):
 
 if __name__ == '__main__':
     rospy.init_node('smach_example_state_machine')
-    start_sm("/home/jose/data/collisions_2702/", "collision_bags_bags_2702_", Monitor, Setup, Plotter, time_limit = 15, max_bag_file = 50)
+    start_sm("/home/jose/data/collisions_2003/", "collision_bags_bags_2003_", Monitor, Setup, Plotter, time_limit = 15, max_bag_file = 110)
+    #start_sm("/home/jose/data/stomach_collisions/", "stomach_collision_", Monitor, Setup, Plotter, time_limit = 15, max_bag_file = 60)
