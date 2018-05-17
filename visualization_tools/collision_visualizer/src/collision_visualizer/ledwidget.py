@@ -1,6 +1,6 @@
-from python_qt_binding.QtGui import QWidget
-from PyQt4.QtGui import *
-from PyQt4.QtCore import Qt, QTimer, QSize
+from python_qt_binding.QtWidgets import QWidget
+from PyQt5.QtGui import *
+from PyQt5.QtCore import Qt, QTimer, QSize
 import rospy
 from fusion_msgs.msg import sensorFusionMsg
 

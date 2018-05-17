@@ -4,8 +4,10 @@ import rospkg
 
 from qt_gui.plugin import Plugin
 from python_qt_binding import loadUi
-import PyQt4.QtCore
-from python_qt_binding.QtGui import QWidget, QLabel, QFont, QHBoxLayout, QVBoxLayout
+import PyQt5.QtCore
+#from python_qt_binding.QtGui import QLabel, QFont, QHBoxLayout, QVBoxLayout
+from python_qt_binding.QtGui import *
+from python_qt_binding.QtWidgets import *
 from collision_visualizer.ledwidget import LedWidget
 
 class MyPlugin(Plugin):
@@ -45,7 +47,7 @@ class MyPlugin(Plugin):
         # Add widget to the user interface
         #context.add_widget(self._widget)
         layout = QVBoxLayout(self._widget)
-        layout.setAlignment(PyQt4.QtCore.Qt.AlignJustify)
+        layout.setAlignment(PyQt5.QtCore.Qt.AlignJustify)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSizeConstraint(1)
 
@@ -54,13 +56,13 @@ class MyPlugin(Plugin):
             led = LedWidget()
             led.setObjectName("collision_state_" + str(i))
             led.initializeSubscriber(i)
-            led.setAlignment(PyQt4.QtCore.Qt.AlignCenter)
+            led.setAlignment(PyQt5.QtCore.Qt.AlignCenter)
 
             text = QLabel("sensing_source_" + str(i))
             text.setObjectName("label_"+str(i))
             #text.setGeometry(10, 10, 100, 100);
             text.resize(100,100)
-            text.setAlignment(PyQt4.QtCore.Qt.AlignCenter)
+            text.setAlignment(PyQt5.QtCore.Qt.AlignCenter)
             font = QFont()
             font.setPointSize(20)
             text.setFont(font)
