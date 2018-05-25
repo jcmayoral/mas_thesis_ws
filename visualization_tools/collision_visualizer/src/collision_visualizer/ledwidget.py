@@ -1,5 +1,6 @@
 from python_qt_binding.QtWidgets import QWidget
 from PyQt5.QtGui import *
+from python_qt_binding.QtWidgets import *
 from PyQt5.QtCore import Qt, QTimer, QSize
 import rospy
 from fusion_msgs.msg import sensorFusionMsg
@@ -22,12 +23,38 @@ class LedWidget(QWidget):
         self._timer = QTimer()
         self._timer.timeout.connect(self.toggleState)
 
+        print ("here ", type(self.layout))
+        self.text = QLabel()
+        self.setText()
+        self.updateText("unknown")
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.text);
+        print self.layout()#.addWidget(text)
+        self.setLayout(layout)
+
         self.setDiameter(self._diameter)
+
+    def updateText(self, str):
+        self.text.setText(str)
+        print self.text.text()
+
+    def setText(self):
+        self.text.setGeometry(10, 10, 100, 100);
+        self.text.resize(100,100)
+        self.text.setAlignment(Qt.AlignCenter)
+        font = QFont()
+        font.setPointSize(20)
+        self.text.setFont(font)
 
     def initializeSubscriber(self,sensor_id = 0):
         rospy.Subscriber("/collisions_" + str(sensor_id), sensorFusionMsg, self.topicCB)
 
     def topicCB(self, msg):
+
+        if msg.sensor_id is not self.text.text():
+            self.updateText(msg.sensor_id.data)
+
         if msg.msg == 2:
             self.setState(False)
         else:

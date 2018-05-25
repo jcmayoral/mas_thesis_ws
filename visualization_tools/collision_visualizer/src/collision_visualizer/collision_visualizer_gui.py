@@ -15,6 +15,7 @@ class MyPlugin(Plugin):
     def __init__(self, context):
         super(MyPlugin, self).__init__(context)
         # Give QObjects reasonable names
+        print type(context)
         self.setObjectName('MyPlugin')
 
         # Process standalone plugin command-line arguments
@@ -58,14 +59,14 @@ class MyPlugin(Plugin):
             led.initializeSubscriber(i)
             led.setAlignment(PyQt5.QtCore.Qt.AlignCenter)
 
-            text = QLabel("sensing_source_" + str(i))
-            text.setObjectName("label_"+str(i))
+            #text = QLabel("sensing_source_" + str(i))
+            #text.setObjectName("label_"+str(i))
             #text.setGeometry(10, 10, 100, 100);
-            text.resize(100,100)
-            text.setAlignment(PyQt5.QtCore.Qt.AlignCenter)
-            font = QFont()
-            font.setPointSize(20)
-            text.setFont(font)
+            #text.resize(100,100)
+            #text.setAlignment(PyQt5.QtCore.Qt.AlignCenter)
+            #font = QFont()
+            #font.setPointSize(20)
+            #text.setFont(font)
             #context.add_widget(text)
             #context.add_widget(led)
 
@@ -73,8 +74,12 @@ class MyPlugin(Plugin):
             #context.add_widget(text)
             #context.add_widget(led)
             layout.addWidget(led)
-            layout.addWidget(text)
+            #layout.addWidget(text)
 
+        #context.add_widget(self._widget)
+        #context.remove_widget(self._widget)
+
+        #text.setText("experiment")
         context.add_widget(self._widget)
 
         #context.add_widget(gridLayout)
@@ -82,21 +87,26 @@ class MyPlugin(Plugin):
         if context.serial_number() > 1:
             self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
 
+        self.trigger_configuration()
+
     def shutdown_plugin(self):
         pass
 
         # TODO unregister all publishers here
     def save_settings(self, plugin_settings, instance_settings):
         # TODO save intrinsic configuration, usually using:
+        print "save ", plugin_settings,instance_settings
         # instance_settings.set_value(k, v)
         pass
 
     def restore_settings(self, plugin_settings, instance_settings):
         # TODO restore intrinsic configuration, usually using:
+        print "restore ", plugin_settings.all_keys(),instance_settings
         # v = instance_settings.value(k)
         pass
 
-    #def trigger_configuration(self):
+    def trigger_configuration(self):
         # Comment in to signal that the plugin has a way to configure
         # This will enable a setting button (gear icon) in each dock widget title bar
         # Usually used to open a modal configuration dialog
+        print "trigger", type(self)
