@@ -23,21 +23,21 @@ class LedWidget(QWidget):
         self._timer = QTimer()
         self._timer.timeout.connect(self.toggleState)
 
-        print ("here ", type(self.layout))
+        #print ("here ", type(self.layout))
         self.text = QLabel()
         self.setText()
         self.updateText("unknown")
 
         layout = QVBoxLayout()
         layout.addWidget(self.text);
-        print self.layout()#.addWidget(text)
+        #print self.layout()#.addWidget(text)
         self.setLayout(layout)
 
         self.setDiameter(self._diameter)
 
     def updateText(self, str):
         self.text.setText(str)
-        print self.text.text()
+        #print self.text.text()
 
     def setText(self):
         self.text.setGeometry(10, 10, 100, 100);

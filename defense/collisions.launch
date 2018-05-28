@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="nav_mode" default="stage" />
+  <arg name="robot" default="$(optenv ROBOT !!ROBOT NOT SET!!)" />
+  <arg name="robot_env" default="stage-cave" />
+
+  <include file="$(find collisions_launch)/ros/launch/defense.launch">
+  </include>
+  
+  <include file="$(find audio_capture)/launch/capture.launch">
+  </include>
+
+  <include file="$(find collisions_launch)/ros/launch/2dnav_$(arg nav_mode).launch">
+    <arg name="robot" value="$(arg robot)" />
+    <arg name="robot_env" value="$(arg robot_env)" />
+  </include>
+
+  <!--node pkg="collision_visualizer" type="rqt_collisions_visualizer" respawn="false" name="rqt_visuakuzer" output="screen" >
+  </node-->
+
+  <node pkg="rqt_reconfigure" type="rqt_reconfigure" respawn="false" name="rqt_reconfigure" output="screen" >
+  </node>
+
+  <!--node pkg="rviz" type="rviz" respawn="false" name="collision_rviz" output="screen" args= "-d /home/jose/ros_ws/src/mas_thesis_ws/visualization_tools/rviz/collisions.rviz">
+  </node-->
+
+
+</launch>

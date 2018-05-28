@@ -15,7 +15,7 @@ class MyPlugin(Plugin):
     def __init__(self, context):
         super(MyPlugin, self).__init__(context)
         # Give QObjects reasonable names
-        print type(context)
+        #print type(context)
         self.setObjectName('MyPlugin')
 
         # Process standalone plugin command-line arguments
@@ -95,13 +95,13 @@ class MyPlugin(Plugin):
         # TODO unregister all publishers here
     def save_settings(self, plugin_settings, instance_settings):
         # TODO save intrinsic configuration, usually using:
-        print "save ", plugin_settings,instance_settings
+        #print "save ", plugin_settings,instance_settings
         # instance_settings.set_value(k, v)
         pass
 
     def restore_settings(self, plugin_settings, instance_settings):
         # TODO restore intrinsic configuration, usually using:
-        print "restore ", plugin_settings.all_keys(),instance_settings
+        #print "restore ", plugin_settings.all_keys(),instance_settings
         # v = instance_settings.value(k)
         pass
 
@@ -109,4 +109,5 @@ class MyPlugin(Plugin):
         # Comment in to signal that the plugin has a way to configure
         # This will enable a setting button (gear icon) in each dock widget title bar
         # Usually used to open a modal configuration dialog
-        print "trigger", type(self)
+        #print "trigger", type(self)
+        pass
