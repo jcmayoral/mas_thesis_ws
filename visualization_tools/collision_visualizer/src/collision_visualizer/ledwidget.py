@@ -16,7 +16,7 @@ class LedWidget(QWidget):
         self._diamY = 0
         self._diameter = 100
         #self._alignment = Qt.AlignCenter
-        self._state = True
+        self._state = Qt.green
         self._flashing = False
         self._flashRate = 200
 
@@ -55,10 +55,7 @@ class LedWidget(QWidget):
         if msg.sensor_id is not self.text.text():
             self.updateText(msg.sensor_id.data)
 
-        if msg.msg == 2:
-            self.setState(False)
-        else:
-            self.setState(True)
+        self.setState(msg.msg)
 
     def paintEvent(self, event):
         painter = QPainter()
@@ -68,11 +65,7 @@ class LedWidget(QWidget):
         gradient = QRadialGradient(x + self._diameter / 2, y + self._diameter / 2,
                                    self._diameter * 0.4, self._diameter * 0.4, self._diameter * 0.4)
         gradient.setColorAt(0, Qt.white)
-
-        if self._state:
-            gradient.setColorAt(1, Qt.green)
-        else:
-            gradient.setColorAt(1, Qt.red)
+        gradient.setColorAt(1, self._state)
 
         painter.begin(self)
         brush = QBrush(gradient)
@@ -115,7 +108,12 @@ class LedWidget(QWidget):
 
     #@pyqtSlot(bool)
     def setState(self, value):
-        self._state = value
+        if value == 0:
+            self._state = Qt.green
+        if value == 1:
+            self._state = Qt.yellow
+        if value == 2:
+            self._state = Qt.red
         self.update()
 
     #@pyqtSlot()
